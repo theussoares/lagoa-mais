@@ -5,7 +5,7 @@ const fromRoot = (path: string): string => fileURLToPath(new URL(path, import.me
 
 // Só peças puras (BFF e composables de tela com o service injetado): sem ambiente Nuxt.
 export default defineConfig({
-  resolve: { alias: { '#shared': fromRoot('../../shared'), '#layers/ui': fromRoot('../web/layers/ui') } },
+  resolve: { alias: { '#shared': fromRoot('../../shared'), '#layers/ui': fromRoot('../web/layers/ui'), '#layers/core': fromRoot('../web/layers/core') } },
   test: {
     environment: 'node',
     include: ['server/test/**/*.test.ts', 'app/**/*.test.ts'],

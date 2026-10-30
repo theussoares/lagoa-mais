@@ -2,6 +2,8 @@
 import type { SpineNavItem } from '#layers/ui/app/types/spine'
 
 const { t } = useI18n()
+const session = useAdminSession()
+const name = computed(() => (session.state.value && 'admin' in session.state.value ? session.state.value.admin.name : ''))
 
 const items = computed<SpineNavItem[]>(() => [
   { label: t('nav.shops'), icon: 'i-ph-storefront', to: '/lojas' },
@@ -20,9 +22,17 @@ const footerItems = computed<SpineNavItem[]>(() => [{ label: t('nav.account'), i
           {{ t('app.name') }}
         </p>
         <p class="mt-2 text-[0.9375rem] text-toned">{{ t('app.surface') }}</p>
+        <p v-if="name" class="w-full truncate text-[0.9375rem] text-default" :title="name">{{ name }}</p>
       </div>
       <SpineNav :items="items" :footer-items="footerItems" :label="t('nav.label')" />
-      <slot name="footer" />
+      <button
+        type="button"
+        class="flex min-h-12 items-center gap-3 px-2.5 text-[0.9375rem] text-toned transition-colors duration-(--lagoa-dur-fast) hover:text-highlighted"
+        @click="session.signOut"
+      >
+        <UIcon name="i-ph-sign-out" class="size-5 shrink-0 text-muted" aria-hidden="true" />
+        {{ t('nav.signOut') }}
+      </button>
     </aside>
     <main id="main" class="min-w-0 px-8 py-6">
       <slot />

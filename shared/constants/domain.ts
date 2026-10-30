@@ -184,3 +184,5 @@ export const ADMIN_PASSWORD_MIN_LENGTH = 12
 export const ADMIN_PASSWORD_MAX_LENGTH = 72
 /** Código do autenticador (TOTP). */
 export const ADMIN_MFA_CODE_LENGTH = 6
+/** Dias da agenda de vagas que a tela de Destaques mostra de uma vez (cabe no teto da API, `FEATURED_RANGE_MAX_DAYS`). */
+export const FEATURED_AGENDA_DAYS = 56

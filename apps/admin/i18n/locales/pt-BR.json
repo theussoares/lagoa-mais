@@ -1,4 +1,305 @@
 {
-  "app": { "name": "Lagoa+", "surface": "Painel da rede" },
-  "nav": { "label": "Menu do painel", "shops": "Lojas", "hits": "Hits", "featured": "Destaques", "team": "Equipe", "account": "Minha conta", "signOut": "Sair" }
+  "app": {
+    "name": "Lagoa+",
+    "surface": "Painel da rede"
+  },
+  "nav": {
+    "label": "Menu do painel",
+    "shops": "Lojas",
+    "hits": "Hits",
+    "featured": "Destaques",
+    "team": "Equipe",
+    "account": "Minha conta",
+    "signOut": "Sair"
+  },
+  "common": {
+    "loadMore": "Carregar mais"
+  },
+  "categories": {
+    "barbershop": "Barbearia",
+    "beauty": "Salão de beleza",
+    "cafe": "Café",
+    "bakery": "Padaria",
+    "pizzeria": "Pizzaria",
+    "restaurant": "Restaurante",
+    "petShop": "Pet shop",
+    "gym": "Academia",
+    "clothing": "Roupas e acessórios",
+    "services": "Serviços",
+    "home": "Casa e construção",
+    "other": "Outro comércio"
+  },
+  "plans": {
+    "founder": "Fundador",
+    "founderPro": "Fundador Pro"
+  },
+  "shopStatus": {
+    "pending": "Aguardando aprovação",
+    "approved": "Aprovada",
+    "suspended": "Suspensa"
+  },
+  "programModes": {
+    "stamps": "Cartão de carimbos",
+    "pointsPerCurrency": "Pontos por real",
+    "pointsPerVisit": "Pontos por visita"
+  },
+  "errors": {
+    "unauthorized": "Sua sessão terminou. Entre de novo para continuar.",
+    "forbidden": "Esta conta não tem acesso a esta área.",
+    "network": "Sem conexão agora. Confira a internet e tente de novo.",
+    "rateLimited": "Muitas tentativas seguidas. Espere um instante e tente de novo.",
+    "internal": "Algo deu errado do nosso lado. Tente de novo em instantes.",
+    "notFound": "Não encontramos o que você procurou.",
+    "invalidTransition": "Isso já mudou. Recarregue a página para ver como está agora.",
+    "conflict": "Isso mudou enquanto você olhava. Recarregue para ver de novo.",
+    "slotsFull": "Não há vaga livre nesse período.",
+    "invalidTarget": "Essa loja ou esse produto não pode ser destacado agora.",
+    "alreadyExists": "Já existe."
+  },
+  "auth": {
+    "email": "E-mail",
+    "password": "Senha",
+    "newPassword": "Senha nova",
+    "confirmPassword": "Repita a senha nova",
+    "passwordHint": "Pelo menos {min} caracteres.",
+    "errors": {
+      "invalidCredentials": "E-mail ou senha não conferem.",
+      "captchaFailed": "Confirme que você não é um robô e tente de novo.",
+      "invalidMfaCode": "Código do autenticador não confere. Digite o código que está na tela agora.",
+      "weakPassword": "Essa senha é fraca ou é a mesma de antes. Escolha outra.",
+      "linkExpired": "Este link venceu ou já foi usado. Peça outro em \"Esqueci a senha\".",
+      "passwordTooShort": "A senha precisa de pelo menos 12 caracteres.",
+      "passwordMismatch": "As duas senhas não estão iguais.",
+      "rateLimited": "Muitas tentativas seguidas. Espere 15 minutos e tente de novo.",
+      "unauthorized": "Sua sessão terminou. Entre de novo.",
+      "forbidden": "Para isso, entre de novo com a senha e o autenticador.",
+      "network": "Sem conexão agora. Confira a internet e tente de novo.",
+      "internal": "Algo deu errado do nosso lado. Tente de novo em instantes."
+    }
+  },
+  "signIn": {
+    "title": "Entrar",
+    "lead": "Painel da rede Lagoa+. Só para a equipe da rede.",
+    "submit": "Entrar",
+    "forgot": "Esqueci a senha"
+  },
+  "mfa": {
+    "title": "Código do autenticador",
+    "lead": "Abra o app autenticador no celular e digite o código de 6 dígitos.",
+    "code": "Código de 6 dígitos",
+    "submit": "Confirmar",
+    "enroll": {
+      "title": "Cadastre o autenticador",
+      "lead": "No primeiro acesso, ligue um app autenticador (Google Authenticator, Microsoft Authenticator ou 1Password) a esta conta.",
+      "step1": "Abra o app autenticador no celular.",
+      "step2": "Escaneie o QR abaixo (ou digite a chave).",
+      "step3": "Digite o código de 6 dígitos que aparecer.",
+      "qrAlt": "QR para cadastrar o autenticador",
+      "secret": "Não consegue escanear? Digite esta chave no app:"
+    }
+  },
+  "forgot": {
+    "title": "Esqueci a senha",
+    "lead": "Digite o seu e-mail da rede. Mandamos um link para criar uma senha nova.",
+    "submit": "Mandar link",
+    "sent": "Se este e-mail for de alguém da equipe, o link chega em alguns minutos. Confira também o spam.",
+    "back": "Voltar para Entrar"
+  },
+  "setPassword": {
+    "title": "Definir senha",
+    "lead": "Crie a senha da sua conta no painel da rede.",
+    "submit": "Salvar senha",
+    "done": "Senha salva. Agora entre com ela e com o autenticador."
+  },
+  "shops": {
+    "title": "Lojas",
+    "lead": "Aprove as lojas novas e acompanhe as da rede. As que esperam aprovação vêm primeiro.",
+    "listTitle": "Lojas da rede",
+    "search": "Buscar pelo nome",
+    "searchSubmit": "Buscar",
+    "statusFilter": "Filtrar por situação",
+    "filter": {
+      "all": "Todas",
+      "pending": "Aguardando",
+      "approved": "Aprovadas",
+      "suspended": "Suspensas"
+    },
+    "columns": {
+      "name": "Loja",
+      "category": "Tipo",
+      "neighborhood": "Bairro",
+      "status": "Situação",
+      "plan": "Plano",
+      "createdAt": "Cadastro"
+    },
+    "empty": "Nenhuma loja com esse filtro."
+  },
+  "shopDetail": {
+    "back": "Voltar para Lojas",
+    "data": "Dados da loja",
+    "actionsTitle": "Ações",
+    "category": "Tipo de comércio",
+    "address": "Endereço",
+    "plan": "Plano",
+    "program": "Programa",
+    "target": "meta {target}",
+    "noProgram": "Ainda sem programa.",
+    "stats": {
+      "customers": "Clientes no clube",
+      "visits": "Visitas nos últimos 30 dias"
+    },
+    "owner": "Contato do dono",
+    "ownerGone": "A conta do dono foi apagada.",
+    "actions": {
+      "approve": "Aprovar loja",
+      "reactivate": "Reativar loja",
+      "toPro": "Mudar para Fundador Pro",
+      "toFounder": "Mudar para Fundador",
+      "suspend": "Suspender loja",
+      "suspendReason": "Motivo da suspensão (o lojista vê)"
+    },
+    "done": {
+      "approve": "Loja aprovada.",
+      "suspend": "Loja suspensa.",
+      "reactivate": "Loja reativada.",
+      "changePlan": "Plano trocado."
+    },
+    "errors": {
+      "reasonMissing": "Escreva o motivo para suspender.",
+      "invalidTransition": "A loja já está nessa situação ou nesse plano."
+    },
+    "history": {
+      "title": "Histórico",
+      "line": "{from} → {to} · {plan}",
+      "reason": "Motivo: {reason}",
+      "empty": "Sem mudanças registradas."
+    }
+  },
+  "hits": {
+    "title": "Hits",
+    "lead": "Produtos que as lojas mandaram para a vitrine. Confira a foto, o preço e para onde o botão leva.",
+    "tabsLabel": "Fila",
+    "tabs": {
+      "pending": "Esperando análise",
+      "approved": "Na vitrine"
+    },
+    "empty": {
+      "pending": "Nenhum produto esperando análise.",
+      "approved": "Nenhum produto na vitrine."
+    },
+    "photoAlt": "Foto de {title}",
+    "onRequest": "Preço sob consulta",
+    "sentAt": "enviado em {date}",
+    "endsAt": "Vale até {date}",
+    "button": {
+      "own": "Botão próprio do produto",
+      "shop": "Botão da loja",
+      "label": "Texto do botão: {label}",
+      "none": "Sem botão: o card não leva a lugar nenhum."
+    },
+    "rejectReason": "Motivo para recusar (o lojista vê)",
+    "takeDownReason": "Motivo para tirar do ar (o lojista vê)",
+    "reasonMissing": "Escreva o motivo.",
+    "approve": "Aprovar",
+    "reject": "Recusar",
+    "takeDown": "Tirar do ar",
+    "approved": "Produto aprovado: já está na vitrine.",
+    "rejected": "Produto recusado. O lojista vê o motivo.",
+    "takenDown": "Produto tirado do ar.",
+    "conflict": "O lojista mudou este produto. Recarregue para revisar de novo.",
+    "gone": "Este produto já mudou de situação. A lista foi atualizada."
+  },
+  "featured": {
+    "title": "Destaques",
+    "lead": "Destaques pagos no carrossel do Descobrir e no banner do Hits. Confira as vagas antes de lançar.",
+    "surfaceLabel": "Onde aparece",
+    "surfaces": {
+      "discoverCarousel": "Carrossel do Descobrir",
+      "hitsBanner": "Banner do Hits"
+    },
+    "agenda": {
+      "title": "Vagas livres",
+      "label": "Vagas pagas livres por dia",
+      "full": "lotado",
+      "free": "{count} livre | {count} livres"
+    },
+    "form": {
+      "title": "Lançar destaque",
+      "shop": "Loja",
+      "item": "Produto do banner",
+      "itemHint": "Só produtos aprovados. A loja é a do produto.",
+      "pick": "Escolha",
+      "start": "Primeiro dia",
+      "end": "Último dia",
+      "endHint": "O destaque vale até o fim deste dia.",
+      "note": "Nota interna",
+      "noteHint": "Ex.: pago no Pix em 12/11.",
+      "fullDays": "Sem vaga em: {days}. Escolha outro período.",
+      "launch": "Lançar destaque"
+    },
+    "launched": "Destaque lançado.",
+    "cancelled": "Destaque cancelado. A vaga voltou para a agenda.",
+    "errors": {
+      "slotsFull": "Esse período já está lotado. A agenda foi atualizada.",
+      "invalidTarget": "Essa loja ou esse produto não está aprovado."
+    },
+    "list": {
+      "title": "Destaques no período",
+      "period": "{start} a {end}",
+      "by": "por {name}",
+      "cancelledBy": "Cancelado por {name}",
+      "cancel": "Cancelar",
+      "empty": "Nenhum destaque no período."
+    },
+    "pro": {
+      "title": "No carrossel por serem Pro",
+      "lead": "Lojas Fundador Pro aparecem no carrossel sem ocupar vaga paga.",
+      "empty": "Nenhuma loja Pro ainda."
+    }
+  },
+  "team": {
+    "title": "Equipe",
+    "lead": "Quem pode entrar no painel da rede. Todo mundo pode tudo; cada ação fica registrada com o nome de quem fez.",
+    "listTitle": "Pessoas",
+    "disabled": "Desativada",
+    "form": {
+      "title": "Convidar pessoa",
+      "name": "Nome",
+      "invite": "Mandar convite"
+    },
+    "actions": {
+      "disable": "Desativar",
+      "reactivate": "Reativar",
+      "resetMfa": "Zerar autenticador",
+      "confirmDisable": "Confirmar: desativar",
+      "confirmResetMfa": "Confirmar: zerar autenticador"
+    },
+    "done": {
+      "invite": "Convite enviado por e-mail.",
+      "disable": "Pessoa desativada.",
+      "reactivate": "Pessoa reativada.",
+      "resetMfa": "Autenticador zerado. No próximo acesso a pessoa cadastra um novo."
+    },
+    "errors": {
+      "invalidInvite": "Confira o nome e o e-mail.",
+      "alreadyExists": "Esse e-mail já tem conta no Lagoa+.",
+      "self": "Você não pode fazer isso na sua própria conta."
+    }
+  },
+  "account": {
+    "title": "Minha conta",
+    "password": {
+      "title": "Trocar a senha",
+      "save": "Salvar senha nova",
+      "saved": "Senha trocada."
+    },
+    "mfa": {
+      "title": "Autenticador",
+      "lead": "Trocou de celular? Cadastre o autenticador novo. O antigo para de valer quando o novo for confirmado.",
+      "start": "Cadastrar autenticador novo",
+      "confirm": "Confirmar autenticador novo",
+      "cancel": "Cancelar",
+      "replaced": "Autenticador novo cadastrado. O antigo não vale mais."
+    }
+  }
 }

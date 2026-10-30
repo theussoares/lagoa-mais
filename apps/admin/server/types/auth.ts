@@ -1,3 +1,7 @@
+import type { AdminAuthErrorCode } from '#shared/types/adminAuth'
+
+export type { AdminAuthErrorCode }
+
 export interface TokenPair {
   readonly accessToken: string
   readonly refreshToken: string
@@ -6,19 +10,6 @@ export interface TokenPair {
   /** `sub` do token: só para o log de segurança, nunca vai para cookie nem resposta. */
   readonly userId: string
 }
-
-/** Código que o front entende; o status HTTP sai de `adminAuthErrorStatus`. Nenhum diz se o e-mail existe. */
-export type AdminAuthErrorCode =
-  | 'invalidCredentials'
-  | 'captchaFailed'
-  | 'invalidMfaCode'
-  | 'weakPassword'
-  | 'linkExpired'
-  | 'rateLimited'
-  | 'unauthorized'
-  | 'forbidden'
-  | 'network'
-  | 'internal'
 
 export type AdminAuthOutcome<T> = { readonly ok: true; readonly value: T } | { readonly ok: false; readonly code: AdminAuthErrorCode }
 

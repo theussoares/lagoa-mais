@@ -8,6 +8,8 @@ export default defineNuxtConfig({
   alias: {
     '#shared': fileURLToPath(new URL('../../shared', import.meta.url)),
     '#layers/ui': fileURLToPath(new URL('../web/layers/ui', import.meta.url)),
+    // Só as peças puras do core do app (cliente HTTP, `parseDomainError`): a layer em si não é herdada.
+    '#layers/core': fileURLToPath(new URL('../web/layers/core', import.meta.url)),
   },
   compatibilityDate: '2026-10-01',
   // Só desktop, nada a indexar e nada a renderizar com dado: SPA, a sessão é conferida pelo BFF.
