@@ -147,6 +147,13 @@ describe('admin team (HTTP)', () => {
     ])
   })
 
+  it('answers who is signed in (the panel shows the name), and refuses a disabled admin', async () => {
+    const res = await as('get', '/v1/admin/team/me', await adminToken()).expect(200)
+    expect(res.body).toEqual({ id: ADMIN, name: 'Ana da Rede', email: 'ana@rede.test', disabledAt: null, createdAt: '2026-10-01T12:00:00.000Z' })
+    repository.seed(OTHER, 'Bia da Rede', pii.encryptEmail('bia@rede.test'), pii.hashEmail('bia@rede.test'), new Date())
+    await as('get', '/v1/admin/team/me', await adminToken(OTHER)).expect(403)
+  })
+
   it('invites with the normalized e-mail and records who invited', async () => {
     const res = await as('post', '/v1/admin/team/invite', await adminToken()).send({ name: 'Caio', email: 'Caio@Rede.test' }).expect(201)
     const [invited] = auth.invited
