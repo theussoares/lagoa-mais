@@ -35,10 +35,10 @@ const themeToggleLabels = computed(() => ({
     <!-- A barra lateral em azul-petróleo escuro usando os tokens da paleta -->
     <aside class="dark print:hidden sticky top-0 flex h-dvh flex-col bg-(--lagoa-desk) border-r border-(--lagoa-rule) px-3.5 py-6 text-default">
       <div class="flex flex-col items-start px-2 pb-7">
-        <div class="rounded-lg border-[1.5px] border-primary/90 px-2.5 py-1 text-sm font-extrabold tracking-wider text-primary uppercase">
-          {{ t('app.name') }}
+        <div class="rounded-lg border-[1.5px] border-cyan-400/90 px-2.5 py-1 text-sm font-extrabold tracking-wider text-cyan-400">
+          LAGOA+
         </div>
-        <p v-if="session" class="mt-2.5 w-full truncate text-[0.875rem] font-medium text-toned" :title="session.shopName">
+        <p v-if="session" class="mt-2.5 w-full truncate text-[0.875rem] font-medium text-slate-300/70" :title="session.shopName">
           {{ session.shopName }}
         </p>
       </div>
