@@ -81,20 +81,28 @@ export interface SetPasswordScreen {
   form: PasswordForm
   submitting: boolean
   done: boolean
+  needsCode: boolean
+  code: string
   errorCode: AdminAuthErrorCode | 'passwordMismatch' | 'passwordTooShort' | null
   change(patch: Partial<PasswordForm>): void
+  setCode(code: string): void
   submit(): Promise<void>
 }
 
 export interface AccountScreen {
   name: string
   password: PasswordForm
+  /** Códigos do autenticador atual: trocar a senha e trocar de autenticador só com ele. */
+  passwordCode: string
+  currentCode: string
   passwordSaving: boolean
   passwordMessage: ScreenMessage | null
   enrollment: AdminMfaEnrollment | null
   mfaCode: string
   mfaBusy: boolean
   mfaMessage: ScreenMessage | null
+  setPasswordCode(code: string): void
+  setCurrentCode(code: string): void
   changePassword(patch: Partial<PasswordForm>): void
   savePassword(): Promise<void>
   startMfa(): Promise<void>

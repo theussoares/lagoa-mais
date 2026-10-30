@@ -28,6 +28,8 @@ const { t } = useI18n()
     <UFormField :label="t('auth.confirmPassword')" name="confirmation">
       <UInput :model-value="form.confirmation" type="password" autocomplete="new-password" size="xl" class="w-full" :ui="{ base: 'min-h-11' }" @update:model-value="$emit('change', { confirmation: String($event) })" />
     </UFormField>
+    <!-- Código do autenticador, quando a ação pede (recuperação de conta com autenticador, troca de senha). -->
+    <slot />
     <p aria-live="polite" class="text-[0.9375rem] text-error">
       <template v-if="errorKey">{{ t(errorKey) }}</template>
     </p>

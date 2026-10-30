@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { canEnroll, mfaStep, verifyTarget } from '../utils/mfaPlan'
+import { canEnroll, confirmationFactor, mfaStep, verifyTarget } from '../utils/mfaPlan'
 
 const none = { verified: [], pending: [] }
 const enrolled = { verified: ['old'], pending: [] }
@@ -30,5 +30,15 @@ describe('mfaPlan', () => {
   it('with a full session, confirming a new authenticator replaces the old ones', () => {
     expect(verifyTarget('aal2', { verified: ['old'], pending: ['new'] })).toEqual({ factorId: 'new', replaces: ['old'] })
     expect(verifyTarget('aal2', enrolled)).toBeNull()
+  })
+})
+
+describe('confirmationFactor', () => {
+  it('asks the code of the confirmed authenticator before touching the password or swapping it', () => {
+    expect(confirmationFactor({ verified: ['old'], pending: ['new'] })).toBe('old')
+  })
+
+  it('asks nothing of an account that never confirmed one (first access, invite link)', () => {
+    expect(confirmationFactor({ verified: [], pending: ['half'] })).toBeNull()
   })
 })

@@ -1,4 +1,5 @@
 import type { AdminAuthErrorCode } from '#shared/types/adminAuth'
+import type { TokenClaims } from '../utils/tokenClaims'
 
 export type { AdminAuthErrorCode }
 
@@ -47,4 +48,10 @@ export interface AdminSecurityEntry {
   readonly outcome: 'success' | 'failure'
   readonly code?: string
   readonly userId?: string
+}
+
+/** Sessão que o Supabase abriu de fato no cliente do pedido, com as claims do token dela. */
+export interface OpenedSession {
+  readonly tokens: TokenPair
+  readonly claims: TokenClaims
 }

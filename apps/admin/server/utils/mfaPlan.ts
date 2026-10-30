@@ -14,6 +14,14 @@ export function canEnroll(aal: AssuranceLevel, factors: TotpFactors): boolean {
 }
 
 /**
+ * Fator cujo código confirma quem está no teclado antes de mexer na senha ou trocar de autenticador: o já confirmado.
+ * Conta sem nenhum (primeiro acesso, link do convite) não tem o que pedir.
+ */
+export function confirmationFactor(factors: TotpFactors): string | null {
+  return factors.verified[0] ?? null
+}
+
+/**
  * Qual fator o código digitado confirma. Com só a senha e um autenticador cadastrado, é sempre ele (um fator novo pela
  * metade não serve de atalho). No cadastro, o mais novo pela metade. Com a sessão completa, confirmar um novo troca os
  * antigos (`replaces`).

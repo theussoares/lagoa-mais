@@ -5,7 +5,7 @@ import { err, ok, type Result } from '#shared/types/result'
 import type { AdminAuthError, AdminAuthService } from '../AdminAuthService'
 
 const AUTH_ERROR_CODES: readonly AdminAuthErrorCode[] = [
-  'invalidCredentials', 'captchaFailed', 'invalidMfaCode', 'weakPassword', 'linkExpired', 'rateLimited', 'unauthorized', 'forbidden', 'network', 'internal',
+  'invalidCredentials', 'captchaFailed', 'invalidMfaCode', 'mfaCodeRequired', 'weakPassword', 'linkExpired', 'rateLimited', 'unauthorized', 'forbidden', 'network', 'internal',
 ]
 const ErrorBodySchema = z.object({ code: z.string() })
 const OkSchema = z.object({ ok: z.literal(true) })
@@ -34,11 +34,11 @@ export class HttpAdminAuthService implements AdminAuthService {
     return result.ok ? ok(result.value.next) : result
   }
 
-  enrollMfa = () => this.send('POST', '/api/auth/mfa-enroll', AdminMfaEnrollmentSchema)
+  enrollMfa = (currentCode?: string) => this.send('POST', '/api/auth/mfa-enroll', AdminMfaEnrollmentSchema, currentCode === undefined ? {} : { currentCode })
   verifyMfa = (code: string) => this.done(this.send('POST', '/api/auth/mfa-verify', OkSchema, { code }))
   requestPasswordReset = (input: Parameters<AdminAuthService['requestPasswordReset']>[0]) => this.done(this.send('POST', '/api/auth/forgot-password', OkSchema, input))
   setPassword = (input: Parameters<AdminAuthService['setPassword']>[0]) => this.done(this.send('POST', '/api/auth/set-password', OkSchema, input))
-  changePassword = (password: string) => this.done(this.send('POST', '/api/account/password', OkSchema, { password }))
+  changePassword = (password: string, currentCode: string) => this.done(this.send('POST', '/api/account/password', OkSchema, { password, currentCode }))
   signOut = () => this.done(this.send('POST', '/api/auth/logout', OkSchema))
 
   private async done(pending: Promise<Result<unknown, AdminAuthError>>): Promise<Result<true, AdminAuthError>> {

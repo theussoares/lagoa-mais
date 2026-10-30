@@ -74,8 +74,11 @@
       "unauthorized": "Sua sessão terminou. Entre de novo.",
       "forbidden": "Para isso, entre de novo com a senha e o autenticador.",
       "network": "Sem conexão agora. Confira a internet e tente de novo.",
-      "internal": "Algo deu errado do nosso lado. Tente de novo em instantes."
-    }
+      "internal": "Algo deu errado do nosso lado. Tente de novo em instantes.",
+      "mfaCodeRequired": "Digite o código de 6 dígitos que está agora no seu app autenticador."
+    },
+    "currentCode": "Código atual do autenticador",
+    "currentCodeHint": "O do app que você usa hoje para entrar."
   },
   "signIn": {
     "title": "Entrar",
@@ -109,7 +112,8 @@
     "title": "Definir senha",
     "lead": "Crie a senha da sua conta no painel da rede.",
     "submit": "Salvar senha",
-    "done": "Senha salva. Agora entre com ela e com o autenticador."
+    "done": "Senha salva. Agora entre com ela e com o autenticador.",
+    "codeLead": "Esta conta tem autenticador. Para salvar a senha nova, digite também o código dele."
   },
   "shops": {
     "title": "Lojas",
@@ -295,7 +299,7 @@
     },
     "mfa": {
       "title": "Autenticador",
-      "lead": "Trocou de celular? Cadastre o autenticador novo. O antigo para de valer quando o novo for confirmado.",
+      "lead": "Trocou de celular? Digite o código do autenticador atual e cadastre o novo. O antigo para de valer quando o novo for confirmado.",
       "start": "Cadastrar autenticador novo",
       "confirm": "Confirmar autenticador novo",
       "cancel": "Cancelar",

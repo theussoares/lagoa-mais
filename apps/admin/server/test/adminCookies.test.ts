@@ -5,7 +5,7 @@ const tokens = { accessToken: 'at', refreshToken: 'rt', expiresIn: 3600, userId:
 
 describe('admin cookies', () => {
   it('are httpOnly, SameSite=Strict, host-only (no Domain) and at the root', () => {
-    const cookies = adminSessionCookiesFor(tokens, { secure: true })
+    const cookies = adminSessionCookiesFor(tokens, { secure: true }, 43_200)
     expect(cookies.map((cookie) => cookie.name)).toEqual([ADMIN_ACCESS_COOKIE, ADMIN_REFRESH_COOKIE])
     for (const cookie of cookies) {
       expect(cookie.options).toMatchObject({ httpOnly: true, secure: true, sameSite: 'strict', path: '/' })
@@ -18,7 +18,7 @@ describe('admin cookies', () => {
   })
 
   it('make the access cookie expire a little before the token does', () => {
-    expect(adminSessionCookiesFor(tokens, { secure: false })[0]?.options.maxAge).toBe(3570)
+    expect(adminSessionCookiesFor(tokens, { secure: false }, 43_200)[0]?.options.maxAge).toBe(3570)
   })
 
   it('expire both on sign out', () => {

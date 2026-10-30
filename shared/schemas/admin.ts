@@ -57,6 +57,11 @@ export type AdminSignIn = z.infer<typeof AdminSignInSchema>
 export const AdminPasswordResetRequestSchema = z.strictObject({ email: AdminEmailSchema, captchaToken: CaptchaTokenSchema })
 export type AdminPasswordResetRequest = z.infer<typeof AdminPasswordResetRequestSchema>
 
+const MfaCodeSchema = z.string().regex(new RegExp(`^\\d{${ADMIN_MFA_CODE_LENGTH}}$`))
+
+export const AdminMfaCodeSchema = z.strictObject({ code: MfaCodeSchema })
+export type AdminMfaCode = z.infer<typeof AdminMfaCodeSchema>
+
 export const AdminNewPasswordSchema = z.string().min(ADMIN_PASSWORD_MIN_LENGTH).max(ADMIN_PASSWORD_MAX_LENGTH)
 
 /** Definir a senha pelo link do convite ou da recuperação: os tokens vêm do fragmento do link, nunca da URL do servidor. */
@@ -64,14 +69,19 @@ export const AdminSetPasswordSchema = z.strictObject({
   accessToken: z.string().min(1).max(4096),
   refreshToken: z.string().min(1).max(512),
   password: AdminNewPasswordSchema,
+  /** Código do autenticador, quando a conta já tem um (link de recuperação). O BFF responde `mfaCodeRequired` se faltar. */
+  code: MfaCodeSchema.optional(),
 })
 export type AdminSetPassword = z.infer<typeof AdminSetPasswordSchema>
 
-export const AdminPasswordChangeSchema = z.strictObject({ password: AdminNewPasswordSchema })
+/** Trocar a senha pede o código atual do autenticador: uma sessão roubada não troca a senha sozinha. */
+export const AdminPasswordChangeSchema = z.strictObject({ password: AdminNewPasswordSchema, currentCode: MfaCodeSchema })
 export type AdminPasswordChange = z.infer<typeof AdminPasswordChangeSchema>
 
-export const AdminMfaCodeSchema = z.strictObject({ code: z.string().regex(new RegExp(`^\\d{${ADMIN_MFA_CODE_LENGTH}}$`)) })
-export type AdminMfaCode = z.infer<typeof AdminMfaCodeSchema>
+
+/** Cadastrar autenticador: no primeiro acesso, nada; para trocar o que já existe, o código atual dele. */
+export const AdminMfaEnrollRequestSchema = z.strictObject({ currentCode: MfaCodeSchema.optional() })
+export type AdminMfaEnrollRequest = z.infer<typeof AdminMfaEnrollRequestSchema>
 
 /** Depois da senha: cadastrar o autenticador (primeiro acesso) ou digitar o código. */
 export const AdminMfaNextSchema = z.enum(['enroll', 'verify'])

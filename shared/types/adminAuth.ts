@@ -3,6 +3,8 @@ export type AdminAuthErrorCode =
   | 'invalidCredentials'
   | 'captchaFailed'
   | 'invalidMfaCode'
+  /** A conta tem autenticador: a ação só vale com o código dele (definir ou trocar a senha, trocar de autenticador). */
+  | 'mfaCodeRequired'
   | 'weakPassword'
   | 'linkExpired'
   | 'rateLimited'

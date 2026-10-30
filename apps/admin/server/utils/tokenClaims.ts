@@ -6,6 +6,8 @@ const ClaimsSchema = z.object({
   aal: z.enum(['aal1', 'aal2']),
   email: z.string().optional(),
   app_metadata: z.object({ role: z.unknown().optional() }).optional(),
+  /** Como e quando a pessoa se autenticou (senha, TOTP). O refresh mantém, então serve de hora do login. */
+  amr: z.array(z.object({ timestamp: z.number() })).optional(),
 })
 
 export interface TokenClaims {
@@ -13,6 +15,8 @@ export interface TokenClaims {
   readonly aal: AssuranceLevel
   readonly email: string | undefined
   readonly isAdmin: boolean
+  /** Hora do login (segundos Unix): a primeira autenticação do `amr`. */
+  readonly signedInAt: number | null
 }
 
 /**
@@ -25,8 +29,9 @@ export function claimsOf(token: string): TokenClaims | null {
   try {
     const parsed = ClaimsSchema.safeParse(JSON.parse(Buffer.from(payload, 'base64url').toString('utf8')))
     if (!parsed.success) return null
-    const { sub, aal, email, app_metadata: metadata } = parsed.data
-    return { sub, aal, email, isAdmin: metadata?.role === 'admin' }
+    const { sub, aal, email, app_metadata: metadata, amr } = parsed.data
+    const times = (amr ?? []).map((entry) => entry.timestamp)
+    return { sub, aal, email, isAdmin: metadata?.role === 'admin', signedInAt: times.length === 0 ? null : Math.min(...times) }
   } catch {
     return null
   }

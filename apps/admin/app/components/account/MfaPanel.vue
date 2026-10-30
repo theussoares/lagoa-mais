@@ -4,12 +4,13 @@ import type { AdminMfaEnrollment } from '#shared/schemas/admin'
 interface Props {
   enrollment: AdminMfaEnrollment | null
   code: string
+  currentCode: string
   busy: boolean
 }
 
 interface Emits {
   (event: 'start' | 'confirm' | 'cancel'): void
-  (event: 'update:code', code: string): void
+  (event: 'update:code' | 'update:currentCode', code: string): void
 }
 
 defineProps<Props>()
@@ -25,6 +26,7 @@ const { t } = useI18n()
   </div>
   <div v-else class="flex flex-col gap-3">
     <p class="text-pretty text-toned">{{ t('account.mfa.lead') }}</p>
+    <CurrentCodeField :code="currentCode" :label="t('auth.currentCode')" @update:code="$emit('update:currentCode', $event)" />
     <ActionButton role="secondary" :label="t('account.mfa.start')" :loading="busy" class="self-start" @click="$emit('start')" />
   </div>
 </template>

@@ -20,6 +20,11 @@ const screen = useSetPasswordScreen()
       :submit-label="t('setPassword.submit')"
       @change="screen.change"
       @submit="screen.submit"
-    />
+    >
+      <template v-if="screen.needsCode">
+        <p class="text-pretty text-toned">{{ t('setPassword.codeLead') }}</p>
+        <CurrentCodeField :code="screen.code" :label="t('auth.currentCode')" @update:code="screen.setCode" />
+      </template>
+    </SetPasswordForm>
   </div>
 </template>

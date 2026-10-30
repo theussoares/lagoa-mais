@@ -10,6 +10,7 @@ describe('claimsOf', () => {
       aal: 'aal2',
       email: 'ana@rede.test',
       isAdmin: true,
+      signedInAt: null,
     })
   })
 

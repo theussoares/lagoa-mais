@@ -1,6 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { AdminMfaEnrollment } from '#shared/schemas/admin'
-import type { AdminAuthOutcome, PasswordSignIn, TokenPair, TotpFactors } from '../types/auth'
+import type { AdminAuthOutcome, OpenedSession, PasswordSignIn, TokenPair, TotpFactors } from '../types/auth'
+import { claimsOf } from './tokenClaims'
 import { passwordErrorCodeOf, refreshErrorCodeOf, signInErrorCodeOf, verifyErrorCodeOf } from './authErrors'
 
 interface SessionLike {
@@ -54,10 +55,17 @@ export class AdminLogin {
     return data.session === null ? { ok: false, code: 'internal' } : { ok: true, value: tokensOf(data.session) }
   }
 
-  /** Abre a sessão do pedido neste cliente; sem ela as chamadas de MFA e de senha não sabem de quem é a conta. */
-  async use(tokens: Pick<TokenPair, 'accessToken' | 'refreshToken'>): Promise<AdminAuthOutcome<true>> {
-    const { error } = await this.supabase.auth.setSession({ access_token: tokens.accessToken, refresh_token: tokens.refreshToken })
-    return error === null ? { ok: true, value: true } : { ok: false, code: refreshErrorCodeOf(error) }
+  /**
+   * Abre a sessão do pedido neste cliente; sem ela as chamadas de MFA e de senha não sabem de quem é a conta. O que vale
+   * é a sessão que o Supabase abriu (token conferido no servidor, ou trocado pelo refresh se o do cookie venceu), nunca
+   * as claims do cookie: um token forjado e vencido passaria direto para o refresh sem ser lido.
+   */
+  async use(tokens: Pick<TokenPair, 'accessToken' | 'refreshToken'>): Promise<AdminAuthOutcome<OpenedSession>> {
+    const { data, error } = await this.supabase.auth.setSession({ access_token: tokens.accessToken, refresh_token: tokens.refreshToken })
+    if (error !== null) return { ok: false, code: refreshErrorCodeOf(error) }
+    if (data.session === null) return { ok: false, code: 'unauthorized' }
+    const claims = claimsOf(data.session.access_token)
+    return claims === null ? { ok: false, code: 'unauthorized' } : { ok: true, value: { tokens: tokensOf(data.session), claims } }
   }
 
   async factors(): Promise<AdminAuthOutcome<TotpFactors>> {

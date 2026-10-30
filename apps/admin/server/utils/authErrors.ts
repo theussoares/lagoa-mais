@@ -4,6 +4,7 @@ const STATUS_BY_CODE: Readonly<Record<AdminAuthErrorCode, number>> = {
   invalidCredentials: 400,
   captchaFailed: 400,
   invalidMfaCode: 400,
+  mfaCodeRequired: 400,
   weakPassword: 400,
   linkExpired: 400,
   unauthorized: 401,
