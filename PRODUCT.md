@@ -48,11 +48,14 @@ outra. Para o lojista, o balcão é tão rápido quanto anotar no papel.
 - Check-in: cliente escaneia o QR da visita (ou digita o código curto) e
   ganha; sem cartão, ganha o cartão na hora. Antifraude por janela (ex.: 1 por
   4 h). O QR do cartaz da loja só faz o cliente entrar no clube.
-- Planos: Fundador R$ 79,90/mês (carimbo, resgate e bônus de aniversário; até
-  300 clientes) e Fundador Pro R$ 99,90/mês (soma boas-vindas, indicação, dia
-  surpresa, clientes sumidos e destaque da loja no Descobrir; até 1.000
-  clientes, sem limite para as 10 primeiras lojas Pro), preço travado e sem
-  fidelidade. Preço de Fundador só para as 10 primeiras lojas.
+- Planos: Fundador R$ 79,90/mês nos 12 primeiros meses, depois R$ 119,90
+  (carimbo, resgate e bônus de aniversário; até 300 clientes) e Fundador Pro
+  R$ 99,90/mês nos 12 primeiros meses, depois R$ 159,90 (soma boas-vindas,
+  indicação, dia surpresa, clientes sumidos e destaque da loja no Descobrir;
+  até 1.000 clientes, sem limite para as 10 primeiras lojas Pro). A promoção
+  dura 12 meses nos dois planos e depois vai para o preço normal; não há preço
+  travado. Os dois sem fidelidade. Preço de Fundador só para as 10 primeiras
+  lojas.
 - Resgate: cliente gera código de 6 caracteres válido por ~10 min; lojista
   valida no Balcão e confirma a entrega.
 - Modos de programa: cartão de carimbos, pontos por real, pontos por visita.
