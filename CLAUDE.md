@@ -83,6 +83,14 @@ Onde ele fala em "CLAUDE.md", leia este arquivo de regras.
   (`resetCustomer`) e o logout é `scope: 'local'`; outra aba aberta só descobre a troca na próxima navegação (risco aceito).
   Sair só deixa o painel depois que o servidor confirma (`signOut`); `expire()` é o logout só local, para `unauthorized`. **Ainda sem API:** Campanhas (M5); no `http` a tela fica escondida (`useCampaignsEnabled`, `NUXT_PUBLIC_CAMPAIGNS_ENABLED`). Termo do lojista: a sessão traz `termsAccepted` e o Início pede o aceite (`HomeTermsAcceptance`). Plano: `docs/specs/api-merchant/`.
 - **App do cliente, fase B:** barra nova (Descobrir · Hits · Carimbar · Carteira · Mais) atrás de `NUXT_PUBLIC_HITS_ENABLED` (padrão desligado; desligada, o app fica como antes). A aba Hits mora em `/vitrine` (o `/hits` é do painel do lojista; arquivo `pages/hits-showcase.vue`, composable `useCustomerHitsScreen`). Prêmios ficam dentro da Carteira (`/carteira?aba=premios`); `/premios` redireciona com 302 só com a chave ligada. Descobrir vira trilhos: carrossel de destaque com selo "Destaque" em todo card e os trilhos "Dia surpresa" e "Cartão já começa andado" (este só com lojas sem cartão). O "rende X" vem de `showcaseEarning` (`shared/domain/showcaseEarning.ts`): regra base do programa ativo + dobro do dia surpresa, igual para todos. API: `GET /v1/hits`, `GET /v1/hits/banners` (pagos "Patrocinado" primeiro, depois o item mais novo de cada loja Pro, "Destaque") e `GET /v1/discover/featured`.
+- **Painel da rede (`apps/admin`):** Nuxt SPA próprio (`pnpm dev:admin`, porta 3002; deploy e domínio próprios,
+  `admin.lagoamais.com.br`), herda `apps/web/layers/ui` e importa só peças puras do core (`#layers/core`). BFF próprio em
+  `apps/admin/server`: login por e-mail e senha com Turnstile conferido no servidor, teto por e-mail na API
+  (`/v1/auth/admin-login-attempts`, também gasto pelo código do autenticador) e TOTP obrigatório (`aal2`). Regra do MFA em
+  `server/utils/mfaPlan.ts`: só a senha nunca cadastra autenticador numa conta que já tem um. Cookies `lagoa_admin_at`/`lagoa_admin_rt`
+  (SameSite=Strict, host-only, 12 h). CSP com `frame-ancestors 'none'` e nonce. Telas: modelo puro em `app/screens/*` (testado
+  sem Nuxt) + `use<Tela>Screen` que injeta o service. Convite e "esqueci a senha" caem em `/definir-senha` com os tokens no
+  fragmento.
 - **Monorepo (pnpm workspace):** o front vive em `apps/web` (Nuxt + `layers/`);
   `shared/` fica na raiz (alias `#shared`) para o futuro `apps/api` reusar
   os contratos. Caminhos `layers/...` neste documento são relativos a `apps/web/`.
