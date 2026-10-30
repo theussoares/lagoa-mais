@@ -117,6 +117,8 @@ export const HOME_LAPSED_PREVIEW_LIMIT = 5
 export const SHOP_NAME_MAX_LENGTH = 60
 export const SHOP_NEIGHBORHOOD_MAX_LENGTH = 40
 export const SHOP_ADDRESS_MAX_LENGTH = 100
+/** CEP brasileiro: 8 dígitos (a máscara 00000-000 é só de tela). */
+export const POSTAL_CODE_LENGTH = 8
 /** Texto do botão de WhatsApp nos cards da loja ("Agendar agora"). */
 export const SHOP_CTA_LABEL_MAX_LENGTH = 24
 /** Link do botão do card: o CHECK do banco e o schema recusam acima disto. */

@@ -6,7 +6,7 @@ import type { ProgramDraft } from '#shared/schemas/program'
 import type { RedemptionCode } from '#shared/schemas/redemption'
 import type { ShopContactUpdate, ShopPhotoKind, ShopPhotos, ShopPhotoUpload } from '#shared/schemas/shop'
 import type { VisitQrIssueRequest } from '#shared/schemas/visitQr'
-import { ok } from '#shared/types/result'
+import { err, ok } from '#shared/types/result'
 import { asMerchant } from '#layers/core/app/mock/withSession'
 import type { MerchantServices } from '../MerchantServices'
 import { MockHitItemService } from './MockHitItemService'
@@ -19,6 +19,10 @@ import { simulateVisitQrClaim } from '#layers/core/app/mock/handlers/visitQrClai
 import { countActiveCards, getProgram, merchantCustomerPage, updateProgram, weekSummary } from '#layers/core/app/mock/handlers/merchant'
 import { contactOf, saveContact } from '#layers/core/app/mock/handlers/shopContact'
 import type { MerchantSessionProvider } from '#layers/core/app/services/SessionProvider'
+
+/** O mock só conhece um CEP (o do centro de Três Lagoas); qualquer outro é "não encontrado". */
+const MOCK_POSTAL_CODE = '79601000'
+const MOCK_POSTAL_ADDRESS = 'Avenida Rosário Congro, Centro — Três Lagoas/MS'
 
 export function createMockMerchantServices(backend: MockBackend, sessions: MerchantSessionProvider): MerchantServices {
   // As imagens do mock ficam só na memória da aba (data URL): servem para ver a tela, não vão ao Descobrir do mock.
@@ -81,6 +85,10 @@ export function createMockMerchantServices(backend: MockBackend, sessions: Merch
     shopContact: {
       getContact: () => asMerchant(backend, sessions, contactOf),
       saveContact: (update: ShopContactUpdate) => asMerchant(backend, sessions, (ctx, shopId) => saveContact(ctx, shopId, update)),
+    },
+    postalCode: {
+      lookup: (code: string) =>
+        Promise.resolve(code === MOCK_POSTAL_CODE ? ok({ addressLine: MOCK_POSTAL_ADDRESS }) : err({ code: 'notFound', entity: 'shop' } as const)),
     },
     hits,
     shopStatus: {

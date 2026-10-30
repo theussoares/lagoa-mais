@@ -4,6 +4,7 @@ import type { ProgramMode } from '#shared/schemas/program'
 import type { CreateClubError } from '../services/ClubSetupService'
 import type { ProgramFieldErrors, ProgramFieldOptions, ProgramPreview } from './program'
 import type { CheckInPosterModel } from './poster'
+import type { PostalCodeField } from './postalCode'
 import type { ComputedRef, Ref } from 'vue'
 
 export type ClubSetupStep = 'shop' | 'rules' | 'reward' | 'poster'
@@ -60,6 +61,9 @@ export interface ClubSetupScreen {
   /** Rascunho do store: os campos fazem `v-model` direto nele. */
   form: ClubSetupForm
   readonly shopErrors: ShopFieldErrors
+  /** CEP digitado (com máscara) e a situação da busca; o endereço achado entra em `form.shop.addressLine`. */
+  readonly postalCode: PostalCodeField
+  readonly setPostalCode: (raw: string) => Promise<void>
   readonly programErrors: ProgramFieldErrors
   readonly fieldOptions: ProgramFieldOptions
   readonly creating: boolean

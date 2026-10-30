@@ -945,6 +945,14 @@
       "categoryError": "Escolha o tipo de comércio.",
       "neighborhood": "Bairro",
       "neighborhoodError": "Escreva o bairro, com até {max} caracteres.",
+      "postalCode": "CEP",
+      "postalCodePlaceholder": "00000-000",
+      "postalCodeStatus": {
+        "loading": "Buscando o endereço…",
+        "found": "Endereço preenchido. Falta só o número.",
+        "notFound": "Não achamos esse CEP. Escreva o endereço à mão.",
+        "unavailable": "Não deu para buscar agora. Escreva o endereço à mão."
+      },
       "addressLine": "Endereço",
       "addressHint": "Rua e número",
       "addressError": "Escreva o endereço, com até {max} caracteres."

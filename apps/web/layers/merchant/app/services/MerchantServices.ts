@@ -4,6 +4,7 @@ import type { CounterService } from './CounterService'
 import type { MerchantCustomersService } from './MerchantCustomersService'
 import type { MerchantHomeService } from './MerchantHomeService'
 import type { MerchantTermsService } from './MerchantTermsService'
+import type { PostalCodeService } from './PostalCodeService'
 import type { PosterReprintService } from './PosterReprintService'
 import type { ProgramService } from './ProgramService'
 import type { HitItemService } from './HitItemService'
@@ -25,6 +26,7 @@ export interface MerchantServices {
   readonly posterReprint: PosterReprintService
   readonly shopPhoto: ShopPhotoService
   readonly shopContact: ShopContactService
+  readonly postalCode: PostalCodeService
   readonly hits: HitItemService
   readonly shopStatus: ShopStatusService
   /** `null` fora do mock. */
