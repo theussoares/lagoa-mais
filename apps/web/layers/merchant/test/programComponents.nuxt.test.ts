@@ -209,14 +209,14 @@ describe('program components: BonusFields', () => {
   it('has one switch per bonus rule, reflecting which are on', async () => {
     const page = await mountIt(BonusFields, bonusProps)
     const states = page.findAll('button[role="switch"]').map((item) => item.attributes('aria-checked'))
-    expect(states).toEqual(['true', 'true', 'false', 'false'])
+    expect(states).toEqual(['true', 'true', 'false'])
   })
 
   it('toggles a rule without touching the others', async () => {
     const page = await mountIt(BonusFields, bonusProps)
-    await switchByLabel(page, t('program.bonus.referral.label')).trigger('click')
+    await switchByLabel(page, t('program.bonus.welcome.label')).trigger('click')
     const next = page.emitted('update:bonus')?.at(-1)?.[0]
-    expect(next).toEqual(bonus({ referralBonus: { enabled: true, units: 1 } }))
+    expect(next).toEqual(bonus({ welcomeBonus: { ...bonus().welcomeBonus, enabled: false } }))
   })
 
   it('asks for the units only while the rule is on, naming them by unit, and shows their range error', async () => {
