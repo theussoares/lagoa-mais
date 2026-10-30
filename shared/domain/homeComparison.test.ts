@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { getComparisonRanges, summarizeComparison } from './homeComparison'
+import { getComparisonRanges, minComparisonStart, summarizeComparison } from './homeComparison'
 import { CustomerIdSchema } from '../schemas/ids'
 
 describe('homeComparison', () => {
@@ -73,5 +73,40 @@ describe('homeComparison', () => {
     expect(result.week.redemptions.previous).toBe(0)
     expect(result.week.newCustomers.current).toBe(1)
     expect(result.week.newCustomers.previous).toBe(1)
+  })
+
+  it('includes day 1 of previous month on 31/12, 31/10 and 31/08 in minComparisonStart and summarizeComparison', () => {
+    const cus1 = CustomerIdSchema.parse('cus_1')
+
+    // 31/12 local (UTC-4) -> 2026-12-31T18:00:00Z; mês anterior começa em 01/11 local (2026-11-01T04:00:00Z)
+    const dec31 = new Date('2026-12-31T18:00:00Z')
+    const decRanges = getComparisonRanges(dec31)
+    const decMin = minComparisonStart(decRanges)
+    expect(decMin.getTime()).toBeLessThanOrEqual(decRanges.month.previous.start.getTime())
+    expect(decMin).toEqual(new Date('2026-11-01T04:00:00.000Z'))
+
+    const nov1Record = { kind: 'visit' as const, createdAt: '2026-11-01T05:00:00Z', amountCents: 2000 }
+    const decSummary = summarizeComparison([nov1Record], [{ customerId: cus1, createdAt: '2026-11-01T05:00:00Z' }], dec31)
+    expect(decSummary.month.visits.previous).toBe(1)
+    expect(decSummary.month.purchases.previous).toBe(1)
+    expect(decSummary.month.newCustomers.previous).toBe(1)
+
+    // 31/10 local -> mês anterior começa em 01/09 local (2026-09-01T04:00:00Z)
+    const oct31 = new Date('2026-10-31T18:00:00Z')
+    const octRanges = getComparisonRanges(oct31)
+    const octMin = minComparisonStart(octRanges)
+    expect(octMin.getTime()).toBeLessThanOrEqual(octRanges.month.previous.start.getTime())
+    expect(octMin).toEqual(new Date('2026-09-01T04:00:00.000Z'))
+
+    const sep1Record = { kind: 'visit' as const, createdAt: '2026-09-01T05:00:00Z', amountCents: null }
+    const octSummary = summarizeComparison([sep1Record], [{ customerId: cus1, createdAt: '2026-09-01T05:00:00Z' }], oct31)
+    expect(octSummary.month.visits.previous).toBe(1)
+    expect(octSummary.month.newCustomers.previous).toBe(1)
+
+    // 31/08 local -> mês anterior começa em 01/07 local (2026-07-01T04:00:00Z), 2 dias antes de last30.previous.start
+    const aug31 = new Date('2026-08-31T18:00:00Z')
+    const augRanges = getComparisonRanges(aug31)
+    const augMin = minComparisonStart(augRanges)
+    expect(augMin).toEqual(new Date('2026-07-01T04:00:00.000Z'))
   })
 })

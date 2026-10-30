@@ -144,6 +144,21 @@ export function getComparisonRanges(now: Date): Record<HomePeriod, { current: Da
   }
 }
 
+/** Menor `start` entre todos os períodos e intervalos para pré-filtrar consultas sem cortar o dia 1 do mês anterior (ex.: 31/08, 31/10, 31/12). */
+export function minComparisonStart(
+  ranges: Record<HomePeriod, { current: DateRange; previous: DateRange }>,
+): Date {
+  const starts = [
+    ranges.week.current.start.getTime(),
+    ranges.week.previous.start.getTime(),
+    ranges.month.current.start.getTime(),
+    ranges.month.previous.start.getTime(),
+    ranges.last30.current.start.getTime(),
+    ranges.last30.previous.start.getTime(),
+  ]
+  return new Date(Math.min(...starts))
+}
+
 export function summarizeComparison(
   records: readonly LedgerComparisonRecord[],
   newCustomers: readonly CustomerRegistrationRecord[],

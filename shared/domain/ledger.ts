@@ -1,5 +1,7 @@
+import type { HomeActivityKind } from '../schemas/homeOverview'
 import type { LedgerKind } from '../schemas/visit'
 
+/** Conta como visita em `visitsCount`, `lastVisitAt`, resumo da semana e desafios? Bônus e resgate não são visita. */
 const visitKinds: Readonly<Record<LedgerKind, boolean>> = {
   visit: true,
   amount: true,
@@ -27,4 +29,15 @@ export function isVisitKind(kind: LedgerKind): boolean {
 
 export function isCounterKind(kind: LedgerKind): boolean {
   return counterKinds[kind]
+}
+
+/** Tipo de atividade exibida no Início do lojista a partir de uma linha da caderneta. */
+export function homeActivityKindOf(
+  kind: LedgerKind,
+  amountCents?: number | null,
+): Exclude<HomeActivityKind, 'rewardReleased'> {
+  if (kind === 'redemption') return 'redemption'
+  if (amountCents !== null && amountCents !== undefined && amountCents > 0) return 'purchase'
+  if (kind === 'welcomeBonus' || kind === 'referralBonus' || kind === 'campaignBonus') return 'bonus'
+  return 'visit'
 }
