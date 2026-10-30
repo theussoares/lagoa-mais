@@ -54,7 +54,7 @@ const DEFAULT_ICON: Readonly<Record<InkNoteTone, string>> = {
           variant="outline"
           color="neutral"
           size="lg"
-          class="cursor-pointer transition-all duration-150 hover:bg-slate-100 dark:hover:bg-white/10 active:scale-95"
+          class="cursor-pointer transition-all duration-150 hover:bg-(--ui-bg-elevated) active:scale-95"
           :label="action.label"
           @click="action.onClick?.()"
         />

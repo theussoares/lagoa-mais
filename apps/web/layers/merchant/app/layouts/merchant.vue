@@ -24,31 +24,38 @@ const items = computed<SpineNavItem[]>(() => [
   ...(campaignsEnabled ? [{ label: t('nav.campaigns'), icon: 'i-ph-megaphone', to: '/campanhas' }] : []),
 ])
 const footerItems = computed<SpineNavItem[]>(() => [{ label: t('merchantNav.settings'), icon: 'i-ph-gear-six', to: '/configuracoes' }])
+const themeToggleLabels = computed(() => ({
+  switchToLight: t('theme.switchToLight'),
+  switchToDark: t('theme.switchToDark'),
+}))
 </script>
 
 <template>
-  <div class="grid min-h-dvh grid-cols-[var(--merchant-sidebar-width)_minmax(0,1fr)] bg-[#f8fafc] dark:bg-[#081e26] text-base [--merchant-sidebar-width:230px] print:block">
-    <!-- A barra lateral em azul-petróleo muito escuro, com linha divisória e contraste refinado para o tema escuro -->
-    <aside class="dark print:hidden sticky top-0 flex h-dvh flex-col bg-[#03131a] border-r border-white/10 px-3.5 py-6 text-default">
+  <div class="grid min-h-dvh grid-cols-[var(--merchant-sidebar-width)_minmax(0,1fr)] bg-(--ui-bg-muted) dark:bg-(--lagoa-desk) text-base [--merchant-sidebar-width:230px] print:block">
+    <!-- A barra lateral em azul-petróleo escuro usando os tokens da paleta -->
+    <aside class="dark print:hidden sticky top-0 flex h-dvh flex-col bg-(--lagoa-desk) border-r border-(--lagoa-rule) px-3.5 py-6 text-default">
       <div class="flex flex-col items-start px-2 pb-7">
-        <div class="rounded-lg border-[1.5px] border-cyan-400/90 px-2.5 py-1 text-sm font-extrabold tracking-wider text-cyan-400">
-          LAGOA+
+        <div class="rounded-lg border-[1.5px] border-primary/90 px-2.5 py-1 text-sm font-extrabold tracking-wider text-primary uppercase">
+          {{ t('app.name') }}
         </div>
-        <p v-if="session" class="mt-2.5 w-full truncate text-[0.875rem] font-medium text-slate-300/70" :title="session.shopName">
+        <p v-if="session" class="mt-2.5 w-full truncate text-[0.875rem] font-medium text-toned" :title="session.shopName">
           {{ session.shopName }}
         </p>
       </div>
       <SpineNav :items="items" :footer-items="footerItems" :label="t('merchantNav.label')" />
       <button
         type="button"
-        class="group mt-1 flex min-h-12 items-center gap-3 rounded-xl px-3 py-2.5 text-[0.9375rem] font-medium text-slate-300/80 transition-all duration-150 hover:bg-white/10 hover:text-white hover:translate-x-1 active:scale-[0.99] cursor-pointer"
+        class="group mt-1 flex min-h-12 items-center gap-3 rounded-xl px-3 py-2.5 text-[0.9375rem] font-medium text-toned transition-all duration-150 hover:bg-(--ui-bg-elevated) hover:text-highlighted hover:translate-x-1 active:scale-[0.99] cursor-pointer"
         @click="signOut"
       >
-        <UIcon name="i-ph-sign-out" class="size-5 shrink-0 text-slate-400 group-hover:text-white group-hover:scale-105 transition-all duration-150" aria-hidden="true" />
+        <UIcon name="i-ph-sign-out" class="size-5 shrink-0 text-muted group-hover:text-highlighted group-hover:scale-105 transition-all duration-150" aria-hidden="true" />
         {{ t('merchantNav.signOut') }}
       </button>
     </aside>
     <main id="main" class="min-w-0 px-6 sm:px-8 py-7">
+      <div class="fixed top-4 right-4 sm:top-6 sm:right-8 z-50 print:hidden">
+        <ThemeToggle :labels="themeToggleLabels" />
+      </div>
       <InkNote
         v-if="shopStatus.status.value === 'pending'"
         tone="warning"

@@ -40,8 +40,8 @@ const { t } = useI18n()
         class="inline-flex min-h-11 items-center rounded-full border px-4 text-base font-semibold transition-all duration-(--lagoa-dur-fast) cursor-pointer select-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary active:scale-95"
         :class="
           label === t(`merchantShopLink.label.preset.${preset}`)
-            ? 'border-[#0f6381] bg-[#0f6381]/10 text-[#0f6381] dark:border-cyan-400 dark:bg-cyan-400/15 dark:text-cyan-300 shadow-xs'
-            : 'border-(--lagoa-rule) bg-default text-toned hover:border-[#0f6381]/50 hover:bg-[#0f6381]/5 hover:text-[#0f6381] dark:hover:border-cyan-400/40 dark:hover:bg-cyan-950/30 dark:hover:text-cyan-300'
+            ? 'border-primary bg-primary/10 text-primary shadow-xs'
+            : 'border-(--lagoa-rule) bg-default text-toned hover:border-primary/50 hover:bg-primary/5 hover:text-primary'
         "
         @click="label = t(`merchantShopLink.label.preset.${preset}`)"
       >

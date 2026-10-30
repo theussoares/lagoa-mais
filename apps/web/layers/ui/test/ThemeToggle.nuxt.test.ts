@@ -3,9 +3,14 @@ import { mountSuspended } from '@nuxt/test-utils/runtime'
 import ThemeToggle from '../app/components/ThemeToggle.vue'
 import { useThemePreference } from '../app/composables/useThemePreference'
 
+const labels = {
+  switchToLight: 'Mudar para tema claro',
+  switchToDark: 'Mudar para tema escuro',
+}
+
 describe('ThemeToggle', () => {
-  it('renders a button with type="button" and accessible label', async () => {
-    const wrapper = await mountSuspended(ThemeToggle)
+  it('renders a button with type="button" and accessible label from props', async () => {
+    const wrapper = await mountSuspended(ThemeToggle, { props: { labels } })
     const button = wrapper.find('button')
     expect(button.exists()).toBe(true)
     expect(button.attributes('type')).toBe('button')
@@ -14,7 +19,7 @@ describe('ThemeToggle', () => {
   })
 
   it('contains both moon and sun Phosphor icons with aria-hidden="true"', async () => {
-    const wrapper = await mountSuspended(ThemeToggle)
+    const wrapper = await mountSuspended(ThemeToggle, { props: { labels } })
     const icons = wrapper.findAllComponents({ name: 'UIcon' })
     expect(icons.length).toBe(2)
 
@@ -34,7 +39,7 @@ describe('ThemeToggle', () => {
     const initialTheme = theme.value
     const expectedToggledTheme = initialTheme === 'dark' ? 'light' : 'dark'
 
-    const wrapper = await mountSuspended(ThemeToggle)
+    const wrapper = await mountSuspended(ThemeToggle, { props: { labels } })
     const button = wrapper.find('button')
     await button.trigger('click')
 
@@ -45,10 +50,12 @@ describe('ThemeToggle', () => {
     expect(theme.value).toBe(initialTheme)
   })
 
-  it('keeps a touch target size of at least 36px and includes focus ring', async () => {
-    const wrapper = await mountSuspended(ThemeToggle)
+  it('keeps a touch target size of at least 44px and includes focus ring', async () => {
+    const wrapper = await mountSuspended(ThemeToggle, { props: { labels } })
     const classes = wrapper.get('button').classes()
-    expect(classes).toContain('size-9')
+    expect(classes).toContain('size-11')
+    expect(classes).toContain('min-h-11')
+    expect(classes).toContain('min-w-11')
     expect(classes).toContain('focus-visible:outline-2')
     expect(classes).toContain('print:hidden')
   })
