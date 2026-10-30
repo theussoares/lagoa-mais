@@ -1,0 +1,4 @@
+{
+  "app": { "name": "Lagoa+", "surface": "Painel da rede" },
+  "nav": { "label": "Menu do painel", "shops": "Lojas", "hits": "Hits", "featured": "Destaques", "team": "Equipe", "account": "Minha conta", "signOut": "Sair" }
+}
