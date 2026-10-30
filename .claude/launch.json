@@ -39,6 +39,18 @@
         "tools/office/server.mjs"
       ],
       "port": 4545
+    },
+    {
+      "name": "lagoa-admin",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": [
+        "dev:admin"
+      ],
+      "port": 3002,
+      "env": {
+        "NUXT_PUBLIC_TURNSTILE_SITE_KEY": "1x00000000000000000000AA",
+        "NUXT_TURNSTILE_SECRET": "1x0000000000000000000000000000000AA"
+      }
     }
   ]
 }
