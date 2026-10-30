@@ -2,6 +2,7 @@ import { LOGIN_CODE_RESEND_SECONDS } from '#shared/constants/domain'
 import type { PhoneNumber } from '#shared/schemas/phone'
 import { LoginCodeSchema } from '#shared/schemas/session'
 import type { DomainErrorCode } from '#shared/types/errors'
+import { ok } from '#shared/types/result'
 import { parsePhoneNumber } from '#shared/utils/phone'
 import { useClubSetupStore } from '../stores/clubSetup'
 import type { MerchantSignInStep, MerchantSignInOutcome, MerchantSignIn } from '../types/signIn'
@@ -16,6 +17,8 @@ export function useMerchantSignIn(): MerchantSignIn {
   const pending = ref(false)
   const error = ref<DomainErrorCode | null>(null)
   const { remaining: resendIn, start: startCountdown } = useCountdown()
+  const demo = useAsyncQuery('merchant-demo-login', async () => ok(await auth.demoAvailable()))
+  const demoEnabled = computed(() => demo.state.value.status === 'success' && demo.state.value.value)
 
   async function sendTo(phone: PhoneNumber): Promise<void> {
     pending.value = true
@@ -53,7 +56,18 @@ export function useMerchantSignIn(): MerchantSignIn {
     }
     pending.value = true
     error.value = null
-    const result = await auth.signInMerchant(step.value.phone, code.data)
+    return settle(await auth.signInMerchant(step.value.phone, code.data))
+  }
+
+  async function signInDemo(): Promise<MerchantSignInOutcome> {
+    if (pending.value) return 'failed'
+    pending.value = true
+    error.value = null
+    return settle(await auth.signInDemoMerchant())
+  }
+
+  /** Código (ou demonstração) aceito pelo servidor: abre a sessão, ou segue para o Criar o clube. */
+  function settle(result: Awaited<ReturnType<typeof auth.signInMerchant>>): MerchantSignInOutcome {
     pending.value = false
     if (!result.ok) {
       error.value = result.error.code
@@ -74,5 +88,5 @@ export function useMerchantSignIn(): MerchantSignIn {
     error.value = null
   }
 
-  return { step, pending, error, resendIn, requestCode, resendCode, verify, changePhone }
+  return { step, pending, error, resendIn, demoEnabled, requestCode, resendCode, verify, signInDemo, changePhone }
 }

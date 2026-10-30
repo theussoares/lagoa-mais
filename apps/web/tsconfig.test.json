@@ -45,5 +45,6 @@
     "layers/merchant/test/**/*.ts"
   ],
   // Testes de página rodam no ambiente Nuxt (auto-imports, .vue, #imports): `nuxt typecheck` é quem os checa.
-  "exclude": ["layers/*/test/**/*.nuxt.ts", "layers/*/test/**/*.nuxt.test.ts"]
+  // `server/test/*.route.test.ts` importam rotas do Nitro (h3, auto-imports): quem as checa é o `nuxt typecheck`.
+  "exclude": ["layers/*/test/**/*.nuxt.ts", "layers/*/test/**/*.nuxt.test.ts", "server/test/**/*.route.test.ts"]
 }

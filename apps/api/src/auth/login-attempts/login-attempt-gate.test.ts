@@ -1,7 +1,7 @@
 import type { ThrottlerStorage } from '@nestjs/throttler'
 import { Logger } from '@nestjs/common'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { ADMIN_LOGIN_ATTEMPTS_MAX, ADMIN_LOGIN_WINDOW_MINUTES, LOGIN_VERIFY_ATTEMPTS_MAX, LOGIN_VERIFY_WINDOW_MINUTES } from '#shared/constants/domain'
+import { ADMIN_LOGIN_ATTEMPTS_MAX, ADMIN_LOGIN_WINDOW_MINUTES, DEMO_LOGIN_ATTEMPTS_MAX, DEMO_LOGIN_WINDOW_MINUTES, LOGIN_VERIFY_ATTEMPTS_MAX, LOGIN_VERIFY_WINDOW_MINUTES } from '#shared/constants/domain'
 import { PhoneNumberSchema } from '#shared/schemas/phone'
 import { createTestPii } from '../../test-support/pii'
 import { toStorageRecord, type ThrottlerRecord } from '../../throttling/throttle-window.rules'
@@ -58,6 +58,35 @@ describe('LoginAttemptGate', () => {
     const warn = vi.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined)
     expect(await gate.allow(PHONE)).toBe(false)
     expect(warn).toHaveBeenCalledOnce()
+  })
+})
+
+describe('LoginAttemptGate for demo logins', () => {
+  it(`lets an IP enter ${DEMO_LOGIN_ATTEMPTS_MAX} times in the window and refuses the next`, async () => {
+    const { gate } = setup()
+    for (let attempt = 0; attempt < DEMO_LOGIN_ATTEMPTS_MAX; attempt += 1) expect(await gate.reserveDemoLogin('203.0.113.9')).toBe('allowed')
+    expect(await gate.reserveDemoLogin('203.0.113.9')).toBe('refused')
+  })
+
+  it('counts each IP on its own, so one visitor cannot lock the demo for the others', async () => {
+    const { gate } = setup()
+    for (let attempt = 0; attempt <= DEMO_LOGIN_ATTEMPTS_MAX; attempt += 1) await gate.reserveDemoLogin('203.0.113.9')
+    expect(await gate.reserveDemoLogin('203.0.113.10')).toBe('allowed')
+  })
+
+  it('keys the counter by the IP hash with its own prefix, never the IP', async () => {
+    const { counter, gate } = setup()
+    await gate.reserveDemoLogin('203.0.113.9')
+    expect(counter.calls[0]?.key).toMatch(/^demo-login:[0-9a-f]{64}$/)
+    expect(counter.calls[0]?.key).not.toContain('203')
+    expect(counter.calls[0]?.ttl).toBe(DEMO_LOGIN_WINDOW_MINUTES * 60_000)
+  })
+
+  it('is unavailable when the counter is down (fail-closed)', async () => {
+    const { counter, gate } = setup()
+    counter.failing = true
+    vi.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined)
+    expect(await gate.reserveDemoLogin('203.0.113.9')).toBe('unavailable')
   })
 })
 

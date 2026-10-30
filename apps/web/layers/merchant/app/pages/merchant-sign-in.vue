@@ -2,6 +2,7 @@
 import { LOGIN_CODE_LENGTH } from '#shared/constants/domain'
 import { formatPhoneInput } from '#shared/utils/phone'
 import type { ComponentPublicInstance } from 'vue'
+import type { MerchantSignInOutcome } from '../types/signIn'
 
 definePageMeta({ path: '/balcao/entrar', layout: 'merchant-entry', middleware: 'merchant-guest' })
 
@@ -9,7 +10,7 @@ const { t } = useI18n()
 const route = useRoute()
 useHead({ title: () => `${t('merchantSignIn.pageTitle')} · ${t('app.name')}` })
 
-const { step, pending, error, resendIn, requestCode, resendCode, verify, changePhone } = useMerchantSignIn()
+const { step, pending, error, resendIn, demoEnabled, requestCode, resendCode, verify, signInDemo, changePhone } = useMerchantSignIn()
 const { session } = useMerchantSession()
 const mockCode = useMockLoginHint()
 const mockPhone = useMockMerchantPhone()
@@ -34,7 +35,14 @@ function onPhoneInput(value: string | number): void {
 }
 
 async function submitCode(): Promise<void> {
-  const outcome = await verify(code.value.join(''))
+  await finishSignIn(await verify(code.value.join('')))
+}
+
+async function submitDemo(): Promise<void> {
+  await finishSignIn(await signInDemo())
+}
+
+async function finishSignIn(outcome: MerchantSignInOutcome): Promise<void> {
   if (outcome === 'signedIn') {
     // Loja aguardando aprovação ainda não lança visita: o Início explica o porquê.
     const fallback = session.value?.shopStatus === 'pending' ? MERCHANT_PANEL_PATH : MERCHANT_HOME_PATH
@@ -96,7 +104,10 @@ function backToPhone(): void {
             />
           </UFormField>
 
-          <UButton type="submit" size="xl" block :loading="pending" :label="t('merchantSignIn.sendCode')" />
+          <div class="flex flex-col gap-2">
+            <UButton type="submit" size="xl" block :loading="pending" :label="t('merchantSignIn.sendCode')" />
+            <UButton v-if="demoEnabled" variant="ghost" color="neutral" block :disabled="pending" :label="t('merchantSignIn.demo')" @click="submitDemo" />
+          </div>
         </form>
 
         <form v-else class="flex flex-col gap-6" novalidate @submit.prevent="submitCode">

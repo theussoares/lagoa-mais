@@ -31,9 +31,13 @@ export interface CustomerSignIn {
   greeting: Readonly<Ref<SignInGreeting | null>>
   /** Segundos até liberar "Reenviar código" (0 = liberado). */
   resendIn: Readonly<Ref<number>>
+  /** A conta de demonstração está ligada no servidor (o botão só aparece então). */
+  demoEnabled: Readonly<Ref<boolean>>
   requestCode: (rawPhone: string) => Promise<void>
   resendCode: () => Promise<void>
   verify: (rawCode: string) => Promise<VerifyOutcome>
+  /** Entra pela conta de demonstração, sem SMS. */
+  signInDemo: () => Promise<VerifyOutcome>
   signUp: (draft: SignUpDraft) => Promise<boolean>
   changePhone: () => void
 }

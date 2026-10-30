@@ -25,6 +25,8 @@ function setup(verify: Result<true, SignInError>, routes: Record<string, () => R
   const gateway: PhoneAuthGateway = {
     sendCode: vi.fn(async () => ({ ok: true as const, value: true as const })),
     verifyCode: vi.fn(async () => verify),
+    demoAvailable: vi.fn(async () => true),
+    demoSignIn: vi.fn(async () => verify),
     signOut: vi.fn(async () => ({ ok: true as const, value: true as const })),
   }
   const calls: string[] = []
@@ -49,6 +51,25 @@ describe('HttpMerchantAuthService', () => {
     const { auth, calls } = setup({ ok: true, value: true }, { 'GET /merchant/session': () => json(200, SESSION) })
     expect(await auth.signInMerchant(PHONE, CODE)).toEqual({ ok: true, value: { kind: 'session', session: SESSION } })
     expect(calls).toEqual(['GET /merchant/session'])
+  })
+
+  it('signs in through the demo account and reads the merchant session, without a code', async () => {
+    const { auth, gateway, calls } = setup({ ok: true, value: true }, { 'GET /merchant/session': () => json(200, SESSION) })
+    expect(await auth.signInDemoMerchant()).toEqual({ ok: true, value: { kind: 'session', session: SESSION } })
+    expect(gateway.demoSignIn).toHaveBeenCalledWith('merchant')
+    expect(gateway.verifyCode).not.toHaveBeenCalled()
+    expect(calls).toEqual(['GET /merchant/session'])
+  })
+
+  it('sends a demo account without a shop to the club setup', async () => {
+    const { auth } = setup({ ok: true, value: true }, { 'GET /merchant/session': () => json(404, { code: 'notFound', entity: 'merchant' }) })
+    expect(await auth.signInDemoMerchant()).toEqual({ ok: true, value: { kind: 'signUp' } })
+  })
+
+  it('asks the gateway whether the demo is on for the merchant', async () => {
+    const { auth, gateway } = setup({ ok: true, value: true }, {})
+    expect(await auth.demoAvailable()).toBe(true)
+    expect(gateway.demoAvailable).toHaveBeenCalledWith('merchant')
   })
 
   it('sends a confirmed phone without a shop to the club setup, with no ticket', async () => {

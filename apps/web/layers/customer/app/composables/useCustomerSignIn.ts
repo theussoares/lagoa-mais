@@ -3,6 +3,7 @@ import { CUSTOMER_FIRST_NAME_MAX_LENGTH, LOGIN_CODE_RESEND_SECONDS } from '#shar
 import type { PhoneNumber } from '#shared/schemas/phone'
 import { LoginCodeSchema } from '#shared/schemas/session'
 import type { DomainErrorCode } from '#shared/types/errors'
+import { ok } from '#shared/types/result'
 import { parsePhoneNumber } from '#shared/utils/phone'
 import type { SignInStep, CustomerSignIn, SignInGreeting, SignUpDraft, SignUpFieldError, VerifyOutcome } from '../types/signIn'
 
@@ -20,6 +21,8 @@ export function useCustomerSignIn(): CustomerSignIn {
   const fieldError = ref<SignUpFieldError | null>(null)
   const greeting = ref<SignInGreeting | null>(null)
   const { remaining: resendIn, start: startCountdown } = useCountdown()
+  const demo = useAsyncQuery('customer-demo-login', async () => ok(await auth.demoAvailable()))
+  const demoEnabled = computed(() => demo.state.value.status === 'success' && demo.state.value.value)
 
   async function sendTo(phone: PhoneNumber): Promise<void> {
     pending.value = true
@@ -62,7 +65,18 @@ export function useCustomerSignIn(): CustomerSignIn {
     }
     pending.value = true
     error.value = null
-    const result = await auth.signInCustomer(step.value.phone, code.data)
+    return settle(await auth.signInCustomer(step.value.phone, code.data))
+  }
+
+  async function signInDemo(): Promise<VerifyOutcome> {
+    if (pending.value) return 'failed'
+    pending.value = true
+    error.value = null
+    return settle(await auth.signInDemoCustomer())
+  }
+
+  /** Código (ou demonstração) aceito pelo servidor: abre a sessão, ou segue para o nome de quem ainda não tem conta. */
+  async function settle(result: Awaited<ReturnType<typeof auth.signInCustomer>>): Promise<VerifyOutcome> {
     if (!result.ok) {
       pending.value = false
       error.value = result.error.code
@@ -116,5 +130,5 @@ export function useCustomerSignIn(): CustomerSignIn {
     fieldError.value = null
   }
 
-  return { step, pending, error, fieldError, greeting, resendIn, requestCode, resendCode, verify, signUp, changePhone }
+  return { step, pending, error, fieldError, greeting, resendIn, demoEnabled, requestCode, resendCode, verify, signInDemo, signUp, changePhone }
 }
