@@ -75,6 +75,25 @@ afterEach(() => {
   restoreClock()
 })
 
+describe('useClubSetupScreen: postal code', () => {
+  it('fills the address line from a complete postal code, keeping the other fields', async () => {
+    const { result } = await mountComposable(useClubSetupScreen)
+    fillShop()
+    await result.setPostalCode('79601000')
+    expect(result.postalCode).toEqual({ value: '79601-000', status: 'found' })
+    expect(result.form.shop.addressLine).toBe('Avenida Rosário Congro, Centro — Três Lagoas/MS')
+    expect(result.form.shop.neighborhood).toBe('Centro')
+  })
+
+  it('leaves the address alone when the postal code is unknown', async () => {
+    const { result } = await mountComposable(useClubSetupScreen)
+    fillShop()
+    await result.setPostalCode('99999999')
+    expect(result.postalCode.status).toBe('notFound')
+    expect(result.form.shop.addressLine).toBe('Rua de exemplo, 100')
+  })
+})
+
 describe('useClubSetupScreen: steps', () => {
   it('starts on the shop step with the four steps laid out and nothing loaded', async () => {
     const { result } = await mountComposable(useClubSetupScreen)

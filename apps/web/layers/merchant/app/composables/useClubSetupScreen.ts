@@ -16,6 +16,9 @@ export function useClubSetupScreen(): ClubSetupScreen {
   const { print } = usePrint()
   const { savePng } = useQrDownload()
   const toast = useToast()
+  const postal = usePostalCodeLookup((addressLine) => {
+    form.value = { ...form.value, shop: { ...form.value.shop, addressLine } }
+  })
   const fieldOptions = useProgramFieldOptions(computed(() => form.value.program))
 
   const shopName = computed(() => form.value.shop.name.trim())
@@ -69,6 +72,8 @@ export function useClubSetupScreen(): ClubSetupScreen {
     steps,
     form,
     shopErrors,
+    postalCode: computed(() => ({ value: postal.value.value, status: postal.status.value })),
+    setPostalCode: postal.change,
     programErrors,
     fieldOptions,
     creating: computed(() => submitState.value.status === 'creating'),
