@@ -63,10 +63,10 @@ function ports(overrides: { reserve?: AuthOutcome<true>; verify?: AuthOutcome<To
 }
 
 describe('runDemoLogin', () => {
-  it('reserves an attempt for the surface phone, then verifies the fixed code', async () => {
+  it('reserves an attempt (per client IP, not per phone), then verifies the fixed code', async () => {
     const p = ports()
     await expect(runDemoLogin(REQUEST, p)).resolves.toEqual({ kind: 'success', tokens: TOKENS })
-    expect(p.reserveAttempt).toHaveBeenCalledWith('67991110001')
+    expect(p.reserveAttempt).toHaveBeenCalledWith()
     expect(p.verifyCode).toHaveBeenCalledWith('67991110001', '123456')
   })
 

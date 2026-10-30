@@ -1,6 +1,6 @@
 import { Inject, Injectable, Logger } from '@nestjs/common'
 import type { ThrottlerStorage } from '@nestjs/throttler'
-import { ADMIN_LOGIN_ATTEMPTS_MAX, ADMIN_LOGIN_WINDOW_MINUTES, LOGIN_VERIFY_ATTEMPTS_MAX, LOGIN_VERIFY_WINDOW_MINUTES } from '#shared/constants/domain'
+import { ADMIN_LOGIN_ATTEMPTS_MAX, ADMIN_LOGIN_WINDOW_MINUTES, DEMO_LOGIN_ATTEMPTS_MAX, DEMO_LOGIN_WINDOW_MINUTES, LOGIN_VERIFY_ATTEMPTS_MAX, LOGIN_VERIFY_WINDOW_MINUTES } from '#shared/constants/domain'
 import type { PhoneNumber } from '#shared/schemas/phone'
 import { PiiService } from '../../common/pii.service'
 
@@ -18,6 +18,9 @@ export const loginAttemptKey = (phoneHash: Buffer): string => `login-verify:${ph
 
 /** Login por senha do painel da rede: hash do e-mail normalizado, nunca o e-mail. Prefixo próprio, contador próprio. */
 export const adminLoginAttemptKey = (emailHash: Buffer): string => `admin-login:${emailHash.toString('hex')}`
+
+/** Login da conta de demonstração: chave por IP do cliente (hash), prefixo próprio, nunca o contador do celular. */
+export const demoLoginAttemptKey = (ipHash: Buffer): string => `demo-login:${ipHash.toString('hex')}`
 
 interface Cap {
   readonly key: string
@@ -39,6 +42,12 @@ export class LoginAttemptGate {
   async allow(phone: PhoneNumber): Promise<boolean> {
     const key = loginAttemptKey(this.pii.hashPhone(phone))
     return (await this.reserve({ key, windowMs: WINDOW_MS, limit: LOGIN_VERIFY_ATTEMPTS_MAX, throttlerName: 'loginVerify' })) === 'allowed'
+  }
+
+  /** Cada IP tem o seu teto: um visitante insistente não trava a demonstração para os outros. */
+  async reserveDemoLogin(clientIp: string): Promise<AttemptVerdict> {
+    const key = demoLoginAttemptKey(this.pii.hashClientIp(clientIp))
+    return this.reserve({ key, windowMs: DEMO_LOGIN_WINDOW_MINUTES * 60_000, limit: DEMO_LOGIN_ATTEMPTS_MAX, throttlerName: 'demoLogin' })
   }
 
   /** Não consulta se o e-mail é de alguém: a resposta é a mesma para e-mail de admin e para qualquer outro. */

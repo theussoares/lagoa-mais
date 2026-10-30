@@ -2,7 +2,7 @@ import { createError, getRequestHeader, getRequestIP, readBody } from 'h3'
 import { z } from 'zod'
 import { failWith, rejectInput } from '../../utils/authResponse'
 import { runDemoLogin } from '../../utils/demoLogin'
-import { reserveLoginAttempt } from '../../utils/loginAttempts'
+import { reserveDemoLoginAttempt } from '../../utils/loginAttempts'
 import { logSecurityEvent } from '../../utils/securityLog'
 import { createPhoneLogin, readBffConfig, readDemoConfig } from '../../utils/serverConfig'
 import { startSession } from '../../utils/sessionAccess'
@@ -26,11 +26,13 @@ export default defineEventHandler(async (event) => {
       urls: { customerUrl, merchantUrl },
     },
     {
-      reserveAttempt: (phone) =>
-        reserveLoginAttempt(
-          { apiBaseUrl: config.apiBaseUrl, bffSharedSecret: config.bffSharedSecret, production: config.secureCookies, clientIp: getRequestIP(event, { xForwardedFor: true }) },
-          phone,
-        ),
+      reserveAttempt: () =>
+        reserveDemoLoginAttempt({
+          apiBaseUrl: config.apiBaseUrl,
+          bffSharedSecret: config.bffSharedSecret,
+          production: config.secureCookies,
+          clientIp: getRequestIP(event, { xForwardedFor: true }),
+        }),
       verifyCode: (phone, code) => createPhoneLogin().verifyCode(phone, code),
     },
   )

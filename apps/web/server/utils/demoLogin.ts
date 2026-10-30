@@ -62,7 +62,8 @@ export interface DemoLoginRequest {
 
 /** O que o login de demonstração pede ao mundo de fora: o teto por celular e o `verifyOtp` do Supabase. */
 export interface DemoLoginPorts {
-  reserveAttempt(phone: PhoneNumber): Promise<AuthOutcome<true>>
+  /** Teto por IP do cliente: o número demo é público, então não há teto por celular. */
+  reserveAttempt(): Promise<AuthOutcome<true>>
   verifyCode(phone: PhoneNumber, code: LoginCode): Promise<AuthOutcome<TokenPair>>
 }
 
@@ -72,11 +73,11 @@ export type DemoLoginOutcome =
   | { readonly kind: 'failure'; readonly code: AuthErrorCode }
   | { readonly kind: 'success'; readonly tokens: TokenPair }
 
-/** Mesmo caminho do login por código (teto por celular, depois `verifyOtp`), com o número e o código fixos da superfície. */
+/** Teto por IP, depois o `verifyOtp` do login, com o número e o código fixos da superfície. */
 export async function runDemoLogin(request: DemoLoginRequest, ports: DemoLoginPorts): Promise<DemoLoginOutcome> {
   const credentials = demoCredentialsFor(request.config, request.surface)
   if (credentials === null || !demoSurfaceMatchesHost(request.surface, request.host, request.urls)) return { kind: 'notFound' }
-  const reserved = await ports.reserveAttempt(credentials.phone)
+  const reserved = await ports.reserveAttempt()
   if (!reserved.ok) return { kind: 'failure', code: reserved.code }
   const verified = await ports.verifyCode(credentials.phone, credentials.code)
   return verified.ok ? { kind: 'success', tokens: verified.value } : { kind: 'failure', code: verified.code }
