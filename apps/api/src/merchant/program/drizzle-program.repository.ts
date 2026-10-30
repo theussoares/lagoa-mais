@@ -1,5 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common'
 import { and, count, eq, gt, lte } from 'drizzle-orm'
+import { withActiveSurpriseDay } from '#shared/domain/bonusRules'
 import type { Program, ProgramDraft } from '#shared/schemas/program'
 import type { ErrorOf } from '#shared/types/errors'
 import { err, ok, type Result } from '#shared/types/result'
@@ -90,7 +91,7 @@ export class DrizzleProgramRepository extends ProgramRepository {
       const decision = decide(current.value)
       const saved = decision.isNewVersion
         ? await this.insertNewVersion(tx, shop.id, row.id, draft, now)
-        : await this.updateRewardTitle(tx, shop.id, row.id, draft)
+        : await this.updateInPlace(tx, shop.id, row.id, current.value, draft)
       return ok(saved)
     })
   }
@@ -120,10 +121,15 @@ export class DrizzleProgramRepository extends ProgramRepository {
     return mapped.value
   }
 
-  private async updateRewardTitle(tx: Tx, shopId: string, currentProgramId: string, draft: ProgramDraft): Promise<Program> {
+  /** Título do prêmio e dia surpresa não pedem versão nova: valem na hora, sem mexer em cartão nem cancelar QR da visita. */
+  private async updateInPlace(tx: Tx, shopId: string, currentProgramId: string, current: Program, draft: ProgramDraft): Promise<Program> {
     const [updated] = await tx
       .update(programs)
-      .set({ rewardTitle: draft.reward.title, updatedAt: new Date() })
+      .set({
+        rewardTitle: draft.reward.title,
+        bonusRules: withActiveSurpriseDay(current.bonusRules, draft.bonusRules.surpriseDay),
+        updatedAt: new Date(),
+      })
       .where(and(eq(programs.shopId, shopId), eq(programs.id, currentProgramId)))
       .returning()
     if (!updated) throw new Error('Failed to update active program')

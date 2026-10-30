@@ -5,6 +5,7 @@ import { CheckInService } from '../../customer/check-in/check-in.service'
 import { DrizzleCheckInRepository } from '../../customer/check-in/drizzle-check-in.repository'
 import { loyaltyCards, programs, shops } from '../../database/schema'
 import { DrizzleReferralSettlement } from '../../ledger/drizzle-referral-settlement'
+import { localDateParts } from '#shared/utils/time'
 import { LedgerStore } from '../../ledger/ledger.store'
 import { claimVisit } from '../../test-support/claim-visit'
 import { NO_BONUS_RULES, TEST_DATABASE_URL, TestDatabase } from '../../test-support/test-database'
@@ -121,4 +122,44 @@ describe.skipIf(!TEST_DATABASE_URL)('merchant program against a real database', 
     expect(await activeProgramIds(shop.id)).toEqual([before])
     expect(await checkIn.claimVisitQr(await data.createCustomer(), { token: qr.token })).toMatchObject({ ok: true })
   }, SLOW)
+
+  describe('surprise day', () => {
+    const today = () => localDateParts(new Date()).isoDate
+    const withSurprise = async (owner: string, enabled: boolean) => {
+      const current = await draftFor(owner, { mode: 'stamps', target: 10 })
+      return { ...current, bonusRules: { ...current.bonusRules, surpriseDay: { enabled, multiplier: 2 as const, date: enabled ? today() : null } } }
+    }
+
+    it('turning it on today and off again creates no version, keeps cards and QRs, and takes effect on the next visit', async () => {
+      const shop = await data.createShop({ rules: { mode: 'stamps', target: 10 }, bonusRules: NO_BONUS_RULES })
+      const owner = await ownerOf(shop.id)
+      const [before] = await activeProgramIds(shop.id)
+      const qr = await data.createVisitQr({ shopId: shop.id })
+
+      expect(await service.updateProgram(owner, await withSurprise(owner, true))).toMatchObject({ ok: true })
+      expect(await activeProgramIds(shop.id)).toEqual([before])
+      expect(await checkIn.claimVisitQr(await data.createCustomer(), { token: qr.token })).toMatchObject({ ok: true, value: { activity: { units: 2 } } })
+
+      expect(await service.updateProgram(owner, await withSurprise(owner, false))).toMatchObject({ ok: true })
+      expect(await activeProgramIds(shop.id)).toEqual([before])
+      expect(await claimVisit(data, checkIn, await data.createCustomer(), shop)).toMatchObject({ ok: true, value: { activity: { units: 1 } } })
+    }, SLOW)
+
+    it('applies to a card that stayed on an older program version', async () => {
+      const shop = await data.createShop({ rules: { mode: 'stamps', target: 10 }, bonusRules: NO_BONUS_RULES })
+      const owner = await ownerOf(shop.id)
+      const veteran = await data.createCustomer()
+      await claimVisit(data, checkIn, veteran, shop)
+      await service.updateProgram(owner, await draftFor(owner, { mode: 'stamps', target: 12 }))
+      const [newVersion] = await activeProgramIds(shop.id)
+      await data.db.update(loyaltyCards).set({ lastVisitAt: new Date(Date.now() - 3 * 86_400_000) }).where(eq(loyaltyCards.customerId, veteran))
+
+      await service.updateProgram(owner, { ...(await withSurprise(owner, true)), rules: { mode: 'stamps', target: 12 } })
+      expect(await activeProgramIds(shop.id)).toEqual([newVersion])
+
+      const [card] = await data.db.select().from(loyaltyCards).where(eq(loyaltyCards.customerId, veteran))
+      expect(card?.programId).not.toBe(newVersion)
+      expect(await claimVisit(data, checkIn, veteran, shop)).toMatchObject({ ok: true, value: { activity: { units: 2 } } })
+    }, SLOW)
+  })
 })

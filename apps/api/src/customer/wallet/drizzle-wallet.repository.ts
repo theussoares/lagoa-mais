@@ -2,6 +2,8 @@ import { Inject, Injectable } from '@nestjs/common'
 import { and, desc, eq, inArray, type SQL, sql } from 'drizzle-orm'
 import { z } from 'zod'
 import { WALLET_CARDS_LIMIT } from '#shared/constants/domain'
+import { withActiveSurpriseDay } from '#shared/domain/bonusRules'
+import { type BonusRules, BonusRulesSchema } from '#shared/schemas/program'
 import { DB, type Database } from '../../database/database.module'
 import { ledgerEntries, loyaltyCards, programs, redemptions, shops } from '../../database/schema'
 import { CATALOG_COLUMNS, toCatalogShop } from '../../shops/catalog-row'
@@ -74,9 +76,16 @@ export class DrizzleWalletRepository extends WalletRepository {
       .orderBy(sql`${loyaltyCards.lastVisitAt} desc nulls last`, desc(loyaltyCards.id))
       .limit(limit)
 
+    const surpriseDays = await this.readActiveSurpriseDays(rows.map((row) => row.shopId))
     const cards = rows.flatMap((row) => {
-      const shop = toCatalogShop(row)
-      return shop === null ? [] : [{ row, shop }]
+      const parsed = toCatalogShop(row)
+      if (parsed === null) return []
+      // O dia surpresa é da loja: o selo vale também para o cartão que segue numa versão anterior.
+      const active = surpriseDays.get(parsed.id)
+      const shop = active
+        ? { ...parsed, program: { ...parsed.program, bonusRules: withActiveSurpriseDay(parsed.program.bonusRules, active) } }
+        : parsed
+      return [{ row, shop }]
     })
     const stampCards = cards.filter(({ shop }) => shop.program.rules.mode === 'stamps')
     const earnedByCard = await this.readEarned(stampCards.map(({ row }) => ({ cardId: row.cardId, balance: row.balance })))
@@ -91,6 +100,21 @@ export class DrizzleWalletRepository extends WalletRepository {
       shop,
       earned: earnedByCard.get(row.cardId) ?? [],
     }))
+  }
+
+  /** Uma consulta para o dia surpresa da versão ativa de cada loja dos cartões (sem N+1). */
+  private async readActiveSurpriseDays(shopIds: readonly string[]): Promise<Map<string, BonusRules['surpriseDay']>> {
+    const result = new Map<string, BonusRules['surpriseDay']>()
+    if (shopIds.length === 0) return result
+    const rows = await this.db
+      .select({ shopId: programs.shopId, bonusRules: programs.bonusRules })
+      .from(programs)
+      .where(and(inArray(programs.shopId, [...new Set(shopIds)]), eq(programs.active, true)))
+    for (const row of rows) {
+      const parsed = BonusRulesSchema.safeParse(row.bonusRules)
+      if (parsed.success) result.set(row.shopId, parsed.data.surpriseDay)
+    }
+    return result
   }
 
   /**

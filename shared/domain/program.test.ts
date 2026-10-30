@@ -39,6 +39,17 @@ describe('isSameProgram', () => {
     expect(isSameProgram(baseProgram, { ...baseDraft, reward: { title: 'Café especial com bolo' } })).toBe(true)
   })
 
+  it('is the same when only the surprise day was switched on, moved or off', () => {
+    const on = { ...baseDraft.bonusRules, surpriseDay: { enabled: true, multiplier: 2 as const, date: '2026-10-29' } }
+    expect(isSameProgram(baseProgram, { ...baseDraft, bonusRules: on })).toBe(true)
+    expect(isSameProgram({ ...baseProgram, bonusRules: on }, baseDraft)).toBe(true)
+  })
+
+  it('is not the same when the surprise day changes together with another bonus rule', () => {
+    const bonusRules = { ...baseDraft.bonusRules, welcomeBonus: { enabled: true, units: 2 }, surpriseDay: { enabled: true, multiplier: 2 as const, date: '2026-10-29' } }
+    expect(isSameProgram(baseProgram, { ...baseDraft, bonusRules })).toBe(false)
+  })
+
   it('is not the same when the mode changed', () => {
     expect(
       isSameProgram(baseProgram, {
