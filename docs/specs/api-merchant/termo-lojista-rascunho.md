@@ -63,8 +63,8 @@ O Lagoa+ é uma plataforma de fidelidade para o comércio local. Ela permite que
 ## 6. Plano, preço e cobrança
 
 6.1. A loja escolhe um plano. `[LACUNA: confirmar nomes, preços e condições]`:
-- Fundador: R$ 79,90/mês (preço de tabela R$ 119,90). Para as 10 primeiras lojas, com preço travado e sem fidelidade.
-- Fundador Pro: R$ 89,90/mês (tabela R$ 249,90). Inclui clientes sumidos, campanhas e destaque no Descobrir.
+- Fundador: R$ 79,90/mês nos 12 primeiros meses, depois R$ 119,90/mês (preço de tabela). Para as 10 primeiras lojas, sem fidelidade.
+- Fundador Pro: R$ 99,90/mês nos 12 primeiros meses, depois R$ 159,90/mês (tabela). Inclui clientes sumidos, campanhas e destaque no Descobrir.
 
 6.2. `[REVISÃO JURÍDICA]` Forma de cobrança, reajuste, inadimplência e cancelamento. Confirmar se o plano Fundador é realmente "sem fidelidade" e como isso aparece no contrato.
 

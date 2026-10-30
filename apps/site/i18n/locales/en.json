@@ -151,7 +151,7 @@
   "pricing": {
     "title": "Less than R$ 3 a day to stop losing customers.",
     "paybackNote": "Example: with an average ticket of R$ 30, 3 extra returns a month cover the Founder plan.",
-    "scarcity": "Only {founderSpots} shops get Founder pricing, and the first {founderSpots} Pro shops have no customer limit. After that, prices go back to R$ 119.90 and R$ 249.90.",
+    "scarcity": "Only {founderSpots} shops get Founder pricing. Founder is R$ 79.90 for the first 12 months, then R$ 119.90; Pro is R$ 99.90, then R$ 159.90. The first {founderSpots} Pro shops have no customer limit.",
     "currency": "R$",
     "period": "/month",
     "featured": "Most complete",
@@ -162,6 +162,7 @@
         "name": "Founder",
         "from": "119.90",
         "price": "79.90",
+        "note": "For the first 12 months; then R$ 119.90/month",
         "items": {
           "stamps": "Stamp at the sale and reward redemption at the counter",
           "birthday": "Double stamps on the customer's birthday",
@@ -171,8 +172,9 @@
       },
       "pro": {
         "name": "Founder Pro",
-        "from": "249.90",
+        "from": "159.90",
         "price": "99.90",
+        "note": "For the first 12 months; then R$ 159.90/month",
         "lead": "Everything in Founder, plus:",
         "items": {
           "bonus": "Welcome, referral and double-stamp surprise day",
@@ -184,7 +186,7 @@
     },
     "risk": {
       "label": "Low risk to get started",
-      "locked": "Price locked for as long as you're in the club",
+      "locked": "Promo price guaranteed for 12 months",
       "noContract": "No lock-in: cancel whenever you want",
       "setup": "Free onboarding: the Lagoa+ team builds the club with you"
     },
@@ -223,7 +225,7 @@
       },
       "price": {
         "q": "How much does it cost?",
-        "a": "Founder costs R$ 79.90 a month and Founder Pro R$ 99.90, both with locked pricing and no lock-in. The shop joins after the network approves it. Founder pricing applies only to the first {founderSpots} shops."
+        "a": "Founder costs R$ 79.90 a month for the first 12 months, then R$ 119.90. Founder Pro costs R$ 99.90 a month for the first 12 months, then R$ 159.90. Both have no lock-in. The shop joins after the network approves it. Founder pricing applies only to the first {founderSpots} shops."
       },
       "plans": {
         "q": "What's the difference between Founder and Pro?",
@@ -253,7 +255,7 @@
       "setup": "Once your shop is approved, we build the club with you."
     },
     "stepsLabel": "What happens next",
-    "note": "Only {founderSpots} shops with Founder pricing · from R$ 79.90/month · no lock-in"
+    "note": "Only {founderSpots} shops with Founder pricing · R$ 79.90/month for the first 12 months · no lock-in"
   },
   "footer": {
     "tagline": "Loyalty club for local businesses in Três Lagoas/MS.",

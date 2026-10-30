@@ -46,7 +46,7 @@ export const POST_TEXTS: PostText[] = [
         'A small reward usually costs less than the budget to attract a stranger.',
       ] },
       { kind: 'h2', text: 'A plan that pays for itself' },
-      { kind: 'p', text: 'On the Founder plan (R$ 79.90 a month), with an average ticket of R$ 30, three extra returns a month already cover the price. It is an example calculation: real results depend on your shop. That is why Lagoa+ has no lock-in: if it does not make sense, you cancel.' },
+      { kind: 'p', text: 'On the Founder plan (R$ 79.90 a month for the first 12 months), with an average ticket of R$ 30, three extra returns a month already cover the price. It is an example calculation: real results depend on your shop. That is why Lagoa+ has no lock-in: if it does not make sense, you cancel.' },
       { kind: 'quote', text: 'Tomorrow\'s register is in today\'s customer base.' },
     ],
   },
