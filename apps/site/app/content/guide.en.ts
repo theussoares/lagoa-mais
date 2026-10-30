@@ -57,13 +57,12 @@ export const GUIDE_TEXTS: GuideText[] = [
   {
     id: 'bonusRules',
     slug: 'bonus-rules',
-    title: 'Bonus rules: birthday, referral and surprise day',
+    title: 'Bonus rules: birthday and surprise day',
     description: 'How to turn on the rules that bring traffic on slow days and attract new customers.',
     body: [
       { kind: 'p', text: 'Bonus rules are optional. Turn on only the ones that make sense for your shop. If two rules land on the same day, the bigger one applies: they do not add up.' },
       { kind: 'ul', items: [
         'Welcome: the card starts with 2 stamps. People who start ahead are in a hurry to finish.',
-        'Referral (bring a friend): whoever refers earns +1 when their friend makes a first visit.',
         'Birthday: on the customer\'s birthday, each visit is worth two stamps.',
         'Surprise day: double stamps only on the day you choose, great for a slow day.',
       ] },

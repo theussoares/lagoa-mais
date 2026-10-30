@@ -39,6 +39,30 @@ describe('decideQrUse', () => {
   })
 })
 
+describe('decideEarning surprise day', () => {
+  const today = { enabled: true, multiplier: 2 as const, date: '2026-10-03' }
+  const cardVersion = withProgram({ bonusRules: { ...NO_BONUS, surpriseDay: { enabled: false, multiplier: 2, date: null } } })
+
+  it('doubles a card kept on an older version when the active version turned the surprise day on for today', () => {
+    expect(decideEarning(visitQrTarget({ shop: cardVersion, surpriseDay: today }), FIRST_VISIT, now)).toMatchObject({
+      ok: true,
+      value: { units: 2, appliedBonuses: ['surpriseDay'] },
+    })
+  })
+
+  it('does not double when the active version turned it off, even if the card version still has it on', () => {
+    const stale = withProgram({ bonusRules: { ...NO_BONUS, surpriseDay: today } })
+    const target = visitQrTarget({ shop: stale, surpriseDay: { ...today, enabled: false } })
+    expect(decideEarning(target, FIRST_VISIT, now)).toMatchObject({ ok: true, value: { units: 1, appliedBonuses: [] } })
+  })
+
+  it('uses the local pilot date: 23:30 on the 3rd in UTC-4 is still the 3rd, 00:30 UTC of the 4th', () => {
+    const target = visitQrTarget({ shop: cardVersion, surpriseDay: today })
+    expect(decideEarning(target, FIRST_VISIT, new Date('2026-10-04T03:30:00Z'))).toMatchObject({ ok: true, value: { units: 2 } })
+    expect(decideEarning(target, FIRST_VISIT, new Date('2026-10-04T04:30:00Z'))).toMatchObject({ ok: true, value: { units: 1 } })
+  })
+})
+
 describe('decideEarning', () => {
   it('gives the welcome units with the first visit', () => {
     const target = visitQrTarget({ shop: withProgram({ bonusRules: { ...NO_BONUS, welcomeBonus: { enabled: true, units: 2 } } }) })

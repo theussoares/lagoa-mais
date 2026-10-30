@@ -2,7 +2,7 @@ import { Inject, Injectable } from '@nestjs/common'
 import { and, eq, lt, lte, or, sql } from 'drizzle-orm'
 import { CHECK_IN_COOLDOWN_MAX_HOURS } from '#shared/constants/domain'
 import { visitLedgerKindFor } from '#shared/domain/visitQr'
-import { CheckInCooldownModeSchema } from '#shared/schemas/program'
+import { BonusRulesSchema, CheckInCooldownModeSchema } from '#shared/schemas/program'
 import { VisitQrEarnSchema } from '#shared/schemas/visitQr'
 import type { ErrorOf } from '#shared/types/errors'
 import { err, ok, type Result } from '#shared/types/result'
@@ -51,6 +51,7 @@ export class DrizzleCheckInRepository extends CheckInRepository {
         activeProgramId: programs.id,
         cooldownHours: programs.checkInCooldownHours,
         cooldownMode: programs.checkInCooldownMode,
+        activeBonusRules: programs.bonusRules,
       })
       .from(visitQrs)
       .innerJoin(shops, and(eq(shops.id, visitQrs.shopId), eq(shops.status, 'approved')))
@@ -71,6 +72,8 @@ export class DrizzleCheckInRepository extends CheckInRepository {
     if (row.cooldownHours < 1 || row.cooldownHours > CHECK_IN_COOLDOWN_MAX_HOURS) return null
     const cooldownMode = CheckInCooldownModeSchema.safeParse(row.cooldownMode)
     if (!cooldownMode.success) return null
+    const activeBonusRules = BonusRulesSchema.safeParse(row.activeBonusRules)
+    if (!activeBonusRules.success) return null
     const earn = VisitQrEarnSchema.safeParse(row.earnKind === 'amount' ? { kind: 'amount', amountCents: row.amountCents } : { kind: 'visit' })
     if (!earn.success) return null
 
@@ -90,7 +93,7 @@ export class DrizzleCheckInRepository extends CheckInRepository {
       .limit(1)
     const shop = catalog ? toCatalogShop(catalog) : null
     if (shop === null) return null
-    return { visitQrId: row.visitQrId, shop, programId, cooldown: { cooldownHours: row.cooldownHours, cooldownMode: cooldownMode.data }, issuedBy: row.issuedBy, earn: earn.data }
+    return { visitQrId: row.visitQrId, shop, programId, cooldown: { cooldownHours: row.cooldownHours, cooldownMode: cooldownMode.data }, surpriseDay: activeBonusRules.data.surpriseDay, issuedBy: row.issuedBy, earn: earn.data }
   }
 
   async claim<E>(

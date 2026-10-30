@@ -9,7 +9,7 @@ const { t } = useI18n()
 const route = useRoute()
 useHead({ title: () => `${t('signIn.pageTitle')} · ${t('app.name')}` })
 
-const { step, pending, error, fieldError, greeting, resendIn, requestCode, resendCode, verify, signUp, changePhone } = useCustomerSignIn()
+const { step, pending, error, fieldError, greeting, resendIn, demoEnabled, requestCode, resendCode, verify, signInDemo, signUp, changePhone } = useCustomerSignIn()
 const toast = useToast()
 
 const phoneDraft = ref('')
@@ -57,6 +57,11 @@ async function submitCode(): Promise<void> {
   codeFieldElement()?.querySelector('input')?.focus()
 }
 
+async function submitDemo(): Promise<void> {
+  const outcome = await signInDemo()
+  if (outcome === 'signedIn') await enter()
+}
+
 function backToPhone(): void {
   code.value = []
   changePhone()
@@ -94,7 +99,10 @@ function backToPhone(): void {
         />
       </UFormField>
 
-      <ActionButton role="primary" type="submit" block :loading="pending" :label="t('signIn.sendCode')" class="mt-auto" />
+      <div class="mt-auto flex flex-col gap-2">
+        <ActionButton role="primary" type="submit" block :loading="pending" :label="t('signIn.sendCode')" />
+        <ActionButton v-if="demoEnabled" role="quiet" block :disabled="pending" :label="t('signIn.demo')" @click="submitDemo" />
+      </div>
     </form>
 
     <SignInProfileStep

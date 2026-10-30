@@ -1,7 +1,10 @@
 import { deleteCookie, getCookie, setCookie, type H3Event } from 'h3'
 import type { AuthOutcome, CookieSettings, TokenPair } from '../types/auth'
 import { ACCESS_COOKIE, REFRESH_COOKIE, expiredCookiesFor, legacyExpiredCookiesFor, sessionCookiesFor, type CookieWrite } from './sessionCookies'
+import { RefreshCoalescer } from './refreshCoalescer'
 import { createPhoneLogin } from './serverConfig'
+
+const refreshes = new RefreshCoalescer()
 
 function write(event: H3Event, cookies: readonly CookieWrite[]): void {
   for (const cookie of cookies) setCookie(event, cookie.name, cookie.value, cookie.options)
@@ -28,11 +31,22 @@ export async function resolveAccessToken(event: H3Event, settings: CookieSetting
   const { accessToken, refreshToken } = storedTokens(event)
   if (accessToken !== undefined) return { ok: true, value: accessToken }
   if (refreshToken === undefined) return { ok: false, code: 'unauthorized' }
-  const refreshed = await createPhoneLogin().refresh(refreshToken)
+  const refreshed = await renewSession(event, refreshToken, settings)
+  return refreshed.ok ? { ok: true, value: refreshed.value.accessToken } : refreshed
+}
+
+/** Refresh (coalescido) com os cookies novos gravados; recusa do provedor limpa a sessão. */
+export async function renewSession(event: H3Event, refreshToken: string, settings: CookieSettings): Promise<AuthOutcome<TokenPair>> {
+  const refreshed = await refreshes.refresh(refreshToken, (token) => createPhoneLogin().refresh(token))
   if (refreshed.ok) {
     startSession(event, refreshed.value, settings)
-    return { ok: true, value: refreshed.value.accessToken }
+    return refreshed
   }
   if (refreshed.code === 'unauthorized') endSession(event, settings)
   return refreshed
+}
+
+/** Logout: o resultado guardado de um refresh não pode devolver tokens a quem saiu. */
+export function forgetRefresh(...refreshTokens: readonly string[]): void {
+  for (const token of refreshTokens) refreshes.forget(token)
 }

@@ -151,7 +151,7 @@
   "pricing": {
     "title": "Menos de R$ 3 por dia para parar de perder cliente.",
     "paybackNote": "Exemplo: com ticket médio de R$ 30, 3 voltas a mais no mês cobrem o Fundador.",
-    "scarcity": "Só {founderSpots} lojas entram com preço de Fundador, e as {founderSpots} primeiras do Pro não têm limite de clientes. Depois, o preço volta para R$ 119,90 e R$ 249,90.",
+    "scarcity": "Só {founderSpots} lojas entram com preço de Fundador. O Fundador sai por R$ 79,90 nos 12 primeiros meses e depois vai para R$ 119,90; o Pro, por R$ 99,90 e depois R$ 159,90. As {founderSpots} primeiras do Pro não têm limite de clientes.",
     "currency": "R$",
     "period": "/mês",
     "featured": "Mais completo",
@@ -162,6 +162,7 @@
         "name": "Fundador",
         "from": "119,90",
         "price": "79,90",
+        "note": "Nos 12 primeiros meses; depois, R$ 119,90/mês",
         "items": {
           "stamps": "Carimbo na venda e resgate do prêmio no balcão",
           "birthday": "Carimbo em dobro no aniversário do cliente",
@@ -171,11 +172,12 @@
       },
       "pro": {
         "name": "Fundador Pro",
-        "from": "249,90",
+        "from": "159,90",
         "price": "99,90",
+        "note": "Nos 12 primeiros meses; depois, R$ 159,90/mês",
         "lead": "Tudo do Fundador, mais:",
         "items": {
-          "bonus": "Boas-vindas, indicação e dia surpresa em dobro",
+          "bonus": "Boas-vindas e dia surpresa em dobro",
           "spotlight": "Sua loja em destaque no Descobrir",
           "lapsed": "Lista de quem parou de comprar",
           "limit": "Até 1.000 clientes no clube (as {founderSpots} primeiras lojas, sem limite)"
@@ -184,7 +186,7 @@
     },
     "risk": {
       "label": "Pouco risco para começar",
-      "locked": "Preço travado enquanto você estiver no clube",
+      "locked": "Preço de promoção garantido por 12 meses",
       "noContract": "Sem fidelidade: cancele quando quiser",
       "setup": "Implantação grátis: a Equipe Lagoa+ monta o clube com você"
     },
@@ -223,11 +225,11 @@
       },
       "price": {
         "q": "Quanto custa?",
-        "a": "O Fundador custa R$ 79,90 por mês e o Fundador Pro, R$ 99,90, os dois com preço travado e sem fidelidade. A loja entra depois da aprovação da rede. O preço de Fundador vale só para as primeiras {founderSpots} lojas."
+        "a": "O Fundador custa R$ 79,90 por mês nos 12 primeiros meses e depois R$ 119,90. O Fundador Pro custa R$ 99,90 por mês nos 12 primeiros meses e depois R$ 159,90. Os dois são sem fidelidade. A loja entra depois da aprovação da rede. O preço de Fundador vale só para as primeiras {founderSpots} lojas."
       },
       "plans": {
         "q": "Qual a diferença entre Fundador e Pro?",
-        "a": "O Fundador tem carimbo, resgate e bônus de aniversário, para até 300 clientes. O Pro soma boas-vindas, indicação e dia surpresa, a lista de quem sumiu e o destaque da sua loja no Descobrir, para até 1.000 clientes (as primeiras {founderSpots} lojas do Pro não têm limite)."
+        "a": "O Fundador tem carimbo, resgate e bônus de aniversário, para até 300 clientes. O Pro soma boas-vindas e dia surpresa, a lista de quem sumiu e o destaque da sua loja no Descobrir, para até 1.000 clientes (as primeiras {founderSpots} lojas do Pro não têm limite)."
       },
       "privacy": {
         "q": "Como ficam os dados dos meus clientes?",
@@ -253,7 +255,7 @@
       "setup": "Com a loja aprovada, a gente monta o clube com você."
     },
     "stepsLabel": "O que acontece depois",
-    "note": "Só {founderSpots} lojas com preço de Fundador · a partir de R$ 79,90/mês · sem fidelidade"
+    "note": "Só {founderSpots} lojas com preço de Fundador · R$ 79,90/mês nos 12 primeiros meses · sem fidelidade"
   },
   "footer": {
     "tagline": "Clube de fidelidade do comércio de Três Lagoas/MS.",

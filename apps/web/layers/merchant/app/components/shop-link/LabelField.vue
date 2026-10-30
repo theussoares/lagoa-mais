@@ -37,7 +37,12 @@ const { t } = useI18n()
         v-for="preset in ctaLabelPresets(kind)"
         :key="preset"
         type="button"
-        class="inline-flex min-h-11 items-center rounded-full border border-(--lagoa-rule) bg-default px-4 text-base font-semibold text-toned focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+        class="inline-flex min-h-11 items-center rounded-full border px-4 text-base font-semibold transition-all duration-(--lagoa-dur-fast) cursor-pointer select-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary active:scale-95"
+        :class="
+          label === t(`merchantShopLink.label.preset.${preset}`)
+            ? 'border-primary bg-primary/10 text-primary shadow-xs'
+            : 'border-(--lagoa-rule) bg-default text-toned hover:border-primary/50 hover:bg-primary/5 hover:text-primary'
+        "
         @click="label = t(`merchantShopLink.label.preset.${preset}`)"
       >
         {{ t(`merchantShopLink.label.preset.${preset}`) }}

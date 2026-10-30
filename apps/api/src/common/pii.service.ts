@@ -51,6 +51,11 @@ export class PiiService {
     return this.hash(`phone:${phone}`)
   }
 
+  /** IP do cliente em hash: o contador do login de demonstração guarda a chave, nunca o IP. */
+  hashClientIp(ip: string): Buffer {
+    return this.hash(`ip:${ip}`)
+  }
+
   encryptEmail(email: string): Buffer {
     return this.encrypt(normalizeEmail(email))
   }

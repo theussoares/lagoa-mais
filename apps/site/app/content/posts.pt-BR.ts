@@ -46,7 +46,7 @@ export const POST_TEXTS: PostText[] = [
         'Um prêmio pequeno costuma custar menos do que a verba para atrair um desconhecido.',
       ] },
       { kind: 'h2', text: 'Um plano que se paga' },
-      { kind: 'p', text: 'No plano Fundador (R$ 79,90 por mês), com ticket médio de R$ 30, três voltas a mais no mês já cobrem o valor. É uma conta de exemplo: o resultado real depende da sua loja. Por isso o Lagoa+ não tem fidelidade: se não fizer sentido, você cancela.' },
+      { kind: 'p', text: 'No plano Fundador (R$ 79,90 por mês nos 12 primeiros meses), com ticket médio de R$ 30, três voltas a mais no mês já cobrem o valor. É uma conta de exemplo: o resultado real depende da sua loja. Por isso o Lagoa+ não tem fidelidade: se não fizer sentido, você cancela.' },
       { kind: 'quote', text: 'O caixa de amanhã está na base de clientes de hoje.' },
     ],
   },

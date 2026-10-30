@@ -3,9 +3,10 @@ const { t } = useI18n()
 
 const RULES = [
   { key: 'surprise', pro: true, icon: 'i-ph-calendar-star-bold', tilt: 2, span: 'bento-wide', featured: true },
-  { key: 'referral', pro: true, icon: 'i-ph-users-three-bold', tilt: -5, span: 'bento-third', featured: false },
+  // referral hidden for now
+  // { key: 'referral', pro: true, icon: 'i-ph-users-three-bold', tilt: -5, span: 'bento-third', featured: false },
   { key: 'welcome', pro: true, icon: 'i-ph-hand-waving-bold', tilt: -3, span: 'bento-third', featured: false },
-  { key: 'birthday', pro: false, icon: 'i-ph-cake-bold', tilt: 4, span: 'bento-wide', featured: false },
+  { key: 'birthday', pro: false, icon: 'i-ph-cake-bold', tilt: 4, span: 'bento-full', featured: false },
 ] as const
 </script>
 

@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { PhoneNumberSchema } from '#shared/schemas/phone'
-import { loginAttemptCheck, loginAttemptOutcome, reserveLoginAttempt } from '../utils/loginAttempts'
+import { loginAttemptCheck, loginAttemptOutcome, reserveDemoLoginAttempt, reserveLoginAttempt } from '../utils/loginAttempts'
 
 const PHONE = PhoneNumberSchema.parse('67991230374')
 const TARGET = { apiBaseUrl: 'https://api.test/v1', bffSharedSecret: 's3cret', production: true, clientIp: '203.0.113.9' }
@@ -52,6 +52,33 @@ describe('reserveLoginAttempt', () => {
     const fetchMock = vi.fn()
     vi.stubGlobal('fetch', fetchMock)
     expect(await reserveLoginAttempt({ ...TARGET, bffSharedSecret: '' }, PHONE)).toEqual({ ok: false, code: 'internal' })
+    expect(fetchMock).not.toHaveBeenCalled()
+  })
+})
+
+describe('reserveDemoLoginAttempt', () => {
+  it('asks the demo counter of the API with the BFF secret and the client IP, and no phone', async () => {
+    const fetchMock = vi.fn(async () => new Response(null, { status: 204 }))
+    vi.stubGlobal('fetch', fetchMock)
+    expect(await reserveDemoLoginAttempt(TARGET)).toEqual({ ok: true, value: true })
+    const [url, init] = fetchMock.mock.calls[0] as unknown as [string, RequestInit]
+    expect(url).toBe('https://api.test/v1/auth/demo-login-attempts')
+    expect(init.headers).toMatchObject({ 'x-bff-secret': 's3cret', 'x-client-ip': '203.0.113.9' })
+    expect(JSON.parse(String(init.body))).toEqual({})
+  })
+
+  it.each([
+    [429, { ok: false, code: 'rateLimited' }],
+    [503, { ok: false, code: 'internal' }],
+  ])('refuses when the API answers %s (fail-closed)', async (status, outcome) => {
+    vi.stubGlobal('fetch', vi.fn(async () => new Response(null, { status })))
+    expect(await reserveDemoLoginAttempt(TARGET)).toEqual(outcome)
+  })
+
+  it('refuses in production without a secret, without calling the API', async () => {
+    const fetchMock = vi.fn()
+    vi.stubGlobal('fetch', fetchMock)
+    expect(await reserveDemoLoginAttempt({ ...TARGET, bffSharedSecret: '' })).toEqual({ ok: false, code: 'internal' })
     expect(fetchMock).not.toHaveBeenCalled()
   })
 })

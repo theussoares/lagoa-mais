@@ -9,9 +9,15 @@ const screen = useClubSetupScreen()
   <div class="flex min-h-dvh flex-col">
     <ClubSetupHeader :shop-name="screen.shopName" :steps="screen.steps" />
 
-    <div v-if="screen.step !== 'poster'" class="mx-auto grid w-full max-w-[1200px] flex-1 items-start gap-10 px-8 py-8 lg:grid-cols-12">
+    <div v-if="screen.step !== 'poster'" class="mx-auto grid w-full max-w-[1200px] flex-1 items-start gap-6 px-4 py-5 sm:gap-10 sm:px-8 sm:py-8 lg:grid-cols-12">
       <ClubSetupFormStep :step="screen.step" :creating="screen.creating" :submit-error="screen.submitError" @submit="screen.submitStep" @back="screen.back">
-        <ClubSetupShopStep v-if="screen.step === 'shop'" v-model:shop="screen.form.shop" :errors="screen.shopErrors" />
+        <ClubSetupShopStep
+          v-if="screen.step === 'shop'"
+          v-model:shop="screen.form.shop"
+          :errors="screen.shopErrors"
+          :postal-code="screen.postalCode"
+          @postal-code="screen.setPostalCode"
+        />
         <ClubSetupRulesStep
           v-else-if="screen.step === 'rules'"
           v-model:program="screen.form.program"

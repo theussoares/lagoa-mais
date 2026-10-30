@@ -28,6 +28,7 @@ export function visitQrTarget(overrides: Partial<VisitQrTarget> = {}): VisitQrTa
     shop: catalogShop(),
     programId: PROGRAM_ID,
     cooldown: { cooldownHours: 24, cooldownMode: 'rolling' },
+    surpriseDay: catalogShop().program.bonusRules.surpriseDay,
     issuedBy: ISSUER_ID,
     earn: { kind: 'visit' },
     ...overrides,

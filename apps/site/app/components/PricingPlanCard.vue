@@ -12,7 +12,7 @@ interface Props {
 
 withDefaults(defineProps<Props>(), { featured: false, showInheritedLead: false })
 
-const { t } = useI18n()
+const { t, te } = useI18n()
 </script>
 
 <template>
@@ -32,6 +32,7 @@ const { t } = useI18n()
         <span class="font-display tabular text-[4rem] leading-none font-extrabold tracking-tight">{{ t(`pricing.plans.${plan}.price`) }}</span>
         <span class="text-lg text-muted">{{ t('pricing.period') }}</span>
       </p>
+      <p v-if="te(`pricing.plans.${plan}.note`)" class="text-sm text-muted" aria-hidden="true">{{ t(`pricing.plans.${plan}.note`) }}</p>
     </div>
 
     <p v-if="showInheritedLead" class="letreiro text-[0.9375rem] text-muted">{{ t(`pricing.plans.${plan}.lead`) }}</p>

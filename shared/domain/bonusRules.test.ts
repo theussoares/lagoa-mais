@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { BonusRules } from '../schemas/program'
-import { applyVisitBonuses, isBirthdayToday, welcomeUnits } from './bonusRules'
+import { applyVisitBonuses, isBirthdayToday, isSurpriseDay, welcomeUnits, withActiveSurpriseDay } from './bonusRules'
 
 const rules: BonusRules = {
   welcomeBonus: { enabled: true, units: 2 },
@@ -55,5 +55,27 @@ describe('isBirthdayToday', () => {
 
   it('is never true without a birthday', () => {
     expect(isBirthdayToday(null, { isoDate: '2026-10-01', monthDay: '10-01' })).toBe(false)
+  })
+})
+
+describe('withActiveSurpriseDay', () => {
+  const active = { enabled: true, multiplier: 2 as const, date: '2026-10-29' }
+  const oldVersion: BonusRules = { ...rules, surpriseDay: { enabled: false, multiplier: 2, date: null }, welcomeBonus: { enabled: true, units: 5 } }
+
+  it('takes the surprise day from the active version and keeps the rest of the card version', () => {
+    const merged = withActiveSurpriseDay(oldVersion, active)
+    expect(merged.surpriseDay).toEqual(active)
+    expect(merged.welcomeBonus).toEqual({ enabled: true, units: 5 })
+  })
+
+  it('doubles a visit today for a card whose own version has the surprise day off', () => {
+    const merged = withActiveSurpriseDay(oldVersion, active)
+    const result = applyVisitBonuses(1, merged, { today: { isoDate: '2026-10-29', monthDay: '10-29' }, customerBirthday: null })
+    expect(result).toEqual({ units: 2, applied: ['surpriseDay'] })
+  })
+
+  it('stops doubling as soon as the active version switches it off, even if the card version had it on', () => {
+    const merged = withActiveSurpriseDay(rules, { enabled: false, multiplier: 2, date: '2026-10-01' })
+    expect(isSurpriseDay(merged, '2026-10-01')).toBe(false)
   })
 })

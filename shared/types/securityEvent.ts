@@ -3,6 +3,8 @@ export type SecurityEventName =
   | 'auth.codeRequested'
   | 'auth.login'
   | 'auth.logout'
+  /** Entrada pela conta de demonstração (sem SMS). Nunca leva o celular. */
+  | 'auth.demoLogin'
   | 'access.unauthorized'
   | 'access.denied'
   | 'rateLimit.hit'

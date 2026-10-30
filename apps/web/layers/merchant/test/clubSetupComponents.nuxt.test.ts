@@ -23,6 +23,7 @@ function t(key: string, named?: Record<string, unknown>): string {
 }
 
 const mountIt = mountComponent
+const NO_POSTAL_CODE = { value: '', status: 'idle' } as const
 
 afterEach(unmountAll)
 
@@ -186,7 +187,7 @@ describe('club setup components: PosterStep and Poster', () => {
 describe('club setup components: shop, rules and reward steps', () => {
   it('writes the typed shop fields back as a new shop, keeping the others', async () => {
     const { shop } = emptyClubSetupForm()
-    const page = await mountIt(ShopFields, { shop, errors: {} })
+    const page = await mountIt(ShopFields, { shop, errors: {}, postalCode: NO_POSTAL_CODE })
     const name = page.get('input[name="name"]')
     await name.setValue('Lava-jato Brilho')
     expect(page.emitted('update:shop')?.at(-1)?.[0]).toEqual({ ...shop, name: 'Lava-jato Brilho' })
@@ -194,12 +195,29 @@ describe('club setup components: shop, rules and reward steps', () => {
     expect(page.emitted('update:shop')?.at(-1)?.[0]).toEqual({ ...shop, name: 'Lava-jato Brilho', neighborhood: 'Centro' })
   })
 
+  it('masks nothing itself: it shows the postal code it is given and reports what is typed', async () => {
+    const { shop } = emptyClubSetupForm()
+    const page = await mountIt(ShopFields, { shop, errors: {}, postalCode: { value: '79601-000', status: 'found' } })
+    const input = page.get('input[name="postalCode"]')
+    expect((input.element as HTMLInputElement).value).toBe('79601-000')
+    expect(page.get('[role="status"]').text()).toBe(t('clubSetup.shop.postalCodeStatus.found'))
+    await input.setValue('7960')
+    expect(page.emitted('postalCode')?.at(-1)).toEqual(['7960'])
+  })
+
+  it('warns discreetly when the postal code is unknown and keeps the address editable', async () => {
+    const { shop } = emptyClubSetupForm()
+    const page = await mountIt(ShopFields, { shop, errors: {}, postalCode: { value: '99999-999', status: 'notFound' } })
+    expect(page.get('[role="status"]').text()).toBe(t('clubSetup.shop.postalCodeStatus.notFound'))
+    expect(page.get('input[name="addressLine"]').attributes('disabled')).toBeUndefined()
+  })
+
   it('shows one error per invalid field, with the limit, and none otherwise', async () => {
     const { shop } = emptyClubSetupForm()
-    const clean = await mountIt(ShopFields, { shop, errors: {} })
+    const clean = await mountIt(ShopFields, { shop, errors: {}, postalCode: NO_POSTAL_CODE })
     expect(clean.text()).not.toContain(t('clubSetup.shop.categoryError'))
     clean.unmount()
-    const invalid = await mountIt(ShopFields, { shop, errors: { category: true, name: true } })
+    const invalid = await mountIt(ShopFields, { shop, errors: { category: true, name: true }, postalCode: NO_POSTAL_CODE })
     expect(invalid.text()).toContain(t('clubSetup.shop.categoryError'))
     expect(invalid.text()).toContain(t('clubSetup.shop.nameError', { max: SHOP_NAME_MAX_LENGTH }))
     expect(invalid.text()).not.toContain(t('clubSetup.shop.addressError', { max: SHOP_ADDRESS_MAX_LENGTH }))
@@ -207,7 +225,7 @@ describe('club setup components: shop, rules and reward steps', () => {
 
   it('wraps the shop fields in the shop module', async () => {
     const { shop } = emptyClubSetupForm()
-    const page = await mountIt(ShopStep, { shop, errors: {} })
+    const page = await mountIt(ShopStep, { shop, errors: {}, postalCode: NO_POSTAL_CODE })
     expect(page.get('h2').text()).toBe(t('clubSetup.shop.module'))
     expect(page.find('input[name="name"]').exists()).toBe(true)
   })

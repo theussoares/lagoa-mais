@@ -31,6 +31,21 @@ export class HttpAuthService implements AuthService {
   async signInCustomer(phone: PhoneNumber, code: LoginCode): Promise<Result<CustomerSignInResult, SignInError>> {
     const verified = await this.gateway.verifyCode(phone, code)
     if (!verified.ok) return verified
+    return this.resolveSignIn()
+  }
+
+  demoAvailable(): Promise<boolean> {
+    return this.gateway.demoAvailable('customer')
+  }
+
+  async signInDemoCustomer(): Promise<Result<CustomerSignInResult, SignInError>> {
+    const verified = await this.gateway.demoSignIn('customer')
+    if (!verified.ok) return verified
+    return this.resolveSignIn()
+  }
+
+  /** Cookie já gravado: a API diz quem é (`signUp` quando a conta ainda não tem cadastro). */
+  private async resolveSignIn(): Promise<Result<CustomerSignInResult, SignInError>> {
     const session = await this.api.get('/session', CustomerSessionSchema)
     if (session.ok) return ok({ kind: 'signedIn', session: session.value })
     if (session.error.code === 'notFound') return ok({ kind: 'signUp' })
