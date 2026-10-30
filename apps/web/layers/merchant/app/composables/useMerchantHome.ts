@@ -6,7 +6,10 @@ import type { MerchantHomeSnapshot, MerchantHome } from '../types/home'
 export function useMerchantHome(): MerchantHome {
   const { home, campaigns, program: programService, posterReprint: posterReprintService } = useMerchantServices()
   const campaignsEnabled = useCampaignsEnabled()
+  const refreshedAt = ref(new Date())
+
   const { state, reload } = useAsyncResult(async (): Promise<Result<MerchantHomeSnapshot, TransportError>> => {
+    refreshedAt.value = new Date()
     const [week, overviewResult, programResult, campaignsResult, reprint] = await Promise.all([
       home.getWeekSummary(),
       home.getOverview(),
@@ -30,10 +33,9 @@ export function useMerchantHome(): MerchantHome {
       overview: overviewResult.value,
       program: programResult?.ok ? programResult.value : null,
       campaignsOverview: campaignsResult?.ok ? campaignsResult.value : null,
-      reachable: campaignsResult?.ok ? campaignsResult.value.reach.reachable : null,
       posterReprintPending: reprint.ok && reprint.value,
       warnings,
     })
   })
-  return { state, reload, posterReprint: usePosterReprint(reload) }
+  return { state, refreshedAt: readonly(refreshedAt), reload, posterReprint: usePosterReprint(reload) }
 }

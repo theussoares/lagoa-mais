@@ -1,6 +1,7 @@
-import { HOME_ACTIVITY_LIMIT, MERCHANT_CUSTOMERS_PAGE_SIZE, REWARD_HOLD_DAYS } from '#shared/constants/domain'
-import { isLapsedSince, lapsedCutoff } from '#shared/domain/customer'
-import { isVisitKind } from '#shared/domain/ledger'
+import { HOME_ACTIVITY_LIMIT, MERCHANT_CUSTOMERS_PAGE_SIZE, PROGRAM_TARGET_MIN, REWARD_HOLD_DAYS } from '#shared/constants/domain'
+import { isLapsedSince } from '#shared/domain/customer'
+import { homeActivityKindOf, isVisitKind } from '#shared/domain/ledger'
+import { unitOf } from '#shared/domain/programStrategies'
 import { summarizeComparison } from '#shared/domain/homeComparison'
 import { summarizeWeek } from '#shared/domain/weekSummary'
 import { isNearReward, isRewardReady } from '#shared/domain/loyaltyCard'
@@ -9,7 +10,7 @@ import type { CustomerFilter, MerchantCustomerPage, MerchantCustomerRow } from '
 import type { CustomerId, ShopId } from '#shared/schemas/ids'
 import type { LoyaltyCard } from '#shared/schemas/loyaltyCard'
 import type { Program, ProgramDraft } from '#shared/schemas/program'
-import type { HomeActivityItem, HomeActivityKind, HomeOverview } from '#shared/schemas/homeOverview'
+import type { HomeActivityItem, HomeOverview } from '#shared/schemas/homeOverview'
 import type { WeekSummary } from '#shared/schemas/weekSummary'
 import type { ErrorOf } from '#shared/types/errors'
 import { err, ok } from '#shared/types/result'
@@ -125,10 +126,16 @@ export function updateProgram(
 export function homeOverview(ctx: MockContext, shopId: ShopId): HomeOverview {
   const shopCards = ctx.state.cards.filter((card) => card.shopId === shopId)
   const shopLedger = ctx.state.ledger.filter((entry) => entry.shopId === shopId)
-  const shopRedemptions = ctx.state.redemptions.filter((redemption) => redemption.shopId === shopId && redemption.status === 'active')
+  const nowMs = ctx.now.getTime()
+  const shopRedemptions = ctx.state.redemptions.filter(
+    (redemption) =>
+      redemption.shopId === shopId &&
+      redemption.status === 'active' &&
+      Date.parse(redemption.expiresAt) > nowMs,
+  )
   const program = findProgram(ctx, shopId)
-  const target = program?.rules.target ?? 10
-  const unit = program?.rules.mode === 'stamps' ? 'stamp' : 'point'
+  const fallbackTarget = program?.rules.target ?? PROGRAM_TARGET_MIN
+  const fallbackUnit = program ? unitOf(program.rules) : 'stamp'
 
   const lapsedCards = shopCards.filter((card) => isLapsedSince(card.lastVisitAt, ctx.now))
   const oldestLapsedCard = [...lapsedCards]
@@ -138,23 +145,27 @@ export function homeOverview(ctx: MockContext, shopId: ShopId): HomeOverview {
   const nearRewardCards = shopCards.filter((card) => isNearReward(card))
   const rewardReadyCards = shopCards.filter((card) => isRewardReady(card))
 
+  // A API conta a entrada do cliente na loja (criação do cartão); no mock é o primeiro registro na loja.
+  const firstEntryByCustomer = new Map<CustomerId, string>()
+  for (const entry of shopLedger) {
+    const prev = firstEntryByCustomer.get(entry.customerId)
+    if (prev === undefined || entry.createdAt < prev) {
+      firstEntryByCustomer.set(entry.customerId, entry.createdAt)
+    }
+  }
   const newCustomersRecords = shopCards.map((c) => ({
     customerId: c.customerId,
-    createdAt: findCustomer(ctx, c.customerId)?.createdAt ?? toIso(ctx.now),
+    createdAt:
+      firstEntryByCustomer.get(c.customerId) ??
+      findCustomer(ctx, c.customerId)?.createdAt ??
+      toIso(ctx.now),
   }))
   const comparison = summarizeComparison(shopLedger, newCustomersRecords, ctx.now)
 
   const items: HomeActivityItem[] = []
   for (const entry of shopLedger) {
     const customer = findCustomer(ctx, entry.customerId)
-    let kind: HomeActivityKind = 'visit'
-    if (entry.kind === 'redemption') {
-      kind = 'redemption'
-    } else if (entry.amountCents && entry.amountCents > 0) {
-      kind = 'purchase'
-    } else if (entry.kind === 'welcomeBonus' || entry.kind === 'referralBonus' || entry.kind === 'campaignBonus') {
-      kind = 'bonus'
-    }
+    const kind = homeActivityKindOf(entry.kind, entry.amountCents)
     items.push({
       id: `ledger_${entry.id}`,
       kind,
@@ -178,8 +189,8 @@ export function homeOverview(ctx: MockContext, shopId: ShopId): HomeOverview {
       customerId: redemption.customerId,
       name: customer?.firstName ?? null,
       maskedPhone: customer ? maskPhone(customer.phone) : null,
-      units: card?.target ?? target,
-      unit: card?.unit ?? unit,
+      units: card?.target ?? fallbackTarget,
+      unit: card?.unit ?? fallbackUnit,
       amountCents: null,
       rewardTitle: redemption.rewardTitle,
       createdAt: redemption.createdAt,

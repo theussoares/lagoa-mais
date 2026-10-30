@@ -1,18 +1,39 @@
 import { afterEach, describe, expect, it } from 'vitest'
+import { useNuxtApp } from '#imports'
 import type { CustomerId, ProgramId, ShopId } from '#shared/schemas/ids'
 import { MaskedPhoneSchema } from '#shared/schemas/phone'
 import type { Program } from '#shared/schemas/program'
 import type { WeekSummary } from '#shared/schemas/weekSummary'
 import type { HomeOverview } from '#shared/schemas/homeOverview'
+import type { Translate } from '#layers/core/app/types/i18n'
 import { mountComponent, unmountAll } from '#layers/core/test/componentHarness.nuxt'
-import HomeDashboardHeader from '../app/components/home/HomeDashboardHeader.vue'
-import HomeIndicatorCards from '../app/components/home/HomeIndicatorCards.vue'
-import HomeRecentActivity from '../app/components/home/HomeRecentActivity.vue'
-import HomeActiveCampaigns from '../app/components/home/HomeActiveCampaigns.vue'
-import HomeComparisonChart from '../app/components/home/HomeComparisonChart.vue'
-import HomeOpportunities from '../app/components/home/HomeOpportunities.vue'
+import DashboardHeader from '../app/components/home/DashboardHeader.vue'
+import IndicatorCards from '../app/components/home/IndicatorCards.vue'
+import RecentActivity from '../app/components/home/RecentActivity.vue'
+import ActiveCampaigns from '../app/components/home/ActiveCampaigns.vue'
+import ComparisonChart from '../app/components/home/ComparisonChart.vue'
+import Opportunities from '../app/components/home/Opportunities.vue'
+import {
+  toHomeActiveCampaignModels,
+  toHomeActivityModels,
+  toHomeComparisonModels,
+  toHomeIndicatorModels,
+  toHomeOpportunityModels,
+} from '../app/utils/homeModels'
 
 afterEach(unmountAll)
+
+const t: Translate = (key, named, plural) => {
+  const i18n = useNuxtApp().$i18n
+  if (plural !== undefined && named) return i18n.t(key, named, plural)
+  if (plural !== undefined) return i18n.t(key, plural)
+  if (named) return i18n.t(key, named)
+  return i18n.t(key)
+}
+
+function translate(): Translate {
+  return t
+}
 
 function mockWeek(overrides: Partial<WeekSummary> = {}): WeekSummary {
   const days = ['2026-10-09', '2026-10-10', '2026-10-11', '2026-10-12', '2026-10-13', '2026-10-14', '2026-10-15'].map((isoDate, index) => ({
@@ -108,15 +129,17 @@ function mockProgram(overrides: Partial<Program> = {}): Program {
 }
 
 describe('HomeDashboardHeader', () => {
-  it('renders title, subtitle, shop name and emits refresh', async () => {
-    const page = await mountComponent(HomeDashboardHeader, {
+  it('renders title, subtitle, shop name, counter action and emits refresh', async () => {
+    const page = await mountComponent(DashboardHeader, {
       shopName: 'Caju Barbearia',
+      dateText: 'Segunda-feira, 19 de outubro',
       loading: false,
     })
 
     expect(page.text()).toContain('Início')
     expect(page.text()).toContain('Caju Barbearia')
-    expect(page.text()).toContain('Acompanhe o desempenho do seu clube')
+    expect(page.text()).toContain('Segunda-feira, 19 de outubro')
+    expect(page.text()).toContain('Ir para o Balcão')
 
     const refreshBtn = page.get('button[aria-label="Atualizar o Início"]')
     await refreshBtn.trigger('click')
@@ -125,52 +148,49 @@ describe('HomeDashboardHeader', () => {
 })
 
 describe('HomeIndicatorCards', () => {
-  it('renders 4 metric cards including lapsed and near reward with action links', async () => {
-    const week = mockWeek({ customers: 87, redemptions: 32, newCustomers: 12 })
+  it('renders 4 metric cards with 7-day active customers and monthly redemptions diff', async () => {
+    const week = mockWeek({ customers: 87 })
     const overview = mockOverview({
       lapsed: { total: 14, oldestLastVisitAt: '2026-08-10T10:00:00Z' },
       nearReward: { total: 6 },
       totalCustomers: 120,
     })
-    const program = mockProgram()
 
-    const page = await mountComponent(HomeIndicatorCards, {
-      week,
-      overview,
-      program,
+    const page = await mountComponent(IndicatorCards, {
+      cards: toHomeIndicatorModels(week, overview, new Date('2026-10-19T12:00:00Z'), translate()),
     })
 
     expect(page.text()).toContain('Clientes ativos')
     expect(page.text()).toContain('87')
-    expect(page.text()).toContain('de 120 cadastrados')
+    expect(page.text()).toContain('nos últimos 7 dias · de 120 cadastrados')
 
     expect(page.text()).toContain('Clientes sumidos')
     expect(page.text()).toContain('14')
     expect(page.text()).toContain('Detalhes')
 
     expect(page.text()).toContain('Prêmios entregues')
-    expect(page.text()).toContain('32')
+    expect(page.text()).toContain('8')
+    expect(page.text()).toContain('+3')
+    expect(page.text()).toContain('vs. mês anterior')
 
     expect(page.text()).toContain('Perto do prêmio')
     expect(page.text()).toContain('6')
-    expect(page.text()).toContain('Detalhes')
   })
 })
 
 describe('HomeComparisonChart', () => {
-  it('renders comparison title, period switcher and metric values', async () => {
+  it('renders comparison title, accessible period tabs and metric values', async () => {
     const overview = mockOverview()
-    const program = mockProgram()
 
-    const page = await mountComponent(HomeComparisonChart, {
-      comparison: overview.comparison,
-      program,
+    const page = await mountComponent(ComparisonChart, {
+      comparison: toHomeComparisonModels(overview.comparison, translate()),
     })
 
     expect(page.text()).toContain('Resumo do mês')
-    expect(page.text()).toContain('Esta semana')
-    expect(page.text()).toContain('Este mês')
-    expect(page.text()).toContain('Últimos 30 dias')
+    const tabs = page.findAll('[role="tab"]')
+    expect(tabs).toHaveLength(3)
+    expect(tabs[1]?.attributes('aria-selected')).toBe('true')
+
     expect(page.text()).toContain('Cadastrados')
     expect(page.text()).toContain('Visitas')
     expect(page.text()).toContain('Compras')
@@ -179,23 +199,21 @@ describe('HomeComparisonChart', () => {
 })
 
 describe('HomeOpportunities', () => {
-  it('renders actionable opportunity alerts', async () => {
+  it('renders actionable opportunity alerts with singular and plural forms', async () => {
     const overview = mockOverview({
-      lapsed: { total: 12, oldestLastVisitAt: null },
+      lapsed: { total: 1, oldestLastVisitAt: null },
       nearReward: { total: 5 },
-      rewardReady: { total: 3 },
+      rewardReady: { total: 1 },
     })
-    const program = mockProgram()
 
-    const page = await mountComponent(HomeOpportunities, {
-      overview,
-      program,
+    const page = await mountComponent(Opportunities, {
+      alerts: toHomeOpportunityModels(overview, translate()),
     })
 
     expect(page.text()).toContain('Resumo de oportunidades')
-    expect(page.text()).toContain('12 clientes sumidos há mais de 30 dias')
+    expect(page.text()).toContain('1 cliente sumido há mais de 30 dias')
     expect(page.text()).toContain('5 clientes próximos de ganhar um prêmio')
-    expect(page.text()).toContain('3 prêmios disponíveis para resgate')
+    expect(page.text()).toContain('1 prêmio disponível para resgate')
   })
 
   it('renders empty state when there are no alerts', async () => {
@@ -204,11 +222,9 @@ describe('HomeOpportunities', () => {
       nearReward: { total: 0 },
       rewardReady: { total: 0 },
     })
-    const program = mockProgram()
 
-    const page = await mountComponent(HomeOpportunities, {
-      overview,
-      program,
+    const page = await mountComponent(Opportunities, {
+      alerts: toHomeOpportunityModels(overview, translate()),
     })
 
     expect(page.text()).toContain('Tudo em dia por aqui!')
@@ -219,21 +235,22 @@ describe('HomeRecentActivity', () => {
   it('displays activity list with customer name and event details', async () => {
     const overview = mockOverview()
 
-    const page = await mountComponent(HomeRecentActivity, {
-      activity: overview.activity,
+    const page = await mountComponent(RecentActivity, {
+      rows: toHomeActivityModels(overview.activity, new Date('2026-10-19T10:15:00Z'), translate()),
     })
 
     expect(page.text()).toContain('Atividade recente do clube')
     expect(page.text()).toContain('Carlos Silva')
     expect(page.text()).toContain('Visita registrada')
+    expect(page.text()).toContain('Há 15 min')
     expect(page.text()).toContain('Maria Souza')
     expect(page.text()).toContain('Compra lançada')
     expect(page.text()).toContain('45,00')
   })
 
   it('renders empty state when activity is empty', async () => {
-    const page = await mountComponent(HomeRecentActivity, {
-      activity: [],
+    const page = await mountComponent(RecentActivity, {
+      rows: [],
     })
 
     expect(page.text()).toContain('Nenhuma atividade registrada ainda.')
@@ -241,16 +258,16 @@ describe('HomeRecentActivity', () => {
 })
 
 describe('HomeActiveCampaigns', () => {
-  it('displays birthday and welcome bonus campaigns when enabled', async () => {
+  it('displays birthday and welcome bonus campaigns with accurate day rule', async () => {
     const program = mockProgram()
-    const page = await mountComponent(HomeActiveCampaigns, {
-      program,
-      campaignsOverview: null,
-      campaignsEnabled: false,
+    const page = await mountComponent(ActiveCampaigns, {
+      items: toHomeActiveCampaignModels(program, null, false, translate()),
+      seeAllTo: '/programa',
     })
 
     expect(page.text()).toContain('Campanhas ativas')
     expect(page.text()).toContain('Aniversário do clube')
+    expect(page.text()).toContain('No dia do aniversário, a visita vale 2× em pontos.')
     expect(page.text()).toContain('Em andamento')
     expect(page.text()).toContain('Boas-vindas')
   })

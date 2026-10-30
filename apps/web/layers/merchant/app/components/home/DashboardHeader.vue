@@ -1,6 +1,7 @@
 <script setup lang="ts">
 interface Props {
   shopName?: string | null
+  dateText: string
   loading?: boolean
 }
 
@@ -11,16 +12,6 @@ const emit = defineEmits<{
 }>()
 
 const { t } = useI18n()
-
-const currentDateFormatted = computed(() => {
-  const now = new Date()
-  const formatted = new Intl.DateTimeFormat('pt-BR', {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long',
-  }).format(now)
-  return formatted.charAt(0).toUpperCase() + formatted.slice(1)
-})
 </script>
 
 <template>
@@ -35,10 +26,10 @@ const currentDateFormatted = computed(() => {
     </div>
 
     <div class="flex flex-wrap items-center gap-3 sm:gap-4 shrink-0 sm:pr-14">
-      <!-- Data atual no fuso brasileiro -->
+      <!-- Data atual no fuso da cidade -->
       <div class="flex items-center gap-2 text-sm text-(--ui-text-toned)">
         <UIcon name="i-ph-calendar-blank" class="size-4.5 text-(--ui-text-muted)" aria-hidden="true" />
-        <span class="font-medium">{{ currentDateFormatted }}</span>
+        <span class="font-medium">{{ dateText }}</span>
       </div>
 
       <div class="hidden sm:block h-4 w-px bg-(--ui-border)" aria-hidden="true" />
@@ -51,12 +42,22 @@ const currentDateFormatted = computed(() => {
         <span class="max-w-[170px] truncate" :title="shopName">{{ shopName }}</span>
       </div>
 
+      <!-- Atalho direto para o Balcão -->
+      <UButton
+        to="/balcao"
+        size="lg"
+        color="primary"
+        icon="i-ph-storefront"
+        class="min-h-11 cursor-pointer"
+        :label="t('home.counterAction')"
+      />
+
       <!-- Ação de atualizar -->
       <UButton
         variant="ghost"
         color="neutral"
         icon="i-ph-arrow-clockwise"
-        class="size-9 justify-center rounded-lg cursor-pointer transition-all duration-150 hover:bg-(--ui-bg-muted) active:scale-95"
+        class="size-11 min-h-11 min-w-11 justify-center rounded-lg cursor-pointer transition-all duration-150 hover:bg-(--ui-bg-muted) active:scale-95"
         :aria-label="t('home.refresh')"
         :loading="loading"
         @click="emit('refresh')"
@@ -64,3 +65,4 @@ const currentDateFormatted = computed(() => {
     </div>
   </header>
 </template>
+

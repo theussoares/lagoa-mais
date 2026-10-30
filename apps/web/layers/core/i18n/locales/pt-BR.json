@@ -545,30 +545,21 @@
   },
   "home": {
     "title": "Início",
-    "lead": "O que aconteceu na loja nos últimos {days} dias e quem vale chamar de volta.",
     "subtitle": "Acompanhe o desempenho do seu clube e gerencie o dia a dia da sua loja.",
     "counterAction": "Ir para o Balcão",
     "warnings": {
       "program": "Não foi possível carregar as informações do programa. Algumas metas ou unidades podem não ser exibidas.",
       "campaigns": "Não foi possível carregar as campanhas ativas no momento."
     },
-    "stats": {
-      "sales": "Vendas da semana",
-      "visits": "Visitas da semana",
-      "redemptions": "Prêmios entregues"
-    },
-    "week": {
-      "customers": "nenhum cliente | 1 cliente | {count} clientes",
-      "newCustomers": "nenhum cliente novo | 1 cliente novo | {count} clientes novos"
-    },
     "indicators": {
       "activeCustomers": "Clientes ativos",
+      "activeThisWeek": "nos últimos 7 dias · de {total} cadastrados",
       "ofRegistered": "de {total} cadastrados",
       "registered": "cadastrados",
       "lapsedCustomers": "Clientes sumidos",
       "lapsedDescription": "há mais de {days} dias sem visita",
       "oldestLapsed": "mais antigo: há {days} dias",
-      "noLapsed": "Nenhum cliente sumido 🎉",
+      "noLapsed": "Nenhum cliente sumido",
       "seeLapsedAction": "Detalhes",
       "deliveredRewards": "Prêmios entregues",
       "thisMonth": "este mês",
@@ -598,14 +589,15 @@
       },
       "current": "Atual",
       "previous": "Anterior",
+      "barTitle": "{metric} ({period}): {value}",
       "noData": "Sem movimentação no período"
     },
     "opportunities": {
       "title": "Resumo de oportunidades",
       "seeAll": "Ver clientes",
-      "lapsedAlert": "{count} clientes sumidos há mais de {days} dias",
-      "nearRewardAlert": "{count} clientes próximos de ganhar um prêmio",
-      "readyRewardAlert": "{count} prêmios disponíveis para resgate",
+      "lapsedAlert": "1 cliente sumido há mais de {days} dias | {count} clientes sumidos há mais de {days} dias",
+      "nearRewardAlert": "1 cliente próximo de ganhar um prêmio | {count} clientes próximos de ganhar um prêmio",
+      "readyRewardAlert": "1 prêmio disponível para resgate | {count} prêmios disponíveis para resgate",
       "empty": "Tudo em dia por aqui!",
       "emptyHint": "Novos alertas aparecerão conforme clientes atingirem a meta ou ficarem inativos."
     },
@@ -614,6 +606,16 @@
       "seeAll": "Ver todos",
       "empty": "Nenhuma atividade registrada ainda.",
       "emptyHint": "Visitas, compras, prêmios e resgates aparecerão aqui em tempo real.",
+      "defaultReward": "Prêmio",
+      "deliveredAtCounter": "Entregue no balcão",
+      "unitsReached": "{units} atingido | {units} atingidos",
+      "time": {
+        "justNow": "Agora mesmo",
+        "minutesAgo": "Há 1 min | Há {count} min",
+        "todayAt": "Hoje às {time}",
+        "yesterdayAt": "Ontem às {time}",
+        "dateAt": "{date} às {time}"
+      },
       "events": {
         "visit": "Visita registrada",
         "purchase": "Compra lançada ({amount})",
@@ -627,23 +629,18 @@
       "seeAll": "Ver todas",
       "statusOngoing": "Em andamento",
       "birthdayTitle": "Aniversário do clube",
-      "birthdayDesc": "Cliente ganha dobro de pontos na visita durante o mês do aniversário.",
+      "birthdayDesc": "No dia do aniversário, a visita vale {multiplier}× em {unit}.",
       "welcomeTitle": "Boas-vindas",
       "welcomeDesc": "Cliente ganha {units} de boas-vindas no primeiro check-in.",
+      "referralTitle": "Traga um amigo",
+      "referralDesc": "Quem indicou ganha {units} quando o amigo faz a 1ª visita.",
       "surpriseTitle": "Dia surpresa",
-      "surpriseDesc": "Pontuação em dobro no dia especial da loja.",
+      "surpriseDesc": "No dia especial da loja, toda visita vale {multiplier}× em {unit}.",
+      "lapsedReminderTitle": "Lembrete para sumidos",
+      "lapsedReminderDesc": "Último envio para 1 cliente em {date}. | Último envio para {count} clientes em {date}.",
       "empty": "Nenhuma campanha ativa no momento.",
       "emptyHint": "Ative regras de bônus ou envie campanhas para atrair clientes.",
       "configureAction": "Configurar clube"
-    },
-    "lapsed": {
-      "title": "Clientes sumidos",
-      "caption": "Clientes sumidos mais recentes",
-      "count": "1 cliente sem visita há mais de {days} dias | {count} clientes sem visita há mais de {days} dias",
-      "empty": "Ninguém sumido: todo mundo voltou nos últimos {days} dias.",
-      "seeAll": "Ver todos",
-      "remind": "Mandar lembrete",
-      "reachable": "Ninguém pode receber um lembrete agora. | 1 cliente pode receber um lembrete agora. | {count} clientes podem receber um lembrete agora."
     },
     "refresh": "Atualizar o Início",
     "posterReprint": {
