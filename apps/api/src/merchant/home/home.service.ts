@@ -39,7 +39,7 @@ export class HomeService {
     const [customerMetrics, comparison, activity] = await Promise.all([
       this.homeRepo.getCustomerMetrics(shop.id, cutoff),
       this.homeRepo.getComparisonMetrics(shop.id, ranges),
-      this.homeRepo.listRecentActivity(shop.id, HOME_ACTIVITY_LIMIT),
+      this.homeRepo.listRecentActivity(shop.id, HOME_ACTIVITY_LIMIT, now),
     ])
 
     return ok({

@@ -79,7 +79,7 @@ class FakeHomeRepository implements HomeRepository {
     return this.comparisonMetrics
   }
 
-  async listRecentActivity(_shopId: string): Promise<HomeActivityItem[]> {
+  async listRecentActivity(_shopId: string, _limit: number, _now: Date): Promise<HomeActivityItem[]> {
     return this.activity
   }
 }

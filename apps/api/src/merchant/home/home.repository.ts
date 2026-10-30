@@ -18,5 +18,5 @@ export abstract class HomeRepository {
     shopId: string,
     ranges: Record<HomePeriod, { current: DateRange; previous: DateRange }>,
   ): Promise<Record<HomePeriod, HomeMetrics>>
-  abstract listRecentActivity(shopId: string, limit: number): Promise<HomeActivityItem[]>
+  abstract listRecentActivity(shopId: string, limit: number, now: Date): Promise<HomeActivityItem[]>
 }

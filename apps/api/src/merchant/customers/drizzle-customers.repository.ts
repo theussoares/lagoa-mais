@@ -1,7 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common'
-import { and, desc, eq, gte, isNull, lt, lte, sql, type SQL } from 'drizzle-orm'
-import { NEAR_REWARD_PERCENT } from '#shared/constants/domain'
-import type { CustomerFilter } from '#shared/schemas/customer'
+import { and, desc, eq, isNull, sql, type SQL } from 'drizzle-orm'
 import { DB, type Database } from '../../database/database.module'
 import { ledgerEntries, loyaltyCards } from '../../database/schema/cards'
 import { programs } from '../../database/schema/shops'

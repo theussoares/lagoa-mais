@@ -1,12 +1,12 @@
-import { Inject, Injectable } from '@nestjs/common'
-import { and, asc, desc, eq, gte, inArray, isNull, lt, lte, sql, type SQL } from 'drizzle-orm'
-import type { DateRange } from '#shared/domain/homeComparison'
+import { Inject, Injectable, Logger } from '@nestjs/common'
+import { and, asc, desc, eq, gt, gte, inArray, isNull, sql, type AnyColumn, type SQL } from 'drizzle-orm'
+import { minComparisonStart, type DateRange } from '#shared/domain/homeComparison'
+import { homeActivityKindOf } from '#shared/domain/ledger'
 import type { WeekLedgerRecord } from '#shared/domain/weekSummary'
 import { CustomerIdSchema } from '#shared/schemas/ids'
-import type { IsoDateTime } from '#shared/schemas/common'
-import type { PhoneNumber } from '#shared/schemas/phone'
+import { PhoneNumberSchema } from '#shared/schemas/phone'
 import { LedgerKindSchema } from '#shared/schemas/visit'
-import type { HomeActivityItem, HomeActivityKind, HomeMetrics, HomePeriod } from '#shared/schemas/homeOverview'
+import type { HomeActivityItem, HomeMetrics, HomePeriod } from '#shared/schemas/homeOverview'
 import { maskPhone } from '#shared/utils/phone'
 import { toIso } from '#shared/utils/time'
 import { PiiService } from '../../common/pii.service'
@@ -18,8 +18,16 @@ import { HomeRepository, type ShopCustomerMetrics } from './home.repository'
 const PERIODS: readonly HomePeriod[] = ['week', 'month', 'last30']
 const RANGE_KEYS = ['current', 'previous'] as const
 
+function between(col: AnyColumn, range: DateRange): SQL {
+  return (range.inclusiveEnd ?? true)
+    ? sql`${col} >= ${range.start} and ${col} <= ${range.end}`
+    : sql`${col} >= ${range.start} and ${col} < ${range.end}`
+}
+
 @Injectable()
 export class DrizzleHomeRepository extends HomeRepository {
+  private readonly logger = new Logger(DrizzleHomeRepository.name)
+
   constructor(
     @Inject(DB) private readonly db: Database,
     private readonly pii: PiiService,
@@ -96,23 +104,18 @@ export class DrizzleHomeRepository extends HomeRepository {
     shopId: string,
     ranges: Record<HomePeriod, { current: DateRange; previous: DateRange }>,
   ): Promise<Record<HomePeriod, HomeMetrics>> {
-    const minStart = ranges.last30.previous.start
+    const minStart = minComparisonStart(ranges)
 
     const ledgerSelectFields: Record<string, SQL<number>> = {}
     for (const p of PERIODS) {
       for (const k of RANGE_KEYS) {
         const range = ranges[p][k]
-        const timeFilter = (range.inclusiveEnd ?? true)
-          ? and(gte(ledgerEntries.occurredAt, range.start), lte(ledgerEntries.occurredAt, range.end))!
-          : and(gte(ledgerEntries.occurredAt, range.start), lt(ledgerEntries.occurredAt, range.end))!
+        const timeFilter = between(ledgerEntries.occurredAt, range)
+        const isVisit = inArray(ledgerEntries.kind, ['visit', 'amount', 'checkIn'])
 
-        const visitFilter = and(inArray(ledgerEntries.kind, ['visit', 'amount', 'checkIn']), timeFilter)!
-        const purchaseFilter = and(
-          inArray(ledgerEntries.kind, ['visit', 'amount', 'checkIn']),
-          sql`${ledgerEntries.amountCents} > 0`,
-          timeFilter,
-        )!
-        const redemptionFilter = and(eq(ledgerEntries.kind, 'redemption'), timeFilter)!
+        const visitFilter = sql`${isVisit} and (${timeFilter})`
+        const purchaseFilter = sql`${isVisit} and ${ledgerEntries.amountCents} > 0 and (${timeFilter})`
+        const redemptionFilter = sql`${eq(ledgerEntries.kind, 'redemption')} and (${timeFilter})`
 
         ledgerSelectFields[`${p}_${k}_visits`] = sql<number>`count(*) FILTER (WHERE ${visitFilter})::int`
         ledgerSelectFields[`${p}_${k}_purchases`] = sql<number>`count(*) FILTER (WHERE ${purchaseFilter})::int`
@@ -124,9 +127,7 @@ export class DrizzleHomeRepository extends HomeRepository {
     for (const p of PERIODS) {
       for (const k of RANGE_KEYS) {
         const range = ranges[p][k]
-        const cardTimeFilter = (range.inclusiveEnd ?? true)
-          ? and(gte(loyaltyCards.createdAt, range.start), lte(loyaltyCards.createdAt, range.end))!
-          : and(gte(loyaltyCards.createdAt, range.start), lt(loyaltyCards.createdAt, range.end))!
+        const cardTimeFilter = between(loyaltyCards.createdAt, range)
 
         cardSelectFields[`${p}_${k}_newCustomers`] =
           sql<number>`count(DISTINCT ${loyaltyCards.customerId}) FILTER (WHERE ${cardTimeFilter})::int`
@@ -137,7 +138,14 @@ export class DrizzleHomeRepository extends HomeRepository {
       this.db
         .select(ledgerSelectFields)
         .from(ledgerEntries)
-        .where(and(eq(ledgerEntries.shopId, shopId), gte(ledgerEntries.occurredAt, minStart))),
+        .innerJoin(appUsers, eq(appUsers.id, ledgerEntries.customerId))
+        .where(
+          and(
+            eq(ledgerEntries.shopId, shopId),
+            isNull(appUsers.erasedAt),
+            gte(ledgerEntries.occurredAt, minStart),
+          ),
+        ),
       this.db
         .select(cardSelectFields)
         .from(loyaltyCards)
@@ -151,32 +159,33 @@ export class DrizzleHomeRepository extends HomeRepository {
         ),
     ])
 
-    const result = {} as Record<HomePeriod, HomeMetrics>
-    for (const p of PERIODS) {
-      result[p] = {
-        newCustomers: {
-          current: cardRow?.[`${p}_current_newCustomers`] ?? 0,
-          previous: cardRow?.[`${p}_previous_newCustomers`] ?? 0,
-        },
-        visits: {
-          current: ledgerRow?.[`${p}_current_visits`] ?? 0,
-          previous: ledgerRow?.[`${p}_previous_visits`] ?? 0,
-        },
-        purchases: {
-          current: ledgerRow?.[`${p}_current_purchases`] ?? 0,
-          previous: ledgerRow?.[`${p}_previous_purchases`] ?? 0,
-        },
-        redemptions: {
-          current: ledgerRow?.[`${p}_current_redemptions`] ?? 0,
-          previous: ledgerRow?.[`${p}_previous_redemptions`] ?? 0,
-        },
-      }
-    }
+    const metricsFor = (p: HomePeriod): HomeMetrics => ({
+      newCustomers: {
+        current: cardRow?.[`${p}_current_newCustomers`] ?? 0,
+        previous: cardRow?.[`${p}_previous_newCustomers`] ?? 0,
+      },
+      visits: {
+        current: ledgerRow?.[`${p}_current_visits`] ?? 0,
+        previous: ledgerRow?.[`${p}_previous_visits`] ?? 0,
+      },
+      purchases: {
+        current: ledgerRow?.[`${p}_current_purchases`] ?? 0,
+        previous: ledgerRow?.[`${p}_previous_purchases`] ?? 0,
+      },
+      redemptions: {
+        current: ledgerRow?.[`${p}_current_redemptions`] ?? 0,
+        previous: ledgerRow?.[`${p}_previous_redemptions`] ?? 0,
+      },
+    })
 
-    return result
+    return {
+      week: metricsFor('week'),
+      month: metricsFor('month'),
+      last30: metricsFor('last30'),
+    }
   }
 
-  async listRecentActivity(shopId: string, limit: number): Promise<HomeActivityItem[]> {
+  async listRecentActivity(shopId: string, limit: number, now: Date): Promise<HomeActivityItem[]> {
     const [ledgerRows, redemptionRows] = await Promise.all([
       this.db
         .select({
@@ -201,7 +210,15 @@ export class DrizzleHomeRepository extends HomeRepository {
         .where(
           and(
             eq(ledgerEntries.shopId, shopId),
-            inArray(ledgerEntries.kind, ['visit', 'amount', 'checkIn', 'welcomeBonus', 'referralBonus', 'redemption']),
+            // `campaignBonus` entra no enum do banco na M5 (Campanhas); `homeActivityKindOf` já mapeia ambos.
+            inArray(ledgerEntries.kind, [
+              'visit',
+              'amount',
+              'checkIn',
+              'welcomeBonus',
+              'referralBonus',
+              'redemption',
+            ]),
           ),
         )
         .orderBy(sql`${ledgerEntries.occurredAt} desc nulls last`, sql`${ledgerEntries.id} desc nulls last`)
@@ -228,6 +245,7 @@ export class DrizzleHomeRepository extends HomeRepository {
           and(
             eq(redemptions.shopId, shopId),
             eq(redemptions.status, 'active'),
+            gt(redemptions.expiresAt, now),
           ),
         )
         .orderBy(desc(redemptions.createdAt))
@@ -237,21 +255,16 @@ export class DrizzleHomeRepository extends HomeRepository {
     const items: HomeActivityItem[] = []
 
     for (const row of ledgerRows) {
-      let kind: HomeActivityKind = 'visit'
-      if (row.kind === 'redemption') {
-        kind = 'redemption'
-      } else if (row.amountCents !== null && row.amountCents !== undefined && row.amountCents > 0) {
-        kind = 'purchase'
-      } else if (row.kind === 'welcomeBonus' || row.kind === 'referralBonus') {
-        kind = 'bonus'
-      }
+      const parsedKind = LedgerKindSchema.safeParse(row.kind)
+      if (!parsedKind.success) continue
+      const kind = homeActivityKindOf(parsedKind.data, row.amountCents)
 
       items.push({
         id: `ledger_${row.id}`,
         kind,
         customerId: CustomerIdSchema.parse(row.customerId),
         name: row.erasedAt !== null ? null : row.firstName,
-        maskedPhone: this.maskedPhoneOf(row.phoneEncrypted, row.erasedAt),
+        maskedPhone: this.maskedPhoneOf(row.id, row.phoneEncrypted, row.erasedAt),
         units: Math.abs(row.unitsDelta),
         unit: row.programUnit,
         amountCents: row.amountCents !== null && row.amountCents !== undefined && row.amountCents > 0 ? row.amountCents : null,
@@ -266,7 +279,7 @@ export class DrizzleHomeRepository extends HomeRepository {
         kind: 'rewardReleased',
         customerId: CustomerIdSchema.parse(row.customerId),
         name: row.erasedAt !== null ? null : row.firstName,
-        maskedPhone: this.maskedPhoneOf(row.phoneEncrypted, row.erasedAt),
+        maskedPhone: this.maskedPhoneOf(row.id, row.phoneEncrypted, row.erasedAt),
         units: row.target,
         unit: row.programUnit,
         amountCents: null,
@@ -280,11 +293,12 @@ export class DrizzleHomeRepository extends HomeRepository {
       .slice(0, limit)
   }
 
-  private maskedPhoneOf(phoneEncrypted: Buffer, erasedAt: Date | null): ReturnType<typeof maskPhone> | null {
+  private maskedPhoneOf(rowId: string, phoneEncrypted: Buffer, erasedAt: Date | null): ReturnType<typeof maskPhone> | null {
     if (erasedAt !== null) return null
     try {
-      return maskPhone(this.pii.decrypt(phoneEncrypted) as PhoneNumber)
+      return maskPhone(PhoneNumberSchema.parse(this.pii.decrypt(phoneEncrypted)))
     } catch {
+      this.logger.error(`Could not decrypt customer phone for home activity row ${rowId}`)
       return null
     }
   }
