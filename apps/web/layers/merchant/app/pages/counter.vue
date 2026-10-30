@@ -6,15 +6,15 @@ const screen = useCounterScreen()
 </script>
 
 <template>
-  <div class="mx-auto flex max-w-[1200px] flex-col gap-5">
+  <div class="mx-auto flex w-full max-w-[1200px] flex-col gap-4 sm:gap-5">
     <PageTitle :title="$t('counter.title')" class="print:hidden">
       <template #actions>
-        <p class="pb-1 text-muted first-letter:uppercase">{{ screen.today }}</p>
+        <p class="pb-1 text-sm sm:text-base text-muted first-letter:uppercase">{{ screen.today }}</p>
       </template>
     </PageTitle>
 
-    <div class="grid items-start gap-5 lg:grid-cols-12 print:block">
-      <div class="flex flex-col gap-5 lg:col-span-5">
+    <div class="grid items-start gap-4 sm:gap-5 lg:grid-cols-12 print:block">
+      <div class="flex min-w-0 flex-col gap-4 sm:gap-5 lg:col-span-5">
         <CounterVisitQrPanel
           :amount-text="screen.visitQr.amountText"
           :action="screen.visitQr.action"
@@ -39,7 +39,7 @@ const screen = useCounterScreen()
       </div>
 
       <!-- Resgate no topo da direita: valida sem rolar, ao lado do teclado; a caderneta rola por dentro. -->
-      <div class="flex flex-col gap-5 lg:col-span-7 print:hidden">
+      <div class="flex min-w-0 flex-col gap-4 sm:gap-5 lg:col-span-7 print:hidden">
         <CounterRedemptionPanel
           v-model:code="screen.redemption.code"
           :status="screen.redemption.status"

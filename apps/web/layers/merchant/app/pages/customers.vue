@@ -81,7 +81,7 @@ const tableLabels = computed<CustomerTableLabels>(() => ({
             variant="ghost"
             color="neutral"
             icon="i-ph-arrow-clockwise"
-            class="size-11 justify-center"
+            class="size-11 justify-center cursor-pointer transition-all duration-150 hover:bg-slate-100 dark:hover:bg-white/10 active:scale-95"
             :aria-label="t('customers.refresh')"
             :loading="state.status === 'loading'"
             @click="reload"
@@ -90,7 +90,7 @@ const tableLabels = computed<CustomerTableLabels>(() => ({
       </template>
 
       <div class="flex flex-col gap-4">
-        <div role="group" :aria-labelledby="filterLabelId" class="flex flex-col gap-1.5">
+        <div role="group" :aria-labelledby="filterLabelId" class="-mx-3.5 overflow-x-auto px-3.5 sm:mx-0 sm:px-0 [scrollbar-width:none] flex flex-col gap-1.5">
           <span :id="filterLabelId" class="sr-only">{{ t('customers.filters.label') }}</span>
           <UTabs
             :model-value="filter"
@@ -98,8 +98,8 @@ const tableLabels = computed<CustomerTableLabels>(() => ({
             :content="false"
             variant="pill"
             color="neutral"
-            class="w-fit"
-            :ui="{ trigger: 'min-h-11 px-4 text-[0.9375rem]' }"
+            class="w-max sm:w-fit"
+            :ui="{ trigger: 'min-h-11 px-3.5 sm:px-4 text-sm sm:text-[0.9375rem] whitespace-nowrap' }"
             @update:model-value="onFilterChange"
           />
         </div>

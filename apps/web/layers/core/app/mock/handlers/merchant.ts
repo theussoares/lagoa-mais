@@ -1,13 +1,16 @@
-import { MERCHANT_CUSTOMERS_PAGE_SIZE, REWARD_HOLD_DAYS } from '#shared/constants/domain'
+import { HOME_ACTIVITY_LIMIT, MERCHANT_CUSTOMERS_PAGE_SIZE, PROGRAM_TARGET_MIN, REWARD_HOLD_DAYS } from '#shared/constants/domain'
 import { isLapsedSince } from '#shared/domain/customer'
-import { isVisitKind } from '#shared/domain/ledger'
+import { homeActivityKindOf, isVisitKind } from '#shared/domain/ledger'
+import { unitOf } from '#shared/domain/programStrategies'
+import { summarizeComparison } from '#shared/domain/homeComparison'
 import { summarizeWeek } from '#shared/domain/weekSummary'
-import { isRewardReady } from '#shared/domain/loyaltyCard'
+import { isNearReward, isRewardReady } from '#shared/domain/loyaltyCard'
 import { ProgramDraftSchema } from '#shared/schemas/program'
 import type { CustomerFilter, MerchantCustomerPage, MerchantCustomerRow } from '#shared/schemas/customer'
 import type { CustomerId, ShopId } from '#shared/schemas/ids'
 import type { LoyaltyCard } from '#shared/schemas/loyaltyCard'
 import type { Program, ProgramDraft } from '#shared/schemas/program'
+import type { HomeActivityItem, HomeOverview } from '#shared/schemas/homeOverview'
 import type { WeekSummary } from '#shared/schemas/weekSummary'
 import type { ErrorOf } from '#shared/types/errors'
 import { err, ok } from '#shared/types/result'
@@ -21,6 +24,7 @@ import { cancelActiveVisitQrs } from './visitQr'
 const filters: Readonly<Record<CustomerFilter, (row: MerchantCustomerRow) => boolean>> = {
   all: () => true,
   lapsed: (row) => row.isLapsed,
+  nearReward: (row) => isNearReward(row),
   rewardReady: (row) => isRewardReady(row),
 }
 
@@ -117,4 +121,99 @@ export function updateProgram(
   ctx.state.cards = ctx.state.cards.map((card) => (card.shopId === shopId ? retarget(ctx, card, next) : card))
   cancelActiveVisitQrs(ctx, shopId)
   return ok(next)
+}
+
+export function homeOverview(ctx: MockContext, shopId: ShopId): HomeOverview {
+  const shopCards = ctx.state.cards.filter((card) => card.shopId === shopId)
+  const shopLedger = ctx.state.ledger.filter((entry) => entry.shopId === shopId)
+  const nowMs = ctx.now.getTime()
+  const shopRedemptions = ctx.state.redemptions.filter(
+    (redemption) =>
+      redemption.shopId === shopId &&
+      redemption.status === 'active' &&
+      Date.parse(redemption.expiresAt) > nowMs,
+  )
+  const program = findProgram(ctx, shopId)
+  const fallbackTarget = program?.rules.target ?? PROGRAM_TARGET_MIN
+  const fallbackUnit = program ? unitOf(program.rules) : 'stamp'
+
+  const lapsedCards = shopCards.filter((card) => isLapsedSince(card.lastVisitAt, ctx.now))
+  const oldestLapsedCard = [...lapsedCards]
+    .filter((c) => c.lastVisitAt !== null)
+    .sort((a, b) => (a.lastVisitAt ?? '').localeCompare(b.lastVisitAt ?? ''))[0]
+
+  const nearRewardCards = shopCards.filter((card) => isNearReward(card))
+  const rewardReadyCards = shopCards.filter((card) => isRewardReady(card))
+
+  // A API conta a entrada do cliente na loja (criação do cartão); no mock é o primeiro registro na loja.
+  const firstEntryByCustomer = new Map<CustomerId, string>()
+  for (const entry of shopLedger) {
+    const prev = firstEntryByCustomer.get(entry.customerId)
+    if (prev === undefined || entry.createdAt < prev) {
+      firstEntryByCustomer.set(entry.customerId, entry.createdAt)
+    }
+  }
+  const newCustomersRecords = shopCards.map((c) => ({
+    customerId: c.customerId,
+    createdAt:
+      firstEntryByCustomer.get(c.customerId) ??
+      findCustomer(ctx, c.customerId)?.createdAt ??
+      toIso(ctx.now),
+  }))
+  const comparison = summarizeComparison(shopLedger, newCustomersRecords, ctx.now)
+
+  const items: HomeActivityItem[] = []
+  for (const entry of shopLedger) {
+    const customer = findCustomer(ctx, entry.customerId)
+    const kind = homeActivityKindOf(entry.kind, entry.amountCents)
+    items.push({
+      id: `ledger_${entry.id}`,
+      kind,
+      customerId: entry.customerId,
+      name: customer?.firstName ?? null,
+      maskedPhone: customer ? maskPhone(customer.phone) : null,
+      units: entry.units,
+      unit: entry.unit,
+      amountCents: entry.amountCents,
+      rewardTitle: entry.rewardTitle,
+      createdAt: entry.createdAt,
+    })
+  }
+
+  for (const redemption of shopRedemptions) {
+    const customer = findCustomer(ctx, redemption.customerId)
+    const card = ctx.state.cards.find((c) => c.id === redemption.cardId)
+    items.push({
+      id: `redemption_${redemption.id}`,
+      kind: 'rewardReleased',
+      customerId: redemption.customerId,
+      name: customer?.firstName ?? null,
+      maskedPhone: customer ? maskPhone(customer.phone) : null,
+      units: card?.target ?? fallbackTarget,
+      unit: card?.unit ?? fallbackUnit,
+      amountCents: null,
+      rewardTitle: redemption.rewardTitle,
+      createdAt: redemption.createdAt,
+    })
+  }
+
+  const activity = items
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+    .slice(0, HOME_ACTIVITY_LIMIT)
+
+  return {
+    lapsed: {
+      total: lapsedCards.length,
+      oldestLastVisitAt: oldestLapsedCard?.lastVisitAt ?? null,
+    },
+    nearReward: {
+      total: nearRewardCards.length,
+    },
+    rewardReady: {
+      total: rewardReadyCards.length,
+    },
+    totalCustomers: shopCards.length,
+    comparison,
+    activity,
+  }
 }

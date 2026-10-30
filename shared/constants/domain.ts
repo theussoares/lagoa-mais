@@ -113,7 +113,6 @@ export const REMINDER_BONUS_SUGGESTED_VISITS = 1
 export const CAMPAIGN_HISTORY_LIMIT = 10
 /** Janela da caderneta do Início: hoje e os 6 dias anteriores, no fuso do piloto. */
 export const WEEK_SUMMARY_DAYS = 7
-export const HOME_LAPSED_PREVIEW_LIMIT = 5
 export const SHOP_NAME_MAX_LENGTH = 60
 export const SHOP_NEIGHBORHOOD_MAX_LENGTH = 40
 export const SHOP_ADDRESS_MAX_LENGTH = 100
@@ -179,3 +178,7 @@ export const DEMO_LOGIN_ATTEMPTS_MAX = 10
 export const DEMO_LOGIN_WINDOW_MINUTES = 15
 /** Página do painel da rede onde o admin convidado define a senha (destino do link do convite). */
 export const ADMIN_SET_PASSWORD_PATH = '/definir-senha'
+/** Porcentagem mínima da meta (80%) para o cliente ser considerado próximo do prêmio. */
+export const NEAR_REWARD_PERCENT = 80
+/** Quantidade máxima de itens na lista de atividade recente da home. */
+export const HOME_ACTIVITY_LIMIT = 10

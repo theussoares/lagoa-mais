@@ -1,42 +1,110 @@
-import type { MerchantCustomerPage } from '#shared/schemas/customer'
+import type { CampaignOverview } from '#shared/schemas/campaign'
+import type { HomeOverview, HomePeriod } from '#shared/schemas/homeOverview'
+import type { Program } from '#shared/schemas/program'
 import type { WeekSummary } from '#shared/schemas/weekSummary'
 import type { TransportError } from '#shared/types/errors'
 import type { AsyncResultState } from '#layers/core/app/types/asyncResult'
-import type { ComputedRef } from 'vue'
+import type { ComputedRef, Ref } from 'vue'
 import type { CheckInPosterModel } from './poster'
 
-export interface HomeStatCard {
-  readonly id: 'sales' | 'visits' | 'redemptions' | 'lapsed'
-  /** "Vendas da semana". */
+export type HomeDiffTone = 'success' | 'error' | 'neutral'
+
+export interface HomeIndicatorCardBadge {
+  readonly text: string
   readonly label: string
-  /** Já formatado: "R$ 120,50" ou "3". */
+  readonly tone: HomeDiffTone
+  readonly icon: string
+}
+
+export interface HomeIndicatorCardAction {
+  readonly label: string
+  readonly to: string
+}
+
+export interface HomeIndicatorCardModel {
+  readonly id: 'activeCustomers' | 'lapsedCustomers' | 'deliveredRewards' | 'nearReward'
+  readonly icon: string
+  readonly title: string
   readonly value: string
-  /** "2 clientes" embaixo do número; `null` quando não há nota. */
-  readonly note: string | null
+  readonly subtitle: string | null
+  readonly badge?: HomeIndicatorCardBadge
+  readonly action?: HomeIndicatorCardAction
 }
 
-export interface HomeStatInput {
-  readonly week: WeekSummary
-  readonly lapsedTotal: number
-  readonly reachable: number | null
+export interface HomeActivityRowModel {
+  readonly id: string
+  readonly initials: string
+  readonly avatarBg: string
+  readonly avatarText: string
+  readonly customerName: string
+  readonly maskedPhone: string | null
+  readonly icon: string
+  readonly iconColor: string
+  readonly label: string
+  readonly sub: string
+  readonly relativeTime: string
+  readonly to: string
 }
 
-export interface LapsedPreviewLabels {
-  readonly caption: string
-  readonly noName: string
+export interface HomeActiveCampaignModel {
+  readonly id: string
+  readonly title: string
+  readonly description: string
+  readonly status: string
+  readonly icon: string
+  readonly iconBg: string
+  readonly iconColor: string
+  readonly badgeBg: string
+  readonly badgeColor: string
+  readonly to: string
+}
+
+export interface HomeComparisonBarModel {
+  readonly id: 'newCustomers' | 'visits' | 'purchases' | 'redemptions'
+  readonly label: string
+  readonly current: number
+  readonly previous: number
+  readonly currentHeight: number
+  readonly previousHeight: number
+  readonly diffText: string | null
+  readonly diffTone: HomeDiffTone
+  readonly diffIcon: string
+  readonly currentTitle: string
+  readonly previousTitle: string
+}
+
+export interface HomeOpportunityModel {
+  readonly id: 'lapsed' | 'near-reward' | 'reward-ready'
+  readonly title: string
+  readonly count: number
+  readonly icon: string
+  readonly iconColor: string
+  readonly badgeClass: string
+  readonly to: string
 }
 
 export interface MerchantHomeSnapshot {
   readonly week: WeekSummary
-  /** Primeira página dos sumidos, mais recentes primeiro (os mais fáceis de trazer de volta); `total` conta todos. */
-  readonly lapsed: MerchantCustomerPage
-  /**
-   * Quantos podem receber um lembrete agora (regra do servidor, a mesma de Campanhas).
-   * `null` quando a contagem não veio: o resto do Início continua de pé.
-   */
-  readonly reachable: number | null
+  readonly overview: HomeOverview
+  /** Programa e prêmio cadastrados da loja. */
+  readonly program: Program | null
+  /** Campanhas cadastradas. */
+  readonly campaignsOverview: CampaignOverview | null
   /** O cartaz antigo ainda está na parede. Sem a resposta, o aviso não aparece. */
   readonly posterReprintPending: boolean
+  /** Alertas de serviços que falharam (não-autorizado derruba a tela; outras falhas geram aviso). */
+  readonly warnings: readonly ('program' | 'campaigns')[]
+}
+
+export interface MerchantHomeViewModel {
+  readonly cards: readonly HomeIndicatorCardModel[]
+  readonly activityRows: readonly HomeActivityRowModel[]
+  readonly activeCampaigns: readonly HomeActiveCampaignModel[]
+  readonly campaignsSeeAllTo: string
+  readonly comparisonBars: Record<HomePeriod, readonly HomeComparisonBarModel[]>
+  readonly opportunities: readonly HomeOpportunityModel[]
+  readonly posterReprintPending: boolean
+  readonly warnings: readonly ('program' | 'campaigns')[]
 }
 
 export interface PosterReprint {
@@ -48,6 +116,7 @@ export interface PosterReprint {
 
 export interface MerchantHome {
   state: ComputedRef<AsyncResultState<MerchantHomeSnapshot, TransportError>>
+  refreshedAt: Readonly<Ref<Date>>
   reload: () => Promise<void>
   posterReprint: PosterReprint
 }

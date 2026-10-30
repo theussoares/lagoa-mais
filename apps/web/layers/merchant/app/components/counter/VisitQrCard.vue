@@ -36,13 +36,13 @@ useFocusTarget(() => props.focusRequest, 'issueVisitQr', () => focusElement(issu
     <InkNote v-if="display.refusal" tone="warning" icon="i-ph-hourglass-medium" :description="display.refusal" class="print:hidden" />
     <CounterVisitQrReceipt v-if="display.receipt" :key="display.receipt.key" :receipt="display.receipt.model" icon="i-ph-check-fat-bold" class="print:hidden" />
 
-    <div class="flex flex-wrap gap-2 print:hidden">
+    <div class="grid grid-cols-2 sm:flex sm:flex-wrap gap-2 print:hidden">
       <template v-if="display.status === 'active'">
-        <UButton variant="outline" color="neutral" icon="i-ph-printer" :label="$t('counter.visitQr.print')" @click="emit('print')" />
-        <UButton variant="outline" color="neutral" icon="i-ph-x" :label="$t('counter.visitQr.cancel')" @click="emit('cancel')" />
-        <UButton v-if="canSimulate" variant="ghost" color="neutral" :label="$t('counter.visitQr.simulateClaim')" @click="emit('simulateClaim')" />
+        <UButton variant="outline" color="neutral" icon="i-ph-printer" class="min-h-11 justify-center" :label="$t('counter.visitQr.print')" @click="emit('print')" />
+        <UButton variant="outline" color="neutral" icon="i-ph-x" class="min-h-11 justify-center" :label="$t('counter.visitQr.cancel')" @click="emit('cancel')" />
+        <UButton v-if="canSimulate" variant="ghost" color="neutral" class="col-span-2 min-h-11 justify-center" :label="$t('counter.visitQr.simulateClaim')" @click="emit('simulateClaim')" />
       </template>
-      <UButton v-else ref="issueAnotherButton" block icon="i-ph-arrow-clockwise" :label="$t('counter.visitQr.issueAnother')" @click="emit('issueAnother')" />
+      <UButton v-else ref="issueAnotherButton" block icon="i-ph-arrow-clockwise" class="col-span-2 min-h-11 justify-center" :label="$t('counter.visitQr.issueAnother')" @click="emit('issueAnother')" />
     </div>
   </div>
 </template>
