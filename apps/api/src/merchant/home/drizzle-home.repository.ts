@@ -1,5 +1,5 @@
 import { Inject, Injectable, Logger } from '@nestjs/common'
-import { and, asc, desc, eq, gt, gte, inArray, isNull, sql, type AnyColumn, type SQL } from 'drizzle-orm'
+import { and, asc, desc, eq, gt, gte, inArray, isNull, lt, lte, sql, type AnyColumn, type SQL } from 'drizzle-orm'
 import { minComparisonStart, type DateRange } from '#shared/domain/homeComparison'
 import { homeActivityKindOf } from '#shared/domain/ledger'
 import type { WeekLedgerRecord } from '#shared/domain/weekSummary'
@@ -20,8 +20,8 @@ const RANGE_KEYS = ['current', 'previous'] as const
 
 function between(col: AnyColumn, range: DateRange): SQL {
   return (range.inclusiveEnd ?? true)
-    ? sql`${col} >= ${range.start} and ${col} <= ${range.end}`
-    : sql`${col} >= ${range.start} and ${col} < ${range.end}`
+    ? and(gte(col, range.start), lte(col, range.end))!
+    : and(gte(col, range.start), lt(col, range.end))!
 }
 
 @Injectable()
