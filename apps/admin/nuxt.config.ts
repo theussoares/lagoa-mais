@@ -32,6 +32,8 @@ export default defineNuxtConfig({
     turnstileSecret: '',
     /** Mesmo BFF_SHARED_SECRET da API (reserva de tentativa de login). Env: NUXT_BFF_SHARED_SECRET. */
     bffSharedSecret: '',
+    /** Endereço público do painel (https://admin.lagoamais.com.br): destino do link de "esqueci a senha". Vazio = o host do pedido. Env: NUXT_APP_URL. */
+    appUrl: '',
     /** Origens extras que podem escrever em `/api/**`. Env: NUXT_ALLOWED_ORIGINS. */
     allowedOrigins: '',
     public: {

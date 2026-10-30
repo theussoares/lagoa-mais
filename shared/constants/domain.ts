@@ -179,3 +179,8 @@ export const DEMO_LOGIN_ATTEMPTS_MAX = 10
 export const DEMO_LOGIN_WINDOW_MINUTES = 15
 /** Página do painel da rede onde o admin convidado define a senha (destino do link do convite). */
 export const ADMIN_SET_PASSWORD_PATH = '/definir-senha'
+/** Senha do admin: longa o bastante para não cair em lista de vazamento; 72 é o teto do bcrypt do Supabase. */
+export const ADMIN_PASSWORD_MIN_LENGTH = 12
+export const ADMIN_PASSWORD_MAX_LENGTH = 72
+/** Código do autenticador (TOTP). */
+export const ADMIN_MFA_CODE_LENGTH = 6
