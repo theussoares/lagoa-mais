@@ -18,6 +18,8 @@ function setup(verify: Result<true, SignInError>, routes: Record<string, () => R
   const gateway: PhoneAuthGateway = {
     sendCode: vi.fn(async () => ({ ok: true as const, value: true as const })),
     verifyCode: vi.fn(async () => verify),
+    demoAvailable: vi.fn(async () => true),
+    demoSignIn: vi.fn(async () => verify),
     signOut: vi.fn(async () => ({ ok: true as const, value: true as const })),
   }
   const calls: string[] = []
@@ -44,6 +46,27 @@ describe('HttpAuthService', () => {
     const { auth, calls } = setup({ ok: true, value: true }, { 'GET /session': () => json(200, session) })
     expect(await auth.signInCustomer(PHONE, CODE)).toEqual({ ok: true, value: { kind: 'signedIn', session } })
     expect(calls).toEqual(['GET /session'])
+  })
+
+  it('signs in through the demo account and reads the session of the API, without a code', async () => {
+    const session = { role: 'customer', customerId: CUSTOMER_ID, isNewCustomer: false }
+    const { auth, gateway, calls } = setup({ ok: true, value: true }, { 'GET /session': () => json(200, session) })
+    expect(await auth.signInDemoCustomer()).toEqual({ ok: true, value: { kind: 'signedIn', session } })
+    expect(gateway.demoSignIn).toHaveBeenCalledWith('customer')
+    expect(gateway.verifyCode).not.toHaveBeenCalled()
+    expect(calls).toEqual(['GET /session'])
+  })
+
+  it('leaves the API alone when the demo sign-in is refused', async () => {
+    const { auth, calls } = setup({ ok: false, error: { code: 'rateLimited' } }, {})
+    expect(await auth.signInDemoCustomer()).toEqual({ ok: false, error: { code: 'rateLimited' } })
+    expect(calls).toEqual([])
+  })
+
+  it('asks the gateway whether the demo is on for the customer', async () => {
+    const { auth, gateway } = setup({ ok: true, value: true }, {})
+    expect(await auth.demoAvailable()).toBe(true)
+    expect(gateway.demoAvailable).toHaveBeenCalledWith('customer')
   })
 
   it('does not register a first-time customer on its own: it asks for the sign-up details', async () => {

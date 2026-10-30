@@ -29,6 +29,10 @@ export default defineNuxtConfig({
     bffSharedSecret: '',
     /** Origens extras (separadas por vírgula) que podem escrever em `/api/**`; o próprio host sempre pode. Env: NUXT_ALLOWED_ORIGINS. */
     allowedOrigins: '',
+    /** Conta de demonstração (login sem SMS), opcional: test phones do Supabase. Sem as três envs a rota não existe. Envs: NUXT_DEMO_CUSTOMER_PHONE, NUXT_DEMO_MERCHANT_PHONE, NUXT_DEMO_OTP. */
+    demoCustomerPhone: '',
+    demoMerchantPhone: '',
+    demoOtp: '',
     public: {
       /** URL do projeto Supabase (não é segredo): login no servidor e fotos do bucket público. */
       supabaseUrl: '',

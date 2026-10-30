@@ -30,6 +30,21 @@ export class HttpMerchantAuthService implements MerchantAuthService {
   async signInMerchant(phone: PhoneNumber, code: LoginCode): Promise<Result<MerchantSignInResult, MerchantSignInError>> {
     const verified = await this.gateway.verifyCode(phone, code)
     if (!verified.ok) return verified
+    return this.resolveSignIn()
+  }
+
+  demoAvailable(): Promise<boolean> {
+    return this.gateway.demoAvailable('merchant')
+  }
+
+  async signInDemoMerchant(): Promise<Result<MerchantSignInResult, MerchantSignInError>> {
+    const verified = await this.gateway.demoSignIn('merchant')
+    if (!verified.ok) return verified
+    return this.resolveSignIn()
+  }
+
+  /** Cookie já gravado: a API diz se há loja (`session`) ou se falta o Criar o clube (`signUp`). */
+  private async resolveSignIn(): Promise<Result<MerchantSignInResult, MerchantSignInError>> {
     const session = await this.currentSession()
     if (session.ok) return ok({ kind: 'session', session: session.value })
     if (session.error.code === 'notFound') return ok({ kind: 'signUp' })

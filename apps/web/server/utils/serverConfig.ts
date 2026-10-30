@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
 import { parseAllowedOrigins } from './originGuard'
+import type { DemoConfig } from './demoLogin'
 import { PhoneLogin } from './phoneLogin'
 
 export interface BffConfig {
@@ -18,6 +19,12 @@ export function readBffConfig(): BffConfig {
     allowedOrigins: parseAllowedOrigins(config.allowedOrigins),
     secureCookies: process.env.NODE_ENV === 'production',
   }
+}
+
+/** Conta de demonstração (login sem SMS). Vazio = desligada. */
+export function readDemoConfig(): DemoConfig {
+  const config = useRuntimeConfig()
+  return { customerPhone: config.demoCustomerPhone, merchantPhone: config.demoMerchantPhone, otp: config.demoOtp }
 }
 
 export function createPhoneLogin(): PhoneLogin {
