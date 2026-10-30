@@ -21,6 +21,11 @@ describe('session cookies', () => {
     expect(refresh?.options.maxAge).toBeGreaterThan(access?.options.maxAge ?? 0)
   })
 
+  it('give the refresh cookie a fresh 30 days on every write (sliding window)', () => {
+    const refresh = sessionCookiesFor(tokens, { secure: false }).find((cookie) => cookie.name === REFRESH_COOKIE)
+    expect(refresh?.options.maxAge).toBe(60 * 60 * 24 * 30)
+  })
+
   it('expire both on sign out', () => {
     expect(expiredCookiesFor({ secure: false }).map((cookie) => [cookie.name, cookie.value, cookie.options.maxAge])).toEqual([
       [ACCESS_COOKIE, '', 0],
