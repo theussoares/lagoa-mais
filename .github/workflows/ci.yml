@@ -10,7 +10,9 @@ jobs:
     runs-on: ubuntu-latest
     services:
       postgres:
-        image: public.ecr.aws/docker/library/postgres:17
+        # Cache anônimo do Docker Hub mantido pelo Google: o espelho público da AWS passou a recusar com
+        # `toomanyrequests: Data limit exceeded` nos runners compartilhados, e o Docker Hub limita sem login.
+        image: mirror.gcr.io/library/postgres:17
         env:
           POSTGRES_PASSWORD: postgres
           POSTGRES_DB: lagoa_test
@@ -44,3 +46,5 @@ jobs:
         run: pnpm build:api
       - name: Web tests
         run: pnpm test
+      - name: Admin panel tests
+        run: pnpm test:admin
