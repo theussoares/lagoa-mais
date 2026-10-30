@@ -67,6 +67,13 @@
     "title": "Balcão",
     "todayCount": "Nenhum lançamento hoje | 1 lançamento hoje | {count} lançamentos hoje",
     "signedOut": "Entre com o celular da loja para usar o Balcão.",
+    "tabs": {
+      "label": "Seções do Balcão",
+      "visitQr": "QR da visita",
+      "redemption": "Resgate",
+      "ledger": "Caderneta",
+      "ledgerCount": "Caderneta ({count})"
+    },
     "visitQr": {
       "title": "QR da visita",
       "lead": "Gere na hora da venda e mostre ao cliente. Vale {minutes} min e uma vez só.",
@@ -325,6 +332,10 @@
     "label": "Navegação do painel",
     "signOut": "Sair do painel",
     "settings": "Configurações",
+    "programShort": "Programa",
+    "more": "Menu",
+    "moreTitle": "Menu da loja",
+    "closeMenu": "Fechar menu",
     "pending": {
       "title": "Loja aguardando aprovação da rede",
       "description": "Você já pode conferir o clube e imprimir o cartaz. O Balcão e o carimbo pelo QR passam a valer quando a rede Lagoa+ aprovar a loja.",

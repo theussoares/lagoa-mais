@@ -13,6 +13,8 @@ import RecentActivity from '../app/components/home/RecentActivity.vue'
 import ActiveCampaigns from '../app/components/home/ActiveCampaigns.vue'
 import ComparisonChart from '../app/components/home/ComparisonChart.vue'
 import Opportunities from '../app/components/home/Opportunities.vue'
+import MobileHeader from '../app/components/navigation/MobileHeader.vue'
+import MobileNav from '../app/components/navigation/MobileNav.vue'
 import {
   toHomeActiveCampaignModels,
   toHomeActivityModels,
@@ -270,5 +272,44 @@ describe('HomeActiveCampaigns', () => {
     expect(page.text()).toContain('No dia do aniversário, a visita vale 2× em pontos.')
     expect(page.text()).toContain('Em andamento')
     expect(page.text()).toContain('Boas-vindas')
+  })
+})
+
+describe('Merchant Mobile Navigation', () => {
+  it('renders mobile header with LAGOA+ badge, shop name and theme toggle', async () => {
+    const page = await mountComponent(MobileHeader, {
+      shopName: 'Barbearia Central',
+      themeToggleLabels: {
+        switchToLight: 'Mudar para tema claro',
+        switchToDark: 'Mudar para tema escuro',
+      },
+    })
+
+    expect(page.text()).toContain('LAGOA+')
+    expect(page.text()).toContain('Barbearia Central')
+  })
+
+  it('renders mobile bottom navigation with primary tabs and prominent Counter button', async () => {
+    const page = await mountComponent(MobileNav, {
+      items: [
+        { label: 'Início', icon: 'i-ph-house', to: '/painel' },
+        { label: 'Balcão', icon: 'i-ph-storefront', to: '/balcao' },
+        { label: 'Clientes', icon: 'i-ph-users', to: '/clientes' },
+        { label: 'Programa e prêmios', icon: 'i-ph-seal', to: '/programa' },
+        { label: 'Hits', icon: 'i-ph-fire', to: '/hits' },
+      ],
+      footerItems: [{ label: 'Configurações', icon: 'i-ph-gear-six', to: '/configuracoes' }],
+      currentPath: '/balcao',
+      shopName: 'Barbearia Central',
+    })
+
+    expect(page.text()).toContain('Início')
+    expect(page.text()).toContain('Balcão')
+    expect(page.text()).toContain('Clientes')
+    expect(page.text()).toContain('Programa')
+    expect(page.text()).toContain('Menu')
+
+    const activeLink = page.get('a[aria-current="page"]')
+    expect(activeLink.attributes('href')).toBe('/balcao')
   })
 })

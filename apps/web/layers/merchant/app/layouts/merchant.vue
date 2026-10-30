@@ -2,6 +2,7 @@
 import type { SpineNavItem } from '#layers/ui/app/types/spine'
 
 const { t } = useI18n()
+const route = useRoute()
 const { session, signOut } = useMerchantSession()
 const shopStatus = useShopStatus()
 const { approveForTesting } = shopStatus
@@ -31,16 +32,29 @@ const themeToggleLabels = computed(() => ({
 </script>
 
 <template>
-  <div class="grid min-h-dvh grid-cols-[var(--merchant-sidebar-width)_minmax(0,1fr)] bg-(--ui-bg-muted) dark:bg-(--lagoa-desk) text-base [--merchant-sidebar-width:230px] print:block">
-    <!-- A barra lateral em azul-petróleo escuro usando os tokens da paleta -->
-    <aside class="dark print:hidden sticky top-0 flex h-dvh flex-col bg-(--lagoa-desk) border-r border-(--lagoa-rule) px-3.5 py-6 text-default">
-      <div class="flex flex-col items-start px-2 pb-7">
+  <div class="flex min-h-dvh flex-col bg-(--ui-bg-muted) dark:bg-(--lagoa-desk) text-base [--merchant-sidebar-width:230px] lg:grid lg:grid-cols-[var(--merchant-sidebar-width)_minmax(0,1fr)] print:block">
+    <NavigationMobileHeader :shop-name="session?.shopName" :theme-toggle-labels="themeToggleLabels" />
+
+    <!-- A barra lateral em azul-petróleo escuro usando os tokens da paleta (somente desktop) -->
+    <aside class="dark hidden print:hidden lg:sticky lg:top-0 lg:flex lg:h-dvh lg:flex-col bg-(--lagoa-desk) border-r border-(--lagoa-rule) px-3.5 py-6 text-default">
+      <div class="flex flex-col items-start px-2 pb-6">
         <div class="rounded-lg border-[1.5px] border-cyan-400/90 px-2.5 py-1 text-sm font-extrabold tracking-wider text-cyan-400">
           LAGOA+
         </div>
-        <p v-if="session" class="mt-2.5 w-full truncate text-[0.875rem] font-medium text-slate-300/70" :title="session.shopName">
-          {{ session.shopName }}
-        </p>
+        <div
+          v-if="session"
+          class="mt-3.5 flex w-full items-center gap-2.5 rounded-xl border border-white/10 bg-white/[0.04] px-2.5 py-2 shadow-xs transition-colors hover:bg-white/[0.07]"
+          :title="session.shopName"
+        >
+          <div class="flex size-7 shrink-0 items-center justify-center rounded-lg bg-cyan-400/15 text-cyan-400 ring-1 ring-cyan-400/30">
+            <UIcon name="i-ph-storefront-fill" class="size-4" aria-hidden="true" />
+          </div>
+          <div class="min-w-0 flex-1">
+            <span class="block font-display truncate text-sm font-bold text-white tracking-tight leading-tight">
+              {{ session.shopName }}
+            </span>
+          </div>
+        </div>
       </div>
       <SpineNav :items="items" :footer-items="footerItems" :label="t('merchantNav.label')" />
       <button
@@ -52,8 +66,9 @@ const themeToggleLabels = computed(() => ({
         {{ t('merchantNav.signOut') }}
       </button>
     </aside>
-    <main id="main" class="min-w-0 px-6 sm:px-8 py-7">
-      <div class="fixed top-4 right-4 sm:top-6 sm:right-8 z-50 print:hidden">
+
+    <main id="main" class="min-w-0 flex-1 px-4 pt-4 pb-[calc(env(safe-area-inset-bottom)+6.5rem)] sm:px-6 lg:px-8 lg:py-7">
+      <div class="hidden lg:block fixed top-6 right-8 z-50 print:hidden">
         <ThemeToggle :labels="themeToggleLabels" />
       </div>
       <InkNote
@@ -75,5 +90,13 @@ const themeToggleLabels = computed(() => ({
       />
       <slot />
     </main>
+
+    <NavigationMobileNav
+      :items="items"
+      :footer-items="footerItems"
+      :current-path="route.path"
+      :shop-name="session?.shopName"
+      @sign-out="signOut"
+    />
   </div>
 </template>

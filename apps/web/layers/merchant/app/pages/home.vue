@@ -69,15 +69,15 @@ const view = computed(() =>
         live
       />
 
-      <div v-else-if="view" class="flex flex-col gap-6">
+      <div v-else-if="view" class="flex flex-col gap-4 sm:gap-6">
         <HomeIndicatorCards :cards="view.cards" />
 
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
-          <div class="flex flex-col gap-6 min-w-0">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 items-start">
+          <div class="flex flex-col gap-4 sm:gap-6 min-w-0">
             <HomeRecentActivity :rows="view.activityRows" />
             <HomeActiveCampaigns :items="view.activeCampaigns" :see-all-to="view.campaignsSeeAllTo" />
           </div>
-          <div class="flex flex-col gap-6 min-w-0">
+          <div class="flex flex-col gap-4 sm:gap-6 min-w-0">
             <HomeComparisonChart :comparison="view.comparisonBars" />
             <HomeOpportunities :alerts="view.opportunities" />
           </div>

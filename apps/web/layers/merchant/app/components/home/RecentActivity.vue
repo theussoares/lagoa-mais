@@ -11,14 +11,14 @@ const { t } = useI18n()
 </script>
 
 <template>
-  <section class="bg-(--ui-bg) rounded-2xl p-5 border border-(--ui-border-muted) shadow-(--lagoa-shadow-card) flex flex-col transition-all duration-200 hover:border-(--ui-border)">
-    <header class="flex items-center justify-between pb-3">
+  <section class="bg-(--ui-bg) rounded-2xl p-4 sm:p-5 border border-(--ui-border-muted) shadow-(--lagoa-shadow-card) flex flex-col transition-all duration-200 hover:border-(--ui-border)">
+    <header class="flex items-center justify-between gap-2 pb-3">
       <h2 class="text-base font-bold text-(--ui-text-highlighted)">
         {{ t('home.recentActivity.title') }}
       </h2>
       <NuxtLink
         to="/clientes"
-        class="group no-underline hover:no-underline inline-flex min-h-11 items-center gap-1.5 text-xs font-semibold text-primary hover:bg-primary/10 px-2.5 -mr-2 rounded-lg transition-all duration-150"
+        class="group no-underline hover:no-underline inline-flex min-h-11 shrink-0 items-center gap-1.5 text-xs font-semibold text-primary hover:bg-primary/10 px-2.5 -mr-2 rounded-lg transition-all duration-150"
       >
         <span>{{ t('home.recentActivity.seeAll') }}</span>
         <UIcon name="i-ph-arrow-right" class="size-3 transition-transform duration-200 group-hover:translate-x-0.5" aria-hidden="true" />
@@ -41,11 +41,11 @@ const { t } = useI18n()
       <li v-for="row in rows" :key="row.id">
         <NuxtLink
           :to="row.to"
-          class="group no-underline hover:no-underline flex items-center justify-between py-3 -mx-2 px-2.5 rounded-xl transition-all duration-150 hover:bg-primary/5 active:scale-[0.99]"
+          class="group no-underline hover:no-underline flex min-h-14 items-center justify-between py-2.5 sm:py-3 -mx-2 px-2 sm:px-2.5 rounded-xl transition-all duration-150 hover:bg-primary/5 active:scale-[0.99]"
         >
-          <div class="flex items-center gap-3 min-w-0 pr-3">
+          <div class="flex items-center gap-2.5 sm:gap-3 min-w-0 pr-2 sm:pr-3">
             <div
-              class="size-9.5 rounded-full flex items-center justify-center font-bold text-xs shrink-0 select-none"
+              class="size-9 sm:size-9.5 rounded-full flex items-center justify-center font-bold text-xs shrink-0 select-none"
               :class="[row.avatarBg, row.avatarText]"
             >
               {{ row.initials }}
@@ -56,7 +56,7 @@ const { t } = useI18n()
                 <span class="truncate text-sm font-semibold text-(--ui-text-highlighted) group-hover:text-primary transition-colors">
                   {{ row.customerName }}
                 </span>
-                <span v-if="row.maskedPhone" class="text-xs text-(--ui-text-muted) font-mono shrink-0">
+                <span v-if="row.maskedPhone" class="hidden sm:inline text-xs text-(--ui-text-muted) font-mono shrink-0">
                   · {{ row.maskedPhone }}
                 </span>
               </div>
@@ -70,8 +70,8 @@ const { t } = useI18n()
             </div>
           </div>
 
-          <div class="flex items-center gap-2 shrink-0">
-            <span class="text-xs text-(--ui-text-muted) whitespace-nowrap tabular-nums">
+          <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
+            <span class="text-[11px] sm:text-xs text-(--ui-text-muted) whitespace-nowrap tabular-nums">
               {{ row.relativeTime }}
             </span>
             <UIcon name="i-ph-caret-right" class="size-4 text-(--ui-text-muted) group-hover:text-primary group-hover:translate-x-0.5 transition-all duration-150" aria-hidden="true" />

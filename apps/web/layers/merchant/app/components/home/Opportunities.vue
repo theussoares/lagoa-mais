@@ -11,17 +11,17 @@ const { t } = useI18n()
 </script>
 
 <template>
-  <section class="bg-(--ui-bg) rounded-2xl p-5 border border-(--ui-border-muted) shadow-(--lagoa-shadow-card) flex flex-col transition-all duration-200 hover:border-(--ui-border)">
-    <header class="flex items-center justify-between pb-3">
-      <div class="flex items-center gap-2">
-        <UIcon name="i-ph-lightning" class="size-4.5 text-primary" aria-hidden="true" />
-        <h2 class="text-base font-bold text-(--ui-text-highlighted)">
+  <section class="bg-(--ui-bg) rounded-2xl p-4 sm:p-5 border border-(--ui-border-muted) shadow-(--lagoa-shadow-card) flex flex-col transition-all duration-200 hover:border-(--ui-border)">
+    <header class="flex items-center justify-between gap-2 pb-3">
+      <div class="flex items-center gap-2 min-w-0">
+        <UIcon name="i-ph-lightning" class="size-4.5 shrink-0 text-primary" aria-hidden="true" />
+        <h2 class="truncate text-base font-bold text-(--ui-text-highlighted)">
           {{ t('home.opportunities.title') }}
         </h2>
       </div>
       <NuxtLink
         to="/clientes"
-        class="group no-underline hover:no-underline inline-flex min-h-11 items-center gap-1.5 text-xs font-semibold text-primary hover:bg-primary/10 px-2.5 -mr-2 rounded-lg transition-all duration-150"
+        class="group no-underline hover:no-underline inline-flex min-h-11 shrink-0 items-center gap-1.5 text-xs font-semibold text-primary hover:bg-primary/10 px-2.5 -mr-2 rounded-lg transition-all duration-150"
       >
         <span>{{ t('home.opportunities.seeAll') }}</span>
         <UIcon name="i-ph-arrow-right" class="size-3 transition-transform duration-200 group-hover:translate-x-0.5" aria-hidden="true" />

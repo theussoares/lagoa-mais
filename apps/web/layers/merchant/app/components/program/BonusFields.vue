@@ -43,7 +43,7 @@ function setSurpriseDate(value: string | number): void {
         :label="$t(`program.bonus.unitsLabel.${unit}`)"
         :error="errors.welcomeUnits ? $t('program.errors.welcomeUnits', { ...limits.welcomeUnits }) : undefined"
         name="welcomeUnits"
-        class="ml-12 max-w-48"
+        class="sm:ml-12 max-w-full sm:max-w-48"
       >
         <UInputNumber :model-value="bonus.welcomeBonus.units" :min="limits.welcomeUnits.min" :max="limits.welcomeUnits.max" size="lg" :ui="{ base: 'min-h-11' }" class="w-full" @update:model-value="setUnits('welcomeBonus', $event)" />
       </UFormField>
@@ -74,7 +74,7 @@ function setSurpriseDate(value: string | number): void {
         :label="$t(`program.bonus.unitsLabel.${unit}`)"
         :error="errors.referralUnits ? $t('program.errors.range', { ...limits.referralUnits }) : undefined"
         name="referralUnits"
-        class="ml-12 max-w-48"
+        class="sm:ml-12 max-w-full sm:max-w-48"
       >
         <UInputNumber :model-value="bonus.referralBonus.units" :min="limits.referralUnits.min" :max="limits.referralUnits.max" size="lg" :ui="{ base: 'min-h-11' }" class="w-full" @update:model-value="setUnits('referralBonus', $event)" />
       </UFormField>
@@ -94,7 +94,7 @@ function setSurpriseDate(value: string | number): void {
         :label="$t('program.bonus.surprise.date')"
         :error="errors.surpriseDate ? $t('program.errors.surpriseDate') : undefined"
         name="surpriseDate"
-        class="ml-12 max-w-56"
+        class="sm:ml-12 max-w-full sm:max-w-56"
       >
         <UInput type="date" size="lg" :ui="{ base: 'min-h-11' }" :model-value="bonus.surpriseDay.date ?? ''" class="w-full" @update:model-value="setSurpriseDate" />
       </UFormField>

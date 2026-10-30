@@ -27,7 +27,7 @@ const { t } = useI18n()
         <p class="text-[0.9375rem] text-toned tabular-nums">{{ row.priceLabel ?? t('merchantHits.onRequest') }}</p>
         <HitsStatusBadge :status="row.status" :reason="row.rejectionReason" :missing-photo="row.missingPhoto" />
       </div>
-      <div class="flex gap-2">
+      <div class="flex w-full sm:w-auto justify-end gap-2">
         <ActionButton v-if="row.canEdit" role="secondary" :label="t('merchantHits.edit')" :disabled="busy" @click="$emit('edit', row.item.id)" />
         <ActionButton v-if="row.canEdit" role="quiet" :label="t('merchantHits.archive')" :disabled="busy" @click="$emit('archive', row.item.id)" />
         <ActionButton v-else role="secondary" :label="t('merchantHits.unarchive')" :disabled="busy" @click="$emit('unarchive', row.item.id)" />

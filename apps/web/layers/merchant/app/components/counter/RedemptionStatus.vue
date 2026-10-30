@@ -34,13 +34,13 @@ const emit = defineEmits<Emits>()
         <p class="text-[1.375rem] leading-tight font-bold text-secondary [font-stretch:90%]">{{ preview.rewardTitle }}</p>
         <p class="tabular text-[0.9375rem] text-muted">{{ preview.customerLine }}</p>
       </div>
-      <div class="flex gap-2">
+      <div class="flex flex-wrap gap-2">
         <UButton
           color="secondary"
           icon="i-ph-gift"
           :label="$t('counter.redemption.deliver')"
           :loading="preview.confirming"
-          class="flex-1 justify-center"
+          class="min-h-11 flex-1 justify-center"
           @click="emit('deliver')"
         />
         <UButton
@@ -48,6 +48,7 @@ const emit = defineEmits<Emits>()
           color="neutral"
           :label="$t('counter.redemption.cancel')"
           :disabled="preview.confirming"
+          class="min-h-11 justify-center"
           @click="emit('cancel')"
         />
       </div>

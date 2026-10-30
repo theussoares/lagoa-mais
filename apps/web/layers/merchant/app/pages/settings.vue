@@ -4,6 +4,7 @@ definePageMeta({ path: '/configuracoes', layout: 'merchant', middleware: 'mercha
 const { t } = useI18n()
 useHead({ title: () => `${t('merchantSettings.title')} · ${t('app.name')}` })
 
+const { session } = useMerchantSession()
 const theme = useThemePreference()
 const themeLabels = computed(() => ({ legend: t('theme.legend'), light: t('theme.light'), dark: t('theme.dark') }))
 const photos = useShopPhotos()
@@ -11,7 +12,20 @@ const photos = useShopPhotos()
 
 <template>
   <div class="mx-auto flex w-full max-w-[1200px] flex-col gap-6">
-    <PageTitle :title="t('merchantSettings.title')" :lead="t('merchantSettings.lead')" />
+    <PageTitle :title="t('merchantSettings.title')" :lead="t('merchantSettings.lead')">
+      <template #actions>
+        <div
+          v-if="session?.shopName"
+          class="flex items-center gap-2 rounded-xl border border-(--lagoa-rule) bg-(--ui-bg-elevated) px-3 py-1.5 text-sm text-(--ui-text-highlighted) shadow-xs"
+          :title="session.shopName"
+        >
+          <div class="flex size-6 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+            <UIcon name="i-ph-storefront-fill" class="size-3.5" aria-hidden="true" />
+          </div>
+          <span class="font-display truncate font-bold tracking-tight">{{ session.shopName }}</span>
+        </div>
+      </template>
+    </PageTitle>
 
     <div class="grid grid-cols-1 items-start gap-6 lg:grid-cols-12">
       <!-- Coluna da esquerda: Logo e Tema do Painel -->

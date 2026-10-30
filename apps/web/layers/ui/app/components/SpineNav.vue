@@ -14,27 +14,27 @@ const sections = computed(() => [props.items, props.footerItems].filter((section
 </script>
 
 <template>
-  <!-- Índice da caderneta: uma linha pautada por página; a página aberta leva um carimbinho de tinta. -->
+  <!-- Navegação lateral: itens com cantos arredondados, fundo escuro e destaque ativo conforme referência visual. -->
   <nav :aria-label="label" class="flex flex-1 flex-col">
     <ul
       v-for="(section, index) in sections"
       :key="index"
-      class="flex flex-col border-t border-white/10"
-      :class="{ 'mt-auto pt-4': index > 0 }"
+      class="flex flex-col"
+      :class="index === 0 ? 'gap-2.5' : 'mt-auto pt-4 border-t border-(--lagoa-rule) gap-2'"
     >
-      <li v-for="item in section" :key="item.to" class="border-b border-white/10">
+      <li v-for="item in section" :key="item.to">
         <NuxtLink v-slot="{ href, navigate, isActive }" :to="item.to" custom>
           <a
             :href="href ?? item.to"
             :aria-current="isActive ? 'page' : undefined"
-            class="group flex min-h-12 items-center gap-3 px-2.5 py-2.5 text-[0.9375rem] transition-colors duration-150 cursor-pointer"
-            :class="isActive ? 'font-bold text-white' : 'text-slate-300/80 hover:text-white'"
+            class="group flex min-h-12 items-center gap-3 rounded-xl px-3 py-2.5 text-[0.9375rem] transition-all duration-150 cursor-pointer"
+            :class="isActive ? 'bg-(--ui-bg-elevated) text-highlighted font-medium shadow-xs hover:bg-(--ui-bg-accented)' : 'text-toned hover:bg-(--ui-bg-elevated)/60 hover:text-highlighted hover:translate-x-1 active:scale-[0.99]'"
             @click="navigate"
           >
             <UIcon
               :name="item.icon"
-              class="size-5 shrink-0 transition-colors duration-150"
-              :class="isActive ? 'text-cyan-400' : 'text-slate-400 group-hover:text-slate-200'"
+              class="size-5 shrink-0 transition-all duration-150"
+              :class="isActive ? 'text-cyan-400' : 'text-muted group-hover:text-highlighted group-hover:scale-105'"
               aria-hidden="true"
             />
             <span class="min-w-0 flex-1 truncate">{{ item.label }}</span>
