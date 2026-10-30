@@ -36,7 +36,8 @@ export function toProgramSummaries(draft: ProgramDraft, t: Translate): ProgramSe
   const bonus = [
     bonusRules.welcomeBonus.enabled ? t('program.summary.welcome', { units: units(bonusRules.welcomeBonus.units) }) : null,
     bonusRules.birthdayMultiplier.enabled ? t('program.bonus.birthday.label') : null,
-    bonusRules.referralBonus.enabled ? t('program.bonus.referral.label') : null,
+    // referral hidden for now
+    // bonusRules.referralBonus.enabled ? t('program.bonus.referral.label') : null,
     bonusRules.surpriseDay.enabled ? t('program.bonus.surprise.label') : null,
   ].filter((part) => part !== null)
 

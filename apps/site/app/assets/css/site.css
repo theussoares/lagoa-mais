@@ -149,6 +149,9 @@ html {
   .bento-third {
     grid-column: span 2;
   }
+  .bento-full {
+    grid-column: 1 / -1;
+  }
 }
 
 .bento-tile {

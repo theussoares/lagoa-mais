@@ -60,7 +60,8 @@ function setSurpriseDate(value: string | number): void {
       />
     </div>
 
-    <div class="flex flex-col gap-3 py-4">
+    <!-- referral hidden for now -->
+    <div v-if="false" class="flex flex-col gap-3 py-4">
       <USwitch
         :model-value="bonus.referralBonus.enabled"
         :label="$t('program.bonus.referral.label')"

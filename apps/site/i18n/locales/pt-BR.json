@@ -175,7 +175,7 @@
         "price": "99,90",
         "lead": "Tudo do Fundador, mais:",
         "items": {
-          "bonus": "Boas-vindas, indicação e dia surpresa em dobro",
+          "bonus": "Boas-vindas e dia surpresa em dobro",
           "spotlight": "Sua loja em destaque no Descobrir",
           "lapsed": "Lista de quem parou de comprar",
           "limit": "Até 1.000 clientes no clube (as {founderSpots} primeiras lojas, sem limite)"
@@ -227,7 +227,7 @@
       },
       "plans": {
         "q": "Qual a diferença entre Fundador e Pro?",
-        "a": "O Fundador tem carimbo, resgate e bônus de aniversário, para até 300 clientes. O Pro soma boas-vindas, indicação e dia surpresa, a lista de quem sumiu e o destaque da sua loja no Descobrir, para até 1.000 clientes (as primeiras {founderSpots} lojas do Pro não têm limite)."
+        "a": "O Fundador tem carimbo, resgate e bônus de aniversário, para até 300 clientes. O Pro soma boas-vindas e dia surpresa, a lista de quem sumiu e o destaque da sua loja no Descobrir, para até 1.000 clientes (as primeiras {founderSpots} lojas do Pro não têm limite)."
       },
       "privacy": {
         "q": "Como ficam os dados dos meus clientes?",

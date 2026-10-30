@@ -57,13 +57,12 @@ export const GUIDE_TEXTS: GuideText[] = [
   {
     id: 'bonusRules',
     slug: 'regras-bonus',
-    title: 'Regras bônus: aniversário, indicação e dia surpresa',
+    title: 'Regras bônus: aniversário e dia surpresa',
     description: 'Como ligar as regras que dão movimento no dia fraco e trazem cliente novo.',
     body: [
       { kind: 'p', text: 'As regras bônus são opcionais. Ligue só as que fazem sentido para a sua loja. Se duas regras caírem no mesmo dia, vale a maior: elas não se somam.' },
       { kind: 'ul', items: [
         'Boas-vindas: o cartão começa com 2 carimbos. Quem começa andado tem pressa de terminar.',
-        'Indicação (traga um amigo): quem indica ganha +1 quando o amigo faz a primeira visita.',
         'Aniversário: no dia do aniversário, cada visita vale dois carimbos.',
         'Dia surpresa: carimbo em dobro só no dia que você escolher, ótimo para o dia fraco.',
       ] },

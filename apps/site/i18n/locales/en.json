@@ -175,7 +175,7 @@
         "price": "99.90",
         "lead": "Everything in Founder, plus:",
         "items": {
-          "bonus": "Welcome, referral and double-stamp surprise day",
+          "bonus": "Welcome and double-stamp surprise day",
           "spotlight": "Your shop featured in Discover",
           "lapsed": "List of customers who stopped buying",
           "limit": "Up to 1,000 customers in the club (the first {founderSpots} shops, no limit)"
@@ -227,7 +227,7 @@
       },
       "plans": {
         "q": "What's the difference between Founder and Pro?",
-        "a": "Founder has stamps, redemption and a birthday bonus, for up to 300 customers. Pro adds welcome, referral and surprise day, the list of customers who disappeared and your shop's spotlight in Discover, for up to 1,000 customers (the first {founderSpots} Pro shops have no limit)."
+        "a": "Founder has stamps, redemption and a birthday bonus, for up to 300 customers. Pro adds welcome and surprise day, the list of customers who disappeared and your shop's spotlight in Discover, for up to 1,000 customers (the first {founderSpots} Pro shops have no limit)."
       },
       "privacy": {
         "q": "What happens to my customers' data?",
