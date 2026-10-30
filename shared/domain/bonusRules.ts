@@ -34,6 +34,14 @@ export function isSurpriseDay(rules: BonusRules, isoDate: IsoDate): boolean {
   return rules.surpriseDay.enabled && rules.surpriseDay.date === isoDate
 }
 
+/**
+ * O dia surpresa é da loja, não da versão do cartão: ligar ou desligar vale na hora para todo cartão, mesmo o que
+ * segue numa versão anterior do programa. As demais regras bônus continuam as da versão do cartão.
+ */
+export function withActiveSurpriseDay(cardRules: BonusRules, activeSurpriseDay: BonusRules['surpriseDay']): BonusRules {
+  return { ...cardRules, surpriseDay: activeSurpriseDay }
+}
+
 const multiplierRules: Readonly<Record<AppliedBonus, MultiplierRule>> = {
   birthdayMultiplier: {
     applies: (rules, context) =>

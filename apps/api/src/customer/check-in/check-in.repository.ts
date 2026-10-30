@@ -1,7 +1,7 @@
 import type { EarningCard, EarningPlan } from '#shared/domain/earning'
 import type { VisitQrSnapshot } from '#shared/domain/visitQr'
 import type { Birthday } from '#shared/schemas/common'
-import type { CheckInCooldown } from '#shared/schemas/program'
+import type { BonusRules, CheckInCooldown } from '#shared/schemas/program'
 import type { VisitCode, VisitQrEarn } from '#shared/schemas/visitQr'
 import type { ErrorOf } from '#shared/types/errors'
 import type { Result } from '#shared/types/result'
@@ -23,6 +23,8 @@ export interface VisitQrTarget {
   readonly programId: string
   /** Da versão ativa: a política vigente da loja vale, não a do cartão. */
   readonly cooldown: CheckInCooldown
+  /** Da versão ativa: o dia surpresa vale para todo cartão da loja, qualquer que seja a versão dele. */
+  readonly surpriseDay: BonusRules['surpriseDay']
   /** Quem atestou a venda; vira `recordedBy` no ledger. */
   readonly issuedBy: string
   readonly earn: VisitQrEarn

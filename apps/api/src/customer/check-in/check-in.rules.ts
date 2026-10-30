@@ -1,4 +1,5 @@
 import { type EarningPlan } from '#shared/domain/earning'
+import { withActiveSurpriseDay } from '#shared/domain/bonusRules'
 import { decideVisitEarning, decideVisitQrUse, type VisitQrUseError } from '#shared/domain/visitQr'
 import type { ErrorOf } from '#shared/types/errors'
 import type { Result } from '#shared/types/result'
@@ -16,7 +17,7 @@ export function decideEarning(target: VisitQrTarget, state: VisitClaimState, now
   const { rules, bonusRules } = target.shop.program
   return decideVisitEarning({
     rules,
-    bonusRules,
+    bonusRules: withActiveSurpriseDay(bonusRules, target.surpriseDay),
     cooldown: target.cooldown,
     card: state.card,
     birthday: state.birthday,
