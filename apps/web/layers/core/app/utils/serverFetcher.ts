@@ -1,20 +1,41 @@
 import type { ServerFetcherOptions } from '../types/http'
 
-const ZERO_MAX_AGE = /^\s*max-age\s*=\s*0+\s*$/i
+/** Cookies de sessão do BFF (`server/utils/sessionCookies.ts`); qualquer outro `Set-Cookie` não mexe no pedido interno. */
+const SESSION_COOKIES: readonly string[] = ['lagoa_at', 'lagoa_rt']
+const ZERO_MAX_AGE = /^max-age\s*=\s*0+$/i
 
-/** Aplica um `Set-Cookie` ao cabeçalho `cookie` do pedido: valor novo substitui o antigo, cookie expirado sai. */
-export function applySetCookie(cookieHeader: string | undefined, setCookie: string): string {
-  const [pair = '', ...attributes] = setCookie.split(';')
+function attributeValue(attributes: readonly string[], name: string): string | undefined {
+  for (const attribute of attributes) {
+    const separator = attribute.indexOf('=')
+    if (separator > 0 && attribute.slice(0, separator).trim().toLowerCase() === name) return attribute.slice(separator + 1).trim()
+  }
+  return undefined
+}
+
+function isExpired(value: string, attributes: readonly string[], now: number): boolean {
+  if (value === '' || attributes.some((attribute) => ZERO_MAX_AGE.test(attribute.trim()))) return true
+  const expires = attributeValue(attributes, 'expires')
+  return expires !== undefined && Date.parse(expires) <= now
+}
+
+/**
+ * Aplica um `Set-Cookie` do BFF ao cabeçalho `cookie` do pedido: só os cookies de sessão em `Path=/` (o apagar do
+ * caminho antigo `/api` não pode tirar o cookie de `/`); valor novo substitui o antigo, expirado sai.
+ */
+export function applySetCookie(cookieHeader: string | undefined, setCookie: string, now: number = Date.now()): string {
+  const current = cookieHeader ?? ''
+  const [pair = '', ...rest] = setCookie.split(';')
+  const attributes = rest.map((attribute) => attribute.trim())
   const separator = pair.indexOf('=')
-  if (separator <= 0) return cookieHeader ?? ''
+  if (separator <= 0 || attributeValue(attributes, 'path') !== '/') return current
   const name = pair.slice(0, separator).trim()
+  if (!SESSION_COOKIES.includes(name)) return current
   const value = pair.slice(separator + 1).trim()
-  const expired = value === '' || attributes.some((attribute) => ZERO_MAX_AGE.test(attribute))
-  const kept = (cookieHeader ?? '')
+  const kept = current
     .split(';')
     .map((part) => part.trim())
     .filter((part) => part !== '' && part.split('=')[0]?.trim() !== name)
-  return (expired ? kept : [...kept, `${name}=${value}`]).join('; ')
+  return (isExpired(value, attributes, now) ? kept : [...kept, `${name}=${value}`]).join('; ')
 }
 
 /**

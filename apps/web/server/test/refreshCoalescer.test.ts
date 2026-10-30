@@ -45,4 +45,32 @@ describe('RefreshCoalescer', () => {
     await Promise.all([coalescer.refresh('a', run), coalescer.refresh('b', run)])
     expect(run).toHaveBeenCalledTimes(2)
   })
+
+  it('keeps the window within the Supabase reuse interval (10 s)', () => {
+    expect(REFRESH_REUSE_WINDOW_MS).toBeLessThanOrEqual(10_000)
+  })
+
+  it('forget drops the cache by the old token and by the token it returned', async () => {
+    for (const forgotten of ['rt1', 'rt2']) {
+      const run = vi.fn(async () => ok)
+      const coalescer = new RefreshCoalescer()
+      await coalescer.refresh('rt1', run)
+      coalescer.forget(forgotten)
+      await coalescer.refresh('rt1', run)
+      expect(run).toHaveBeenCalledTimes(2)
+    }
+  })
+
+  it('never evicts a pending refresh, even long after it started', async () => {
+    let now = 0
+    let release: (outcome: AuthOutcome<TokenPair>) => void = () => undefined
+    const slow = vi.fn(() => new Promise<AuthOutcome<TokenPair>>((resolve) => (release = resolve)))
+    const coalescer = new RefreshCoalescer(() => now)
+    const first = coalescer.refresh('rt1', slow)
+    now = REFRESH_REUSE_WINDOW_MS * 10
+    const second = coalescer.refresh('rt1', slow)
+    release(ok)
+    await Promise.all([first, second])
+    expect(slow).toHaveBeenCalledTimes(1)
+  })
 })
