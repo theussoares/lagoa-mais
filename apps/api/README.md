@@ -170,6 +170,12 @@ Organizado em módulos focados em `src/merchant/*`:
 Scripts de operação (nunca em CI): `pnpm --filter @lagoa/api shop:status --shop <id> --actor <apelido> [--status approved|suspended|pending] [--plan founder|founderPro] [--reason "..."] [--dry-run]`
 (exige `ALLOW_SHOP_ADMIN=1`; grava `shop_status_events`) e `db:backfill-visits` (recalcula `visits_count`/`first_visit_at` do ledger;
 rodar depois do deploy que mantém os contadores). `DELETE /customer/account` de dono de loja responde 409 `accountOwnsShop`.
+`ALLOW_SHOP_ADMIN=1 pnpm --filter @lagoa/api shop:mark-demo --actor <apelido> [--dry-run]` marca como demo (`shops.is_demo`, fora
+da vitrine e dos agregados) a loja do dono cujo celular é o `DEMO_MERCHANT_PHONE`: backfill da loja demo que nasceu antes da
+coluna. Não aceita `--shop` (o alvo vem sempre do número demo), é idempotente, imprime só id e nome da loja (nunca o
+celular) e não desmarca. Rodar **antes** de qualquer troca do número demo; depois da troca a loja antiga fica inalcançável
+pelo script. A env `DEMO_MERCHANT_PHONE` (opcional; inválida derruba o boot) também faz a loja criada por esse celular no
+Criar o clube já nascer marcada.
 
 
 ### Supabase local (login sem SMS em dev)

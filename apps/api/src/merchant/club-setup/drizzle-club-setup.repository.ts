@@ -8,6 +8,7 @@ import { ensureAppUser, type NewAppUser } from '../../accounts/app-user.writer'
 import { uniqueViolationConstraint } from '../../database/unique-violation'
 import {
   type CreateClubOutcome,
+  type NewShopMarks,
   type PosterData,
   ClubSetupRepository,
 } from './club-setup.repository'
@@ -21,11 +22,11 @@ export class DrizzleClubSetupRepository extends ClubSetupRepository {
     super()
   }
 
-  async createClub(owner: NewAppUser, draft: ClubSetupDraft, newCheckInCode: () => string, now: Date): Promise<CreateClubOutcome> {
+  async createClub(owner: NewAppUser, draft: ClubSetupDraft, newCheckInCode: () => string, now: Date, marks: NewShopMarks): Promise<CreateClubOutcome> {
     // A colisão do código de check-in aborta a transação inteira no Postgres: o retry refaz tudo, não só o insert.
     for (let attempt = 0; attempt < CHECK_IN_CODE_ATTEMPTS; attempt++) {
       try {
-        return await this.createOnce(owner, draft, newCheckInCode(), now)
+        return await this.createOnce(owner, draft, newCheckInCode(), now, marks)
       } catch (error) {
         const constraint = uniqueViolationConstraint(error)
         if (constraint === 'app_users_phone_hash_unique') return { kind: 'phoneTaken' }
@@ -35,7 +36,7 @@ export class DrizzleClubSetupRepository extends ClubSetupRepository {
     throw new Error('Could not allocate a unique check-in code')
   }
 
-  private createOnce(owner: NewAppUser, draft: ClubSetupDraft, checkInCode: string, now: Date): Promise<CreateClubOutcome> {
+  private createOnce(owner: NewAppUser, draft: ClubSetupDraft, checkInCode: string, now: Date, marks: NewShopMarks): Promise<CreateClubOutcome> {
     return this.db.transaction(async (tx) => {
       await ensureAppUser(tx, owner)
       // `FOR SHARE` pareia com o `FOR UPDATE` do `erase`: ou a conta é apagada antes (e aqui para) ou a loja nasce antes
@@ -54,20 +55,22 @@ export class DrizzleClubSetupRepository extends ClubSetupRepository {
           status: 'pending',
           // Loja nova já imprime o cartaz certo: o aviso de "cartaz novo" é só das lojas antigas.
           posterReprintedAt: now,
+          isDemo: marks.isDemo,
         })
+        // RN-05: dono que já tem loja não passa por UPDATE nenhum, então a marca de uma loja existente nunca muda.
         .onConflictDoNothing({ target: shops.ownerUserId })
-        .returning({ id: shops.id, name: shops.name, status: shops.status, termsVersion: shops.merchantTermsVersion })
+        .returning({ id: shops.id, name: shops.name, status: shops.status, termsVersion: shops.merchantTermsVersion, isDemo: shops.isDemo })
 
       if (!insertedShop) {
         const [existing] = await tx
-          .select({ id: shops.id, name: shops.name, status: shops.status, termsVersion: shops.merchantTermsVersion })
+          .select({ id: shops.id, name: shops.name, status: shops.status, termsVersion: shops.merchantTermsVersion, isDemo: shops.isDemo })
           .from(shops).where(eq(shops.ownerUserId, owner.userId)).limit(1)
         if (!existing) throw new Error('Shop vanished after conflict')
-        return { kind: 'existing', club: { shopId: existing.id, shopName: existing.name, shopStatus: existing.status, merchantTermsVersion: existing.termsVersion } }
+        return { kind: 'existing', club: { shopId: existing.id, shopName: existing.name, shopStatus: existing.status, merchantTermsVersion: existing.termsVersion, isDemo: existing.isDemo } }
       }
 
       await tx.insert(programs).values(mapDraftToProgramInsert(insertedShop.id, draft.program))
-      return { kind: 'created', club: { shopId: insertedShop.id, shopName: insertedShop.name, shopStatus: insertedShop.status, merchantTermsVersion: insertedShop.termsVersion } }
+      return { kind: 'created', club: { shopId: insertedShop.id, shopName: insertedShop.name, shopStatus: insertedShop.status, merchantTermsVersion: insertedShop.termsVersion, isDemo: insertedShop.isDemo } }
     })
   }
 
