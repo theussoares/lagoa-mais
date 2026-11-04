@@ -4,6 +4,7 @@ import { HITS_BANNERS_MAX } from '#shared/constants/domain'
 import type { PublicHitItem } from '#shared/schemas/showcase'
 import type { Clock } from '../../common/clock'
 import { featuredPlacements, hitItems, shops } from '../../database/schema'
+import { createDemoShopScenario, type DemoShopScenario } from '../../test-support/demo-shop-scenario'
 import { NO_BONUS_RULES, TEST_DATABASE_URL, TestDatabase, type TestShop } from '../../test-support/test-database'
 import { DrizzleCustomerHitsRepository } from './drizzle-hits.repository'
 import { CustomerHitsService } from './hits.service'
@@ -181,6 +182,36 @@ describe.skipIf(!TEST_DATABASE_URL)('customer hits against a real database', () 
       await place(suspended, 'hitsBanner', live, ofSuspended.id)
       const ids = (await banners()).map((banner) => banner.item.id)
       for (const hidden of [expired, future, ended, ofSuspended]) expect(ids).not.toContain(hidden.id)
+    }, SLOW)
+  })
+
+  describe('demo shop', () => {
+    let scenario: DemoShopScenario
+    let demoGroupItem: string
+
+    beforeAll(async () => {
+      scenario = await createDemoShopScenario(data, NOW)
+      // Um segundo produto da demo, para a paginação ter mais de um item dela para esconder.
+      demoGroupItem = (await approvedItem(scenario.demo.id, { approvedAt: hoursFromNow(-3) })).id
+    })
+
+    it.each([{}, { group: 'food' as const }])('never lists a demo shop item, page after page (CA-12, query %j)', async (query) => {
+      for (const pageSize of [undefined, 2]) {
+        const pages = await everything(query, pageSize)
+        const ids = pages.flat().map((item) => item.id)
+        expect(ids).toContain(scenario.real.hitItemId)
+        for (const hidden of [scenario.demo.hitItemId, demoGroupItem]) expect(ids).not.toContain(hidden)
+        expect(JSON.stringify(pages)).not.toContain(scenario.demo.id)
+      }
+    }, SLOW)
+
+    it('gives the demo shop no banner, paid or Pro (CA-13)', async () => {
+      const repository = new DrizzleCustomerHitsRepository(data.db)
+      const paid = await repository.listPaidBannerItems(NOW, 10_000)
+      const pro = await repository.listProBannerItems(NOW, [], 10_000)
+      expect(paid.map((record) => record.id)).toContain(scenario.real.hitItemId)
+      for (const records of [paid, pro]) expect(JSON.stringify(records)).not.toContain(scenario.demo.id)
+      expect(JSON.stringify(await service.banners())).not.toContain(scenario.demo.id)
     }, SLOW)
   })
 })

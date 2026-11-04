@@ -4,6 +4,7 @@ import { DB, type Database } from '../../database/database.module'
 import { featuredPlacements, programs, shops } from '../../database/schema'
 import type { CatalogShop } from '../../shops/catalog-shop'
 import { CATALOG_COLUMNS, toCatalogShop } from '../../shops/catalog-row'
+import { listedShop } from '../../shops/listed-shop'
 import { DiscoverRepository, type FeaturedCatalogShop } from './discover.repository'
 
 @Injectable()
@@ -17,7 +18,7 @@ export class DrizzleDiscoverRepository extends DiscoverRepository {
       .select(CATALOG_COLUMNS)
       .from(shops)
       .innerJoin(programs, and(eq(programs.shopId, shops.id), eq(programs.active, true)))
-      .where(eq(shops.status, 'approved'))
+      .where(listedShop())
       .orderBy(asc(shops.name), asc(shops.id))
       .limit(limit)
     return rows.flatMap((row) => toCatalogShop(row) ?? [])
@@ -38,8 +39,9 @@ export class DrizzleDiscoverRepository extends DiscoverRepository {
           ),
         ),
     )
-    const paid = await this.featuredGroup(and(eq(shops.status, 'approved'), paidNow), day, limit)
-    const pro = await this.featuredGroup(and(eq(shops.status, 'approved'), eq(shops.plan, 'founderPro'), not(paidNow)), day, limit)
+    // Loja demo fica fora dos dois grupos mesmo com destaque pago vigente ou plano Pro (RN-06, RN-10).
+    const paid = await this.featuredGroup(and(listedShop(), paidNow), day, limit)
+    const pro = await this.featuredGroup(and(listedShop(), eq(shops.plan, 'founderPro'), not(paidNow)), day, limit)
     return [...paid.map((shop) => ({ shop, sponsored: true })), ...pro.map((shop) => ({ shop, sponsored: false }))]
   }
 

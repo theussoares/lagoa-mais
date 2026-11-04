@@ -3,6 +3,7 @@ import { and, asc, desc, eq, gt, inArray, isNotNull, isNull, lte, notInArray, or
 import { DB, type Database } from '../../database/database.module'
 import { featuredPlacements, hitItems, programs, shops } from '../../database/schema'
 import { CATALOG_COLUMNS, type CatalogRow, toCatalogShop } from '../../shops/catalog-row'
+import { listedShop } from '../../shops/listed-shop'
 import { CustomerHitsRepository, type HitFeedFilter, type PublicHitRecord } from './hits.repository'
 
 const COLUMNS = {
@@ -46,9 +47,12 @@ function toRecord(row: Row): PublicHitRecord | null {
   }
 }
 
-/** O que torna um produto visível ao cliente; a loja também precisa estar aprovada. */
+/**
+ * O que torna um produto visível ao cliente; a loja também precisa estar listada (aprovada e não demo). Feed, banner
+ * pago e banner Pro passam todos por aqui, então a loja demo some das três listas de uma vez.
+ */
 function visible(now: Date): SQL | undefined {
-  return and(eq(hitItems.status, 'approved'), isNotNull(hitItems.photoPath), or(isNull(hitItems.endsAt), gt(hitItems.endsAt, now)), eq(shops.status, 'approved'))
+  return and(eq(hitItems.status, 'approved'), isNotNull(hitItems.photoPath), or(isNull(hitItems.endsAt), gt(hitItems.endsAt, now)), listedShop())
 }
 
 /** Depois do cursor em `approved_at desc nulls last, id`; a data do cursor é lida no banco (um `Date` do JS perde os microssegundos). */
