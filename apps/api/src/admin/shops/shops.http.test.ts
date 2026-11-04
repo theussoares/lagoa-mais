@@ -29,7 +29,7 @@ const CREATED = new Date('2026-05-01T12:00:00Z')
 
 const pii = new PiiService({ PII_ENCRYPTION_KEY: Buffer.alloc(32, 7).toString('base64'), PII_HASH_PEPPER: 'pepper' })
 
-const SHOP: AdminShopRecord = { id: SHOP_ID, name: 'Padaria', category: 'bakery', neighborhood: 'Centro', status: 'pending', plan: 'founder', createdAt: CREATED }
+const SHOP: AdminShopRecord = { id: SHOP_ID, name: 'Padaria', category: 'bakery', neighborhood: 'Centro', status: 'pending', plan: 'founder', createdAt: CREATED, isDemo: false }
 const DETAIL: AdminShopDetailRecord = {
   ...SHOP,
   addressLine: 'Rua A, 1',
@@ -115,6 +115,7 @@ describe('admin shops (HTTP)', () => {
   it('shows the owner phone only in the detail', async () => {
     const res = await as('get', `/v1/admin/shops/${SHOP_ID}`, await adminToken()).expect(200)
     expect(res.body.owner).toEqual({ phone: PHONE, email: null })
+    expect(res.body.isDemo).toBe(false)
   })
 
   it('answers 404 for an unknown shop and 400 for a bad id', async () => {

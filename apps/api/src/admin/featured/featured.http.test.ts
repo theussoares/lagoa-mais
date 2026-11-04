@@ -56,7 +56,7 @@ class FakeAdminUsersReader extends AdminUsersReader {
 }
 
 class FakeRepository extends AdminFeaturedRepository {
-  snapshot: PlacementSnapshot = { shopStatus: 'approved', hitItem: null, existing: [] }
+  snapshot: PlacementSnapshot = { shopStatus: 'approved', shopIsDemo: false, hitItem: null, existing: [] }
   windows: PlacementWindow[] = []
   created: { candidate: PlacementCandidate; adminId: string }[] = []
   cancelResult: Result<AdminPlacementRecord, CancelPlacementError> = ok(RECORD)
@@ -117,7 +117,7 @@ describe('admin featured (HTTP)', () => {
   afterAll(async () => app.close())
 
   beforeEach(() => {
-    repository.snapshot = { shopStatus: 'approved', hitItem: null, existing: [] }
+    repository.snapshot = { shopStatus: 'approved', shopIsDemo: false, hitItem: null, existing: [] }
     repository.windows = []
     repository.created = []
     repository.periods = []
@@ -198,13 +198,13 @@ describe('admin featured (HTTP)', () => {
 
   it('answers 409 slotsFull when the period is full', async () => {
     const taken = { startsAt: new Date('2026-11-10T04:00:00Z'), endsAt: new Date('2026-11-20T04:00:00Z') }
-    repository.snapshot = { shopStatus: 'approved', hitItem: null, existing: [taken, taken, taken, taken] }
+    repository.snapshot = { shopStatus: 'approved', shopIsDemo: false, hitItem: null, existing: [taken, taken, taken, taken] }
     const res = await as('post', '/v1/admin/featured', await adminToken()).send(DRAFT).expect(409)
     expect(res.body).toEqual({ code: 'slotsFull' })
   })
 
   it('answers 422 invalidTarget for a suspended shop', async () => {
-    repository.snapshot = { shopStatus: 'suspended', hitItem: null, existing: [] }
+    repository.snapshot = { shopStatus: 'suspended', shopIsDemo: false, hitItem: null, existing: [] }
     const res = await as('post', '/v1/admin/featured', await adminToken()).send(DRAFT).expect(422)
     expect(res.body).toEqual({ code: 'invalidTarget' })
   })

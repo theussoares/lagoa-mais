@@ -46,6 +46,13 @@ describe.skipIf(!TEST_DATABASE_URL)('admin hits against a real database', () => 
   const review = async (id: string, action: Parameters<AdminHitsService['review']>[2]) => service.review(admin, id, action)
   const merchantContext = (shopId: string) => ({ shopId, status: 'approved' as const, plan: 'founder' as const, role: 'owner' as const, termsVersion: null })
 
+  // CA-33: moderar não é vitrine. O admin vê tudo o que existe, inclusive o produto da loja demo; ele só nunca chega ao app.
+  it('keeps the pending item of a demo shop in the moderation queue', async () => {
+    const demo = await data.createShop({ isDemo: true })
+    const item = await data.createHitItem(demo.id)
+    expect((await everything('pending')).map((entry) => entry.id)).toContain(item.id)
+  }, SLOW)
+
   it('lists the pending queue oldest first, only with a photo', async () => {
     const shop = await data.createShop()
     const older = await data.createHitItem(shop.id, { createdAt: new Date('2020-01-01T00:00:00Z') })

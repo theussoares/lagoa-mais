@@ -236,4 +236,40 @@ describe.skipIf(!TEST_DATABASE_URL)('admin shops against a real database', () =>
       await data.db.delete(shopStatusEvents).where(inArray(shopStatusEvents.shopId, ids))
     })
   })
+
+  // CA-30/CA-34: o admin enxerga a loja demo como qualquer loja, com a marca só leitura. A loja some só para o cliente.
+  describe('demo shop', () => {
+    const everyRow = async (query: Parameters<AdminShopsService['list']>[0]) => {
+      const rows = []
+      let cursor: string | undefined
+      do {
+        const page = await service.list({ ...query, ...(cursor !== undefined && { cursor }) })
+        rows.push(...page.shops)
+        cursor = page.nextCursor ?? undefined
+      } while (cursor !== undefined)
+      return rows
+    }
+
+    it('lists the demo shop with and without filters, marked, next to an unmarked real one', async () => {
+      const name = `Loja Demonstração ${randomUUID().slice(0, 8)}`
+      const demo = await newShop({ status: 'pending', isDemo: true })
+      const real = await newShop({ status: 'pending' })
+      await data.db.update(shops).set({ name }).where(inArray(shops.id, [demo.id, real.id]))
+      for (const query of [{}, { status: 'pending' as const }, { q: name }, { status: 'pending' as const, q: name }]) {
+        const byId = new Map((await everyRow(query)).map((row) => [row.id, row.isDemo]))
+        expect(byId.get(demo.id)).toBe(true)
+        expect(byId.get(real.id)).toBe(false)
+      }
+      expect((await detail(demo.id)).isDemo).toBe(true)
+      expect((await detail(real.id)).isDemo).toBe(false)
+    }, SLOW)
+
+    it('approves, suspends and reactivates the demo shop like any shop, and the mark stays', async () => {
+      const demo = await newShop({ status: 'pending', isDemo: true })
+      expect(await service.act(admin, demo.id, { action: 'approve' })).toMatchObject({ ok: true, value: { status: 'approved', isDemo: true } })
+      expect(await service.act(admin, demo.id, { action: 'suspend', reason: 'Fim da apresentação' })).toMatchObject({ ok: true, value: { status: 'suspended', isDemo: true } })
+      expect(await service.act(admin, demo.id, { action: 'reactivate' })).toMatchObject({ ok: true, value: { status: 'approved', isDemo: true } })
+      expect(await data.isDemoOf(demo.id)).toBe(true)
+    }, SLOW)
+  })
 })
