@@ -29,6 +29,11 @@ export const shops = pgTable(
     ctaLabel: text('cta_label'),
     status: shopStatus('status').notNull().default('pending'),
     plan: shopPlan('plan').notNull().default('founder'),
+    /**
+     * Loja de demonstração (Criar o clube pelo `DEMO_MERCHANT_PHONE` ou `shop:mark-demo`): fora da vitrine e dos
+     * agregados. Só liga, nunca desliga (RN-04). Não é uma `shopStatus`: a demo precisa estar aprovada para a apresentação.
+     */
+    isDemo: boolean('is_demo').notNull().default(false),
     /** Cartaz novo impresso? `null` = ainda não (aviso no Início); o Criar o clube já grava `now()`. */
     posterReprintedAt: timestamp('poster_reprinted_at', { withTimezone: true }),
     /** Versão do termo do lojista aceita (`MERCHANT_TERMS_VERSION`) e quando: prova do que foi lido. */
