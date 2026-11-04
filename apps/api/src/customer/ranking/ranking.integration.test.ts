@@ -30,7 +30,7 @@ describe.skipIf(!TEST_DATABASE_URL)('ranking against a real database', () => {
           customerId,
           kind: 'visit',
           now: new Date(Date.now() - (total - i) * 1000),
-          idempotencyKey: `rank-${customerId}-${i}`,
+          idempotencyKey: `rank-${shop.id}-${customerId}-${i}`,
           plan: { welcomeUnits: 0, units: 1, appliedBonuses: [], balanceAfter: i + 1, rewardExpiresAt: null },
         })
       }
@@ -82,5 +82,28 @@ describe.skipIf(!TEST_DATABASE_URL)('ranking against a real database', () => {
     const ghost = await data.createCustomer({ withProfile: false })
     expect(await service.get(ghost)).toEqual({ ok: false, error: { code: 'notFound', entity: 'customer' } })
     expect(await service.setConsent(ghost, { granted: true, name: 'Fantasma' })).toEqual({ ok: false, error: { code: 'notFound', entity: 'customer' } })
+  }, SLOW)
+
+  it('does not count visits made in a demo shop, in the top nor in the "you" row (CA-19)', async () => {
+    const [real, demo] = [await data.createShop(), await data.createShop({ isDemo: true })]
+    const [x, y] = await Promise.all([data.createCustomer(), data.createCustomer()])
+    await visits(real, x, 3)
+    await visits(demo, y, 5)
+    await visits(real, y, 1)
+    await service.setConsent(x, { granted: true, name: 'Xis' })
+    await service.setConsent(y, { granted: true, name: 'Ypsilon' })
+
+    const ofX = await service.get(x)
+    const ofY = await service.get(y)
+    if (!ofX.ok || !ofY.ok) throw new Error('ranking expected')
+    expect(ofX.value.me).toMatchObject({ visits: 3 })
+    expect(ofY.value.me).toMatchObject({ visits: 1 })
+    expect(ofX.value.me.position ?? Infinity).toBeLessThan(ofY.value.me.position ?? -Infinity)
+    // `topAndMe` e `visitsOf` usam o mesmo critério: a linha "você" e a contagem crua batem.
+    const repository = new DrizzleRankingRepository(data.db)
+    const window = { start: new Date(Date.now() - 31 * 24 * 3_600_000), end: new Date(Date.now() + 3_600_000) }
+    expect(await repository.visitsOf(y, window)).toBe(1)
+    const rows = await repository.topAndMe(y, window, 0)
+    expect(rows.find((row) => row.userId === y)?.visits).toBe(1)
   }, SLOW)
 })
