@@ -21,6 +21,7 @@ const LIST_COLUMNS = {
   status: shops.status,
   plan: shops.plan,
   createdAt: shops.createdAt,
+  isDemo: shops.isDemo,
 }
 
 const RANK = sql`(case when ${shops.status} = 'pending' then 0 else 1 end)`

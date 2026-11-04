@@ -19,6 +19,7 @@ const toRow = (record: AdminShopRecord): AdminShopRow => ({
   status: record.status,
   plan: record.plan,
   createdAt: record.createdAt.toISOString(),
+  isDemo: record.isDemo,
 })
 
 @Injectable()

@@ -66,6 +66,7 @@ class Shop {
   +text whatsapp?  «celular BR (DDD + 9 dígitos), contato público do botão nos cards»
   +text ctaLabel?  «texto do botão, até 24; só com whatsapp»
   +enum status  «pending | approved | suspended»
+  +bool isDemo  «loja de demonstração: fora da vitrine e dos agregados; só liga»
   +timestamptz createdAt
 }
 class Program {
@@ -237,6 +238,12 @@ em log nem URL.
 4. **Resgate com snapshot** do título e índice único parcial
    `(shopId, code) WHERE status = 'active'`.
 5. **IDs UUID v7**, com os brand types do Zod (`ShopId`, `CustomerId`…).
+6. **Loja de demonstração fora da rede** ([spec](./specs/demo-shop-hidden/spec.md)). `Shop.isDemo` (`shops.is_demo`)
+   nasce `true` só no Criar o clube do `DEMO_MERCHANT_PHONE` ou pelo script `shop:mark-demo`, e nunca volta a `false`.
+   Toda listagem pública usa `listedShop()` e **todo agregado da rede** (métricas da rede, vagas de Fundador/Fundador
+   Pro, números públicos da LP, ranking) usa `notDemoShop()` (`apps/api/src/shops/listed-shop.ts`), RN-07. O primeiro
+   módulo de métricas da rede nasce com esse filtro e com um teste que prova que a demo não conta. Número de **uma**
+   loja (painel do lojista, detalhe no admin) e acesso direto (QR, Carteira, Balcão, resgate, indicação) não filtram.
 
 ## Segurança no Supabase
 
@@ -256,7 +263,8 @@ em log nem URL.
 - `Redemption(shopId, code) WHERE status='active'` único e `(cardId) WHERE status='active'` único
   (um código ativo por cartão).
 - `Referral(shopId, referredId)` único; `(referrerId)`.
-- `Shop(checkInCode)` único; `Shop(status)`; `Shop(ownerUserId)`.
+- `Shop(checkInCode)` único; `Shop(status)`; `Shop(ownerUserId)`. **Sem índice** para `Shop(isDemo)`: a tabela tem
+  dezenas/centenas de linhas e o predicado se resolve junto do `status` ou no join por PK; revisitar se passar de milhares.
 - `VisitQr(tokenHash)` único; `VisitQr(visitCode) WHERE status='active'` único (na rede toda);
   `(visitCode, createdAt DESC)`; `(shopId) WHERE status='active'`; `(ledgerEntryId)` único quando não nulo.
 

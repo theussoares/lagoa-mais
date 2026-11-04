@@ -57,6 +57,8 @@ export const AdminShopRowSchema = z.object({
   status: ShopStatusSchema,
   plan: ShopPlanSchema,
   createdAt: IsoDateTimeSchema,
+  /** Loja de demonstração (`shops.is_demo`): fora da vitrine e dos agregados da rede. Só leitura; nenhuma rota muda. */
+  isDemo: z.boolean(),
 })
 export type AdminShopRow = z.infer<typeof AdminShopRowSchema>
 

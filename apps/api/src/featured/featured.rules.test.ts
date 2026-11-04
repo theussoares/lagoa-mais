@@ -39,7 +39,7 @@ describe('peakOverlap', () => {
 
 describe('planPlacement', () => {
   const carousel = (candidate: { startsAt: Date; endsAt: Date }, existing: readonly { startsAt: Date; endsAt: Date }[] = []) =>
-    planPlacement({ candidate, existing, surface: 'discoverCarousel', shopStatus: 'approved', hitItem: null, shopId: SHOP })
+    planPlacement({ candidate, existing, surface: 'discoverCarousel', shopStatus: 'approved', shopIsDemo: false, hitItem: null, shopId: SHOP })
 
   it('refuses 15–16/11 when the 4 Discover slots are taken from 10 to 20/11', () => {
     expect(carousel(period('2026-11-15T04:00:00Z', '2026-11-16T04:00:00Z'), fullNovember)).toEqual({ ok: false, error: { code: 'slotsFull' } })
@@ -58,12 +58,20 @@ describe('planPlacement', () => {
   })
 
   it.each(['pending', 'suspended'] as const)('refuses a %s shop as invalidTarget', (shopStatus) => {
-    const plan = planPlacement({ candidate: period('2026-11-15T04:00:00Z', '2026-11-16T04:00:00Z'), existing: [], surface: 'discoverCarousel', shopStatus, hitItem: null, shopId: SHOP })
+    const plan = planPlacement({ candidate: period('2026-11-15T04:00:00Z', '2026-11-16T04:00:00Z'), existing: [], surface: 'discoverCarousel', shopStatus, shopIsDemo: false, hitItem: null, shopId: SHOP })
     expect(plan).toEqual({ ok: false, error: { code: 'invalidTarget' } })
   })
 
+  // RN-10: a demo nunca aparece ao cliente, então destaque pago para ela seria cobrar por nada.
+  it('refuses a demo shop on both surfaces, even approved, with free slots and an approved item', () => {
+    const candidate = period('2026-11-15T04:00:00Z', '2026-11-16T04:00:00Z')
+    const demo = { candidate, existing: [], shopStatus: 'approved' as const, shopIsDemo: true, shopId: SHOP }
+    expect(planPlacement({ ...demo, surface: 'discoverCarousel', hitItem: null })).toEqual({ ok: false, error: { code: 'invalidTarget' } })
+    expect(planPlacement({ ...demo, surface: 'hitsBanner', hitItem: { status: 'approved', shopId: SHOP } })).toEqual({ ok: false, error: { code: 'invalidTarget' } })
+  })
+
   const banner = (hitItem: { status: 'pending' | 'approved' | 'rejected' | 'archived'; shopId: string } | null) =>
-    planPlacement({ candidate: period('2026-11-15T04:00:00Z', '2026-11-16T04:00:00Z'), existing: [], surface: 'hitsBanner', shopStatus: 'approved', hitItem, shopId: SHOP })
+    planPlacement({ candidate: period('2026-11-15T04:00:00Z', '2026-11-16T04:00:00Z'), existing: [], surface: 'hitsBanner', shopStatus: 'approved', shopIsDemo: false, hitItem, shopId: SHOP })
 
   it('refuses a banner whose item is pending', () => {
     expect(banner({ status: 'pending', shopId: SHOP })).toEqual({ ok: false, error: { code: 'invalidTarget' } })
@@ -80,7 +88,7 @@ describe('planPlacement', () => {
 
   it('refuses a full Hits banner surface at its own slot count', () => {
     const taken = Array.from({ length: FEATURED_PAID_SLOTS_HITS }, () => period('2026-11-10T04:00:00Z', '2026-11-20T04:00:00Z'))
-    const plan = planPlacement({ candidate: period('2026-11-15T04:00:00Z', '2026-11-16T04:00:00Z'), existing: taken, surface: 'hitsBanner', shopStatus: 'approved', hitItem: { status: 'approved', shopId: SHOP }, shopId: SHOP })
+    const plan = planPlacement({ candidate: period('2026-11-15T04:00:00Z', '2026-11-16T04:00:00Z'), existing: taken, surface: 'hitsBanner', shopStatus: 'approved', shopIsDemo: false, hitItem: { status: 'approved', shopId: SHOP }, shopId: SHOP })
     expect(plan).toEqual({ ok: false, error: { code: 'slotsFull' } })
   })
 })
