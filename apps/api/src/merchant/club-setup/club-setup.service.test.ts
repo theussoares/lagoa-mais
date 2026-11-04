@@ -1,19 +1,25 @@
-import { describe, expect, it, vi } from 'vitest'
+import { Logger } from '@nestjs/common'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { ClubSetupDraft } from '#shared/schemas/onboarding'
-import { PhoneNumberSchema } from '#shared/schemas/phone'
+import { PhoneNumberSchema, type PhoneNumber } from '#shared/schemas/phone'
 import type { ShopStatus } from '#shared/schemas/shop'
 import type { AuthUser } from '../../auth/auth.types'
 import { TEST_USER } from '../../test-support/fake-auth.guard'
 import { createTestPii } from '../../test-support/pii'
 import {
   type CreateClubOutcome,
+  type NewShopMarks,
   type PosterData,
   ClubSetupRepository,
 } from './club-setup.repository'
 import { ClubSetupService } from './club-setup.service'
+import { DemoMerchant } from './demo-merchant'
 
 const OWNER: AuthUser = { ...TEST_USER, phone: PhoneNumberSchema.parse('67991230374') }
 const NOW = new Date('2026-10-09T12:00:00Z')
+// Número de teste inventado para o lojista demo (não é de ninguém).
+const DEMO_PHONE = PhoneNumberSchema.parse('67911110000')
+const DEMO_OWNER: AuthUser = { ...TEST_USER, phone: DEMO_PHONE }
 
 const sampleDraft: ClubSetupDraft = {
   shop: { name: 'Padaria Modelo', category: 'bakery', neighborhood: 'Centro', addressLine: 'Rua Principal, 100' },
@@ -32,20 +38,29 @@ const sampleDraft: ClubSetupDraft = {
 }
 
 class InMemoryClubSetupRepository extends ClubSetupRepository {
-  shop: { id: string; status: ShopStatus; name: string } | null = null
+  shop: { id: string; status: ShopStatus; name: string; isDemo: boolean } | null = null
   poster: PosterData | null = null
   phoneTaken = false
   posterReprinted = false
   lastOwner: Parameters<ClubSetupRepository['createClub']>[0] | null = null
+  lastMarks: NewShopMarks | null = null
 
-  async createClub(owner: Parameters<ClubSetupRepository['createClub']>[0], draft: ClubSetupDraft, newCheckInCode: () => string): Promise<CreateClubOutcome> {
+  async createClub(
+    owner: Parameters<ClubSetupRepository['createClub']>[0],
+    draft: ClubSetupDraft,
+    newCheckInCode: () => string,
+    _now: Date,
+    marks: NewShopMarks,
+  ): Promise<CreateClubOutcome> {
     this.lastOwner = owner
+    this.lastMarks = marks
     if (this.phoneTaken) return { kind: 'phoneTaken' }
-    if (this.shop) return { kind: 'existing', club: { shopId: this.shop.id, shopName: this.shop.name, shopStatus: this.shop.status, merchantTermsVersion: null } }
-    this.shop = { id: '018f98a2-7b2a-7182-9f33-6d004bbbb999', status: 'pending', name: draft.shop.name }
+    // Como o `ON CONFLICT DO NOTHING` do Drizzle: a loja existente volta como está, sem aplicar as marcas.
+    if (this.shop) return { kind: 'existing', club: { shopId: this.shop.id, shopName: this.shop.name, shopStatus: this.shop.status, merchantTermsVersion: null, isDemo: this.shop.isDemo } }
+    this.shop = { id: '018f98a2-7b2a-7182-9f33-6d004bbbb999', status: 'pending', name: draft.shop.name, isDemo: marks.isDemo }
     this.posterReprinted = true
     this.poster = { shopName: draft.shop.name, status: 'pending', checkInCode: newCheckInCode(), rewardTitle: draft.program.reward.title, unit: 'stamp', target: 10 }
-    return { kind: 'created', club: { shopId: this.shop.id, shopName: this.shop.name, shopStatus: 'pending', merchantTermsVersion: null } }
+    return { kind: 'created', club: { shopId: this.shop.id, shopName: this.shop.name, shopStatus: 'pending', merchantTermsVersion: null, isDemo: this.shop.isDemo } }
   }
 
   async getPoster(): Promise<PosterData | null> {
@@ -74,9 +89,23 @@ class InMemoryClubSetupRepository extends ClubSetupRepository {
   }
 }
 
-function setup() {
+/** `null` = API sem `DEMO_MERCHANT_PHONE` (um padrão `undefined` seria trocado pelo valor padrão do parâmetro). */
+function setup(demoPhone: PhoneNumber | null = DEMO_PHONE) {
   const repo = new InMemoryClubSetupRepository()
-  return { repo, service: new ClubSetupService(repo, createTestPii(), { now: () => NOW }) }
+  const pii = createTestPii()
+  return { repo, service: new ClubSetupService(repo, pii, { now: () => NOW }, new DemoMerchant({ DEMO_MERCHANT_PHONE: demoPhone ?? undefined }, pii)) }
+}
+
+/** Todo canal de log que o processo tem: o que não passar por aqui não sai da API. */
+function captureLogs(): string[] {
+  const lines: string[] = []
+  const keep = (...args: unknown[]) => {
+    lines.push(args.map((arg) => (typeof arg === 'string' ? arg : JSON.stringify(arg))).join(' '))
+  }
+  for (const method of ['log', 'warn', 'error', 'debug', 'verbose'] as const) vi.spyOn(Logger.prototype, method).mockImplementation(keep)
+  for (const method of ['log', 'warn', 'error', 'debug', 'verbose'] as const) vi.spyOn(Logger, method).mockImplementation(keep)
+  for (const method of ['log', 'info', 'warn', 'error', 'debug'] as const) vi.spyOn(console, method).mockImplementation(keep)
+  return lines
 }
 
 describe('ClubSetupService', () => {
@@ -159,5 +188,56 @@ describe('ClubSetupService', () => {
     const { service } = setup()
     expect(await service.isPosterReprintPending(TEST_USER.id)).toEqual({ ok: false, error: { code: 'notFound', entity: 'shop' } })
     expect(await service.getStatus(TEST_USER.id)).toMatchObject({ ok: false })
+  })
+
+  describe('demo shop mark', () => {
+    afterEach(() => {
+      vi.restoreAllMocks()
+    })
+
+    it('marks the shop created by the demo phone (CA-01) and not the one of any other phone (CA-02)', async () => {
+      const demo = setup()
+      await demo.service.createClub(DEMO_OWNER, sampleDraft)
+      expect(demo.repo.lastMarks).toEqual({ isDemo: true })
+
+      const other = setup()
+      await other.service.createClub(OWNER, sampleDraft)
+      expect(other.repo.lastMarks).toEqual({ isDemo: false })
+    })
+
+    it('marks nothing without DEMO_MERCHANT_PHONE (CA-03)', async () => {
+      const { service, repo } = setup(null)
+      await service.createClub(DEMO_OWNER, sampleDraft)
+      expect(repo.lastMarks).toEqual({ isDemo: false })
+    })
+
+    it('leaves an existing shop as it is (CA-05)', async () => {
+      const { service, repo } = setup()
+      repo.shop = { id: '018f98a2-7b2a-7182-9f33-6d004bbbb111', status: 'approved', name: 'Loja antiga', isDemo: false }
+      const again = await service.createClub(DEMO_OWNER, sampleDraft)
+      expect(again).toMatchObject({ ok: true, value: { created: false } })
+      expect(repo.shop.isDemo).toBe(false)
+    })
+
+    it('does not expose the mark in the response', async () => {
+      const { service } = setup()
+      const created = await service.createClub(DEMO_OWNER, sampleDraft)
+      expect(JSON.stringify(created)).not.toMatch(/isDemo|is_demo/)
+    })
+
+    it('logs only the shop id of a new demo shop, never a phone (CA-07)', async () => {
+      const lines = captureLogs()
+      const demo = setup()
+      await demo.service.createClub(DEMO_OWNER, sampleDraft)
+      await demo.service.createClub(DEMO_OWNER, sampleDraft)
+      const other = setup()
+      await other.service.createClub(OWNER, sampleDraft)
+
+      expect(lines.filter((line) => line.includes('Demo shop created'))).toEqual(['Demo shop created: 018f98a2-7b2a-7182-9f33-6d004bbbb999'])
+      for (const line of lines) {
+        expect(line).not.toContain(DEMO_PHONE)
+        expect(line).not.toContain('67991230374')
+      }
+    })
   })
 })

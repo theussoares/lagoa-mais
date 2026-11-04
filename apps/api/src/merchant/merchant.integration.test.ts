@@ -18,6 +18,7 @@ import { TEST_DATABASE_URL, TestDatabase } from '../test-support/test-database'
 import { DrizzleProgramRepository } from './program/drizzle-program.repository'
 import { ProgramService } from './program/program.service'
 import { ClubSetupService } from './club-setup/club-setup.service'
+import { DemoMerchant } from './club-setup/demo-merchant'
 import { DrizzleClubSetupRepository } from './club-setup/drizzle-club-setup.repository'
 import { CounterRedemptionsService } from './counter/counter-redemptions.service'
 import { DrizzleCounterRepository } from './counter/drizzle-counter.repository'
@@ -82,7 +83,7 @@ describe.skipIf(!TEST_DATABASE_URL)('merchant end-to-end integration against rea
     const customersRepo = new DrizzleCustomersRepository(data.db)
     const homeRepo = new DrizzleHomeRepository(data.db, pii)
 
-    clubSetupService = new ClubSetupService(clubSetupRepo, pii, clock)
+    clubSetupService = new ClubSetupService(clubSetupRepo, pii, clock, new DemoMerchant({ DEMO_MERCHANT_PHONE: undefined }, pii))
     programService = new ProgramService(new DrizzleProgramRepository(data.db), clock)
     visitQrsService = new VisitQrsService(visitQrsRepo, sessionRepo, new VisitQrsRules(), clock)
     counterRedemptionsService = new CounterRedemptionsService(counterRepo, clock)
