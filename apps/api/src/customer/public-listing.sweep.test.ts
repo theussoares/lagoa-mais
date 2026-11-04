@@ -1,7 +1,8 @@
 import { join } from 'node:path'
 import { Controller, Get, Post } from '@nestjs/common'
 import { describe, expect, it } from 'vitest'
-import { controllerFiles, controllerRoutes, controllersInFiles } from '../test-support/controller-routes'
+import { AppModule } from '../app.module'
+import { controllerFiles, controllerRoutes, controllersInFiles, controllersOf } from '../test-support/controller-routes'
 import { DIRECT_ACCESS_ROUTES, PUBLIC_LISTING_ROUTES, staleClassifiedRoutes, unclassifiedGetRoutes } from '../test-support/public-listing-routes'
 
 // A loja demo some porque cada listagem pública passa por `listedShop()`. A ameaça é a próxima leitura pública que
@@ -43,5 +44,12 @@ describe('public listing sweep', () => {
     expect(routes.length).toBeGreaterThanOrEqual(40)
     expect(unclassifiedGetRoutes(routes)).toEqual([])
     expect(staleClassifiedRoutes(routes)).toEqual([])
+  })
+
+  // A varredura por nome de arquivo não vê um controller registrado num arquivo com outro nome; o grafo do AppModule vê.
+  it('also classifies every GET of the controllers registered in the AppModule graph', () => {
+    const routes = controllerRoutes(controllersOf(AppModule))
+    expect(routes.length).toBeGreaterThanOrEqual(40)
+    expect(unclassifiedGetRoutes(routes)).toEqual([])
   })
 })

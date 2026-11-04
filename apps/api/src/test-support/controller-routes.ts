@@ -10,6 +10,19 @@ const isClass = (value: unknown): value is Type<unknown> => typeof value === 'fu
 
 export const isController = (value: unknown): value is Type<unknown> => isClass(value) && Reflect.getMetadata(PATH_METADATA, value) !== undefined
 
+/** Todos os controllers de um módulo e dos que ele importa (estáticos ou `{ module }` dinâmicos). */
+export function controllersOf(root: Type<unknown>, seen = new Set<unknown>()): Type<unknown>[] {
+  if (seen.has(root)) return []
+  seen.add(root)
+  const own: unknown = Reflect.getMetadata('controllers', root)
+  const imports: unknown = Reflect.getMetadata('imports', root)
+  const children = (Array.isArray(imports) ? imports : []).flatMap((entry: unknown) => {
+    const module = typeof entry === 'object' && entry !== null && 'module' in entry ? entry.module : entry
+    return isClass(module) ? controllersOf(module, seen) : []
+  })
+  return [...(Array.isArray(own) ? own.filter(isController) : []), ...children]
+}
+
 /** Todo `*.controller.ts` debaixo de `dir`, em qualquer profundidade. */
 export function controllerFiles(dir: string): string[] {
   return readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {

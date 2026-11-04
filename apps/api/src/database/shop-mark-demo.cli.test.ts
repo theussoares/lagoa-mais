@@ -16,6 +16,8 @@ describe('parseMarkDemoInvocation', () => {
     ['in CI', ['--actor', 'po'], { ...allowed, CI: 'true' }],
     ['without --actor', ['--dry-run'], allowed],
     ['with an --actor value missing', ['--actor'], allowed],
+    ['with the nickname forgotten before --dry-run', ['--actor', '--dry-run'], allowed],
+    ['with a flag-like nickname', ['--actor', '-x'], allowed],
     ['with an e-mail as actor', ['--actor', 'po@lagoamais.com.br'], allowed],
     ['with --shop', ['--actor', 'po', '--shop', '018f98a2-7b2a-7182-9f33-6d004bbbb111'], allowed],
     ['with --shop=<id>', ['--actor', 'po', '--shop=018f98a2-7b2a-7182-9f33-6d004bbbb111'], allowed],

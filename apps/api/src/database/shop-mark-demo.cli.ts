@@ -29,7 +29,11 @@ export function parseMarkDemoInvocation(argv: readonly string[], env: NodeJS.Pro
     if (arg === '--dry-run') {
       dryRun = true
     } else if (arg === '--actor') {
-      actor = argv[index + 1]
+      // `--actor --dry-run` (apelido esquecido) não pode engolir o `--dry-run`: o apelido passaria no padrão e o
+      // script gravaria quando o operador pediu só a prévia.
+      const value = argv[index + 1]
+      if (value === undefined || value.startsWith('-')) return err(USAGE)
+      actor = value
       index++
     } else if (arg === '--shop' || arg?.startsWith('--shop=')) {
       return err('--shop is not accepted: the target comes from DEMO_MERCHANT_PHONE')
