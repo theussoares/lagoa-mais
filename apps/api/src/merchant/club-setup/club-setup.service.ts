@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common'
+import { Injectable, Logger } from '@nestjs/common'
 import { MERCHANT_TERMS_VERSION } from '#shared/constants/domain'
 import { MerchantIdSchema, ShopIdSchema } from '#shared/schemas/ids'
 import type { ClubSetupDraft } from '#shared/schemas/onboarding'
@@ -11,6 +11,7 @@ import { Clock } from '../../common/clock'
 import { PiiService } from '../../common/pii.service'
 import { ClubSetupRepository } from './club-setup.repository'
 import { newCheckInCode } from './club-setup.rules'
+import { DemoMerchant } from './demo-merchant'
 
 export type CreateClubError = ErrorOf<'unauthorized' | 'phoneAlreadyUsed'>
 
@@ -22,10 +23,13 @@ export interface ClubCreation {
 
 @Injectable()
 export class ClubSetupService {
+  private readonly logger = new Logger(ClubSetupService.name)
+
   constructor(
     private readonly repo: ClubSetupRepository,
     private readonly pii: PiiService,
     private readonly clock: Clock,
+    private readonly demoMerchant: DemoMerchant,
   ) {}
 
   /**
@@ -34,11 +38,13 @@ export class ClubSetupService {
    */
   async createClub(user: AuthUser, draft: ClubSetupDraft): Promise<Result<ClubCreation, CreateClubError>> {
     if (user.phone === undefined) return err({ code: 'unauthorized' })
+    // Um hash só: o mesmo que vai para `app_users.phone_hash` decide a marca de demonstração (RN-01).
+    const phoneHash = this.pii.hashPhone(user.phone)
     const outcome = await this.repo.createClub(
       {
         userId: user.id,
         phoneEncrypted: this.pii.encrypt(user.phone),
-        phoneHash: this.pii.hashPhone(user.phone),
+        phoneHash,
         // O painel não usa e-mail, e o do token não é verificado contra o cadastro de ninguém: gravá-lo só faria o
         // Criar o clube falhar (e-mail único) quando um cliente tivesse informado o mesmo endereço.
         emailEncrypted: null,
@@ -47,10 +53,13 @@ export class ClubSetupService {
       draft,
       newCheckInCode,
       this.clock.now(),
+      { isDemo: this.demoMerchant.owns(phoneHash) },
     )
     if (outcome.kind === 'phoneTaken') return err({ code: 'phoneAlreadyUsed' })
     if (outcome.kind === 'accountErased') return err({ code: 'unauthorized' })
     const { club } = outcome
+    // Só o id: nem celular, nem hash, nem nome do dono (RN-02). A resposta não expõe a marca (decisão 9.3 b).
+    if (outcome.kind === 'created' && club.isDemo) this.logger.log(`Demo shop created: ${club.shopId}`)
     return ok({
       created: outcome.kind === 'created',
       session: {

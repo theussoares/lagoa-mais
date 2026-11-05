@@ -8,6 +8,13 @@ export interface CreatedClub {
   readonly shopName: string
   readonly shopStatus: ShopStatus
   readonly merchantTermsVersion: string | null
+  /** Lido do banco (loja inserida agora ou já existente): a marca de demonstração como ficou gravada. */
+  readonly isDemo: boolean
+}
+
+/** Marcas gravadas só no INSERT da loja; loja existente nunca é alterada (RN-04/RN-05). */
+export interface NewShopMarks {
+  readonly isDemo: boolean
 }
 
 export type CreateClubOutcome =
@@ -28,9 +35,9 @@ export interface PosterData {
 export abstract class ClubSetupRepository {
   /**
    * Numa transação: garante o `app_users` do dono, cria a loja e o programa. Quem já tem loja recebe a existente
-   * (`existing`) sem aplicar o rascunho. `newCheckInCode` é chamado de novo se o código sorteado colidir.
+   * (`existing`) sem aplicar o rascunho nem as `marks`. `newCheckInCode` é chamado de novo se o código sorteado colidir.
    */
-  abstract createClub(owner: NewAppUser, draft: ClubSetupDraft, newCheckInCode: () => string, now: Date): Promise<CreateClubOutcome>
+  abstract createClub(owner: NewAppUser, draft: ClubSetupDraft, newCheckInCode: () => string, now: Date, marks: NewShopMarks): Promise<CreateClubOutcome>
   abstract getPoster(ownerUserId: string): Promise<PosterData | null>
   abstract getStatus(ownerUserId: string): Promise<ShopStatus | null>
   abstract approveShop(ownerUserId: string): Promise<ShopStatus | null>

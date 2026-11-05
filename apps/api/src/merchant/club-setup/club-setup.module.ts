@@ -4,6 +4,7 @@ import { ShopController } from './shop.controller'
 import { ClubSetupController } from './club-setup.controller'
 import { ClubSetupRepository } from './club-setup.repository'
 import { ClubSetupService } from './club-setup.service'
+import { DemoMerchant } from './demo-merchant'
 import { DrizzleClubSetupRepository } from './drizzle-club-setup.repository'
 import { AccessModule } from '../access/access.module'
 
@@ -12,6 +13,7 @@ import { AccessModule } from '../access/access.module'
   controllers: [ClubSetupController, ShopController],
   providers: [
     ClubSetupService,
+    DemoMerchant,
     { provide: ClubSetupRepository, useClass: DrizzleClubSetupRepository },
   ],
   exports: [ClubSetupService, ClubSetupRepository],

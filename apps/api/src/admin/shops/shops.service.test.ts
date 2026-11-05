@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { AdminShopDetailSchema, AdminShopListSchema } from '#shared/schemas/admin'
 import { PiiService } from '../../common/pii.service'
 import type { ShopStatusResult } from '../../database/shop-status'
 import {
@@ -16,7 +17,7 @@ const SHOP_ID = '0190a000-0000-7000-8000-00000000b001'
 const CREATED = new Date('2026-05-01T12:00:00Z')
 
 const record = (id: string, overrides: Partial<AdminShopRecord> = {}): AdminShopRecord => ({
-  id, name: 'Padaria', category: 'bakery', neighborhood: 'Centro', status: 'approved', plan: 'founder', createdAt: CREATED, ...overrides,
+  id, name: 'Padaria', category: 'bakery', neighborhood: 'Centro', status: 'approved', plan: 'founder', createdAt: CREATED, isDemo: false, ...overrides,
 })
 
 const detailRecord = (overrides: Partial<AdminShopDetailRecord> = {}): AdminShopDetailRecord => ({
@@ -68,6 +69,17 @@ describe('AdminShopsService', () => {
     expect(erased).toMatchObject({ ok: true, value: { owner: null } })
     const phoneOnly = await new AdminShopsService(new FakeRepository([], detailRecord({ owner: { phoneEncrypted: pii.encrypt('67991230374'), emailEncrypted: null } })), pii).detail(SHOP_ID)
     expect(phoneOnly).toMatchObject({ ok: true, value: { owner: { email: null } } })
+  })
+
+  // CA-34 (decisão 9.2 a): o admin vê a marca, só leitura, para entender por que a loja aprovada não está no Descobrir.
+  it('shows the demo mark in the row and in the detail, within the shared contract', async () => {
+    const rows = [record('0190a000-0000-7000-8000-00000000b002', { isDemo: true }), record('0190a000-0000-7000-8000-00000000b003')]
+    const list = await new AdminShopsService(new FakeRepository(rows, null), pii).list({})
+    expect(list.shops.map((row) => row.isDemo)).toEqual([true, false])
+    expect(AdminShopListSchema.safeParse(list).success).toBe(true)
+    const detail = await new AdminShopsService(new FakeRepository([], detailRecord({ isDemo: true })), pii).detail(SHOP_ID)
+    expect(detail).toMatchObject({ ok: true, value: { isDemo: true } })
+    expect(detail.ok && AdminShopDetailSchema.safeParse(detail.value).success).toBe(true)
   })
 
   it('answers notFound for a missing shop', async () => {

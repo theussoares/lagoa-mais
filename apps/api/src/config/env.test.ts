@@ -59,4 +59,35 @@ describe('corsOrigins', () => {
     expect(() => parseEnv({ ...production, ADMIN_APP_URL: 'http://admin.lagoamais.com.br' })).toThrow('ADMIN_APP_URL')
     expect(() => parseEnv({ ...production, ADMIN_APP_URL: 'not a url' })).toThrow('ADMIN_APP_URL')
   })
+
+  describe('DEMO_MERCHANT_PHONE', () => {
+    // Número de teste inventado (não é de ninguém); o formato é o único que o `PhoneNumberSchema` aceita.
+    const DEMO_PHONE = '67911110000'
+
+    it('is optional: absent or empty means no demo merchant, also in production', () => {
+      expect(parseEnv(valid()).DEMO_MERCHANT_PHONE).toBeUndefined()
+      expect(parseEnv({ ...valid(), DEMO_MERCHANT_PHONE: '' }).DEMO_MERCHANT_PHONE).toBeUndefined()
+      const production = {
+        ...valid(), NODE_ENV: 'production', TRUST_PROXY_HOPS: '1', COMTELE_AUTH_KEY: 'key', SEND_SMS_HOOK_SECRET: 'v1,whsec_abc',
+        SUPABASE_SERVICE_ROLE_KEY: 'service-role', BFF_SHARED_SECRET: 'b'.repeat(32), ADMIN_APP_URL: 'https://admin.lagoamais.com.br',
+      }
+      expect(parseEnv(production).DEMO_MERCHANT_PHONE).toBeUndefined()
+      expect(parseEnv({ ...production, DEMO_MERCHANT_PHONE: DEMO_PHONE }).DEMO_MERCHANT_PHONE).toBe(DEMO_PHONE)
+    })
+
+    it('accepts the 11-digit form', () => {
+      expect(parseEnv({ ...valid(), DEMO_MERCHANT_PHONE: DEMO_PHONE }).DEMO_MERCHANT_PHONE).toBe(DEMO_PHONE)
+    })
+
+    it.each(['5567911110000', '(67) 91111-0000', '6791111000', ' 67911110000'])('refuses %j at boot, naming only the field', (value) => {
+      let message = ''
+      try {
+        parseEnv({ ...valid(), DEMO_MERCHANT_PHONE: value })
+      } catch (error) {
+        message = error instanceof Error ? error.message : String(error)
+      }
+      expect(message).toBe('Invalid environment: DEMO_MERCHANT_PHONE')
+      expect(message).not.toMatch(/\d{4}/)
+    })
+  })
 })

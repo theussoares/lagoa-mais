@@ -11,6 +11,8 @@ export interface AdminShopRecord {
   readonly status: ShopStatus
   readonly plan: ShopPlan
   readonly createdAt: Date
+  /** Só leitura: o admin vê por que a loja aprovada não aparece no Descobrir; nenhuma ação liga ou desliga (RN-04). */
+  readonly isDemo: boolean
 }
 
 export interface AdminShopListFilter {
