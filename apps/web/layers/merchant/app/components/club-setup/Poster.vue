@@ -53,6 +53,9 @@ defineProps<Props>()
     background: #fff !important;
   }
   .poster-sheet {
+    position: fixed;
+    inset: 0 auto auto 0;
+    margin: 0;
     width: 210mm;
     height: 297mm;
     -webkit-print-color-adjust: exact;

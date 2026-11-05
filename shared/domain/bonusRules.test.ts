@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { BonusRules } from '../schemas/program'
-import { applyVisitBonuses, isBirthdayToday, isSurpriseDay, welcomeUnits, withActiveSurpriseDay } from './bonusRules'
+import { applyVisitBonuses, isBirthdayToday, isSurpriseDay, bonusUnitsMax, welcomeUnits, welcomeUnitsMax, withActiveSurpriseDay } from './bonusRules'
 
 const rules: BonusRules = {
   welcomeBonus: { enabled: true, units: 2 },
@@ -77,5 +77,27 @@ describe('withActiveSurpriseDay', () => {
   it('stops doubling as soon as the active version switches it off, even if the card version had it on', () => {
     const merged = withActiveSurpriseDay(rules, { enabled: false, multiplier: 2, date: '2026-10-01' })
     expect(isSurpriseDay(merged, '2026-10-01')).toBe(false)
+  })
+})
+
+describe('bonus units cap', () => {
+  const stamps = (target: number) => ({ mode: 'stamps', target }) as const
+  const points = (target: number) => ({ mode: 'pointsPerVisit', pointsPerVisit: 10, target }) as const
+
+  it('keeps 10 for stamps and follows the target for points', () => {
+    expect(bonusUnitsMax(stamps(20))).toBe(10)
+    expect(bonusUnitsMax(points(100))).toBe(99)
+    expect(bonusUnitsMax(points(1000))).toBe(999)
+  })
+
+  it('never goes below 10 for a small points target, so saved programs stay valid', () => {
+    expect(bonusUnitsMax(points(5))).toBe(10)
+  })
+
+  it('stops welcome one visit short of the target', () => {
+    expect(welcomeUnitsMax(stamps(20))).toBe(10)
+    expect(welcomeUnitsMax(stamps(5))).toBe(4)
+    expect(welcomeUnitsMax(points(100))).toBe(99)
+    expect(welcomeUnitsMax(points(5))).toBe(4)
   })
 })

@@ -94,3 +94,35 @@ describe('toProgramPreview', () => {
     expect(card.status.kind === 'remaining' && card.status.reward).toBe('program.preview.rewardPlaceholder')
   })
 })
+
+describe('bonus units cap in the draft', () => {
+  const pointsRules = { mode: 'pointsPerVisit', pointsPerVisit: 10, target: 100 } as const
+  const withBonus = (rules: ProgramDraft['rules'], welcome: number, referral: number): ProgramDraft => {
+    const base = draft()
+    return {
+      ...base,
+      rules,
+      bonusRules: {
+        ...base.bonusRules,
+        welcomeBonus: { enabled: true, units: welcome },
+        referralBonus: { enabled: true, units: referral },
+      },
+    }
+  }
+
+  it('accepts welcome and referral up to target - 1 in points', () => {
+    expect(ProgramDraftSchema.safeParse(withBonus(pointsRules, 99, 99)).success).toBe(true)
+    expect(programFieldErrors(withBonus(pointsRules, 50, 30))).toEqual({})
+  })
+
+  it('refuses welcome at the target and referral above target - 1 in points', () => {
+    expect(programFieldErrors(withBonus(pointsRules, 100, 99))).toEqual({ welcomeUnits: true })
+    expect(programFieldErrors(withBonus(pointsRules, 99, 100))).toEqual({ referralUnits: true })
+  })
+
+  it('keeps the 10 unit cap for stamps', () => {
+    const stampRules = { mode: 'stamps', target: 20 } as const
+    expect(programFieldErrors(withBonus(stampRules, 10, 10))).toEqual({})
+    expect(programFieldErrors(withBonus(stampRules, 11, 11))).toEqual({ welcomeUnits: true, referralUnits: true })
+  })
+})

@@ -2,7 +2,6 @@ import { z } from 'zod'
 import { IsoDateSchema } from './common'
 import { ProgramIdSchema, ShopIdSchema } from './ids'
 import {
-  BONUS_UNITS_MAX,
   CHECK_IN_COOLDOWN_MAX_HOURS,
   EXPIRATION_MAX_MONTHS,
   PROGRAM_TARGET_MAX,
@@ -11,6 +10,7 @@ import {
   REWARD_TITLE_MAX_LENGTH,
   STAMPS_TARGET_MAX,
 } from '../constants/domain'
+import { bonusUnitsMax, welcomeUnitsMax } from '../domain/bonusRules'
 
 const target = z.number().int().min(PROGRAM_TARGET_MIN).max(PROGRAM_TARGET_MAX)
 
@@ -55,11 +55,13 @@ export const EarnRateSchema = z.object({
 export type EarnRate = z.infer<typeof EarnRateSchema>
 
 const toggle = z.object({ enabled: z.boolean() })
+// Teto absoluto; o teto de cada programa (unidade e meta) vem de `bonusUnitsMax`, conferido no rascunho.
+const bonusUnits = z.number().int().min(1).max(PROGRAM_TARGET_MAX - 1)
 
 export const BonusRulesSchema = z.object({
-  welcomeBonus: toggle.extend({ units: z.number().int().min(1).max(BONUS_UNITS_MAX) }),
+  welcomeBonus: toggle.extend({ units: bonusUnits }),
   birthdayMultiplier: toggle.extend({ multiplier: z.literal(2) }),
-  referralBonus: toggle.extend({ units: z.number().int().min(1).max(BONUS_UNITS_MAX) }),
+  referralBonus: toggle.extend({ units: bonusUnits }),
   surpriseDay: toggle.extend({ multiplier: z.literal(2), date: IsoDateSchema.nullable() }),
 })
 export type BonusRules = z.infer<typeof BonusRulesSchema>
@@ -109,10 +111,15 @@ export type Program = z.infer<typeof ProgramSchema>
  * ficam aqui para valerem igual no front e no servidor.
  */
 export const ProgramDraftSchema = ProgramSchema.omit({ id: true, shopId: true }).superRefine((draft, ctx) => {
-  const { welcomeBonus, surpriseDay } = draft.bonusRules
+  const { welcomeBonus, referralBonus, surpriseDay } = draft.bonusRules
   // Boas-vindas do tamanho da meta dariam o prêmio sem nenhuma visita.
   if (welcomeBonus.enabled && welcomeBonus.units >= draft.rules.target) {
     ctx.addIssue({ code: 'custom', path: ['bonusRules', 'welcomeBonus', 'units'], message: 'welcomeReachesTarget' })
+  } else if (welcomeBonus.enabled && welcomeBonus.units > welcomeUnitsMax(draft.rules)) {
+    ctx.addIssue({ code: 'custom', path: ['bonusRules', 'welcomeBonus', 'units'], message: 'bonusUnitsTooHigh' })
+  }
+  if (referralBonus.enabled && referralBonus.units > bonusUnitsMax(draft.rules)) {
+    ctx.addIssue({ code: 'custom', path: ['bonusRules', 'referralBonus', 'units'], message: 'bonusUnitsTooHigh' })
   }
   // Dia surpresa ligado sem data nunca dobraria nada.
   if (surpriseDay.enabled && surpriseDay.date === null) {
