@@ -1,17 +1,26 @@
+import { toHitPriceModel, toHitTagModels } from '#layers/core/app/utils/hitPrice'
+import type { Translate } from '#layers/core/app/types/i18n'
 import { HIT_ITEM_PRICE_MAX_CENTS } from '#shared/constants/domain'
+import { checkHitPrices } from '#shared/domain/hitPrice'
+import { HIT_TAGS, type HitTag } from '#shared/domain/hitTag'
 import type { HitItemDraft, MerchantHitItem } from '#shared/schemas/hitItem'
-import { formatCurrency } from '#shared/utils/currency'
 import type { HitItemDraftResult, HitItemForm, HitItemFormErrorCode, HitItemPreview, HitItemRow, HitItemSaveError, HitItemSaveState } from '../types/hitItem'
 import { emptyContactForm, formFromContact, isFormErrorCode, toContactPreview, toContactUpdate } from './shopContactForm'
 
-export const HIT_ITEM_FORM_ERROR_CODES = ['missingTitle', 'invalidPrice', 'invalidEndsAt', 'missingPhoto'] as const
+export const HIT_ITEM_FORM_ERROR_CODES = ['missingTitle', 'invalidPrice', 'invalidPromoPrice', 'promoNeedsPrice', 'promoNotLower', 'invalidEndsAt', 'missingPhoto'] as const
 
 const CENTS_PER_REAL = 100
 const END_OF_DAY = { hours: 23, minutes: 59, seconds: 59 } as const
 const PRICE_PATTERN = /^\d+(\.\d{1,2})?$/
 
+/** Marca ou desmarca uma etiqueta, na ordem do card; o teto de `HIT_ITEM_TAGS_MAX` é da tela (`HitsTagsField`). */
+export function toggleHitTag(tags: readonly HitTag[], tag: HitTag): HitTag[] {
+  const next = tags.includes(tag) ? tags.filter((current) => current !== tag) : [...tags, tag]
+  return HIT_TAGS.filter((known) => next.includes(known))
+}
+
 export function emptyHitItemForm(): HitItemForm {
-  return { title: '', description: '', price: '', endsAt: '', useShopButton: true, contact: emptyContactForm('whatsapp') }
+  return { title: '', description: '', price: '', promoPrice: '', tags: [], endsAt: '', useShopButton: true, contact: emptyContactForm('whatsapp') }
 }
 
 /** "12,50" → 1250. Vazio = sob consulta (`null`); texto que não é preço = `undefined`. */
@@ -48,6 +57,8 @@ export function formFromItem(item: MerchantHitItem): HitItemForm {
     title: item.title,
     description: item.description ?? '',
     price: priceInput(item.priceCents),
+    promoPrice: priceInput(item.promoPriceCents),
+    tags: item.tags,
     endsAt: item.endsAt === null ? '' : localDay(item.endsAt),
     useShopButton: item.contact === null,
     contact: formFromContact(item.contact),
@@ -60,6 +71,10 @@ export function toHitItemDraft(form: HitItemForm, now: Date): HitItemDraftResult
   if (title === '') return { ok: false, code: 'missingTitle' }
   const priceCents = parsePriceCents(form.price)
   if (priceCents === undefined) return { ok: false, code: 'invalidPrice' }
+  const promoPriceCents = parsePriceCents(form.promoPrice)
+  if (promoPriceCents === undefined) return { ok: false, code: 'invalidPromoPrice' }
+  const priceIssue = checkHitPrices({ priceCents, promoPriceCents })
+  if (priceIssue !== null) return { ok: false, code: priceIssue }
   const end = form.endsAt === '' ? null : endOfLocalDay(form.endsAt)
   if (form.endsAt !== '' && (end === null || end <= now)) return { ok: false, code: 'invalidEndsAt' }
   const contact = form.useShopButton ? { ok: true as const, update: { contact: null } } : toContactUpdate(form.contact)
@@ -68,6 +83,8 @@ export function toHitItemDraft(form: HitItemForm, now: Date): HitItemDraftResult
     title,
     description: form.description.trim() === '' ? null : form.description.trim(),
     priceCents,
+    promoPriceCents,
+    tags: [...form.tags],
     contact: contact.update.contact,
     endsAt: end === null ? null : end.toISOString(),
   }
@@ -78,24 +95,27 @@ export function isHitItemFormErrorCode(code: string): code is HitItemFormErrorCo
   return HIT_ITEM_FORM_ERROR_CODES.some((known) => known === code)
 }
 
-export function toHitItemRow(item: MerchantHitItem): HitItemRow {
+export function toHitItemRow(item: MerchantHitItem, t: Translate): HitItemRow {
   return {
     item,
     status: item.status,
-    priceLabel: item.priceCents === null ? null : formatCurrency(item.priceCents),
+    price: toHitPriceModel(item, t),
+    tags: toHitTagModels(item.tags, t),
     missingPhoto: item.photoUrl === null && item.status !== 'archived',
     rejectionReason: item.status === 'rejected' ? item.rejectionReason : null,
     canEdit: item.status !== 'archived',
   }
 }
 
-/** O card como o cliente vai ver, a partir do que está digitado (preço ainda inválido some, não quebra a prévia). */
-export function toHitItemPreview(form: HitItemForm, photoUrl: string | null, whatsappDefaultLabel: string): HitItemPreview {
-  const cents = parsePriceCents(form.price)
+/** O card como o cliente vai ver, a partir do que está digitado (preço ainda inválido ou promoção sem sentido some, não quebra a prévia). */
+export function toHitItemPreview(form: HitItemForm, photoUrl: string | null, whatsappDefaultLabel: string, t: Translate): HitItemPreview {
+  const priceCents = parsePriceCents(form.price) ?? null
+  const promoPriceCents = parsePriceCents(form.promoPrice) ?? null
   return {
     title: form.title.trim(),
     description: form.description.trim() === '' ? null : form.description.trim(),
-    priceLabel: typeof cents === 'number' ? formatCurrency(cents) : null,
+    price: toHitPriceModel({ priceCents, promoPriceCents }, t),
+    tags: toHitTagModels(form.tags, t),
     photoUrl,
     button: form.useShopButton ? null : toContactPreview(form.contact, whatsappDefaultLabel),
   }

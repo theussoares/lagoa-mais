@@ -71,8 +71,8 @@ export class MockHitItemService implements HitItemService {
   }
 
   private backToReview(item: MerchantHitItem, fields: HitItemDraft): MerchantHitItem {
-    const { title, description, priceCents, contact, endsAt } = fields
-    return { ...item, title, description, priceCents, contact, endsAt, status: 'pending', rejectionReason: null, updatedAt: this.now() }
+    const { title, description, priceCents, promoPriceCents, tags, contact, endsAt } = fields
+    return { ...item, title, description, priceCents, promoPriceCents, tags, contact, endsAt, status: 'pending', rejectionReason: null, updatedAt: this.now() }
   }
 
   private change(id: string, edit: (item: MerchantHitItem) => Result<MerchantHitItem, HitItemError>): Promise<Result<MerchantHitItem, HitItemError>> {

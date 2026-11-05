@@ -1,5 +1,7 @@
 import { Inject, Injectable, Logger, Optional } from '@nestjs/common'
 import { HITS_BANNERS_MAX, HITS_PAGE_SIZE } from '#shared/constants/domain'
+import { hitEffectivePriceCents } from '#shared/domain/hitPrice'
+import { parseHitTags } from '#shared/domain/hitTag'
 import { categoriesOf } from '#shared/domain/shopGroup'
 import { showcaseEarning } from '#shared/domain/showcaseEarning'
 import { type HitsBanner, type HitsQuery, type PublicHitItem, PublicHitItemSchema, type PublicHitItemPage } from '#shared/schemas/showcase'
@@ -68,8 +70,10 @@ export class CustomerHitsService {
       title: row.title,
       description: row.description,
       priceCents: row.priceCents,
+      promoPriceCents: row.promoPriceCents,
+      tags: parseHitTags(row.tags),
       photoUrl: shopAssetUrl(this.env.SUPABASE_URL, row.photoPath),
-      earning: showcaseEarning({ rules: shop.program.rules, bonusRules: shop.program.bonusRules, priceCents: row.priceCents, now }),
+      earning: showcaseEarning({ rules: shop.program.rules, bonusRules: shop.program.bonusRules, priceCents: hitEffectivePriceCents(row), now }),
       contact: contactFromColumns(row.itemContact) ?? shop.contact,
       shop: { id: shop.id, name: shop.name, category: shop.category, neighborhood: shop.neighborhood },
     }

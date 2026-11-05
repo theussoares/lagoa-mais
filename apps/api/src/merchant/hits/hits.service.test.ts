@@ -11,7 +11,7 @@ const NOW = new Date('2026-01-01T00:00:00Z')
 const PNG = { contentType: 'image/png', dataBase64: pngHeader(800, 600).toString('base64') } as const
 
 const row = (overrides: Partial<HitItemRow> = {}): HitItemRow => ({
-  id: 'item-1', shopId: 'shop-1', title: 'Bolo', description: null, priceCents: null, photoPath: 'hits/shop-1/old.png',
+  id: 'item-1', shopId: 'shop-1', title: 'Bolo', description: null, priceCents: null, promoPriceCents: null, tags: [], photoPath: 'hits/shop-1/old.png',
   ctaKind: null, whatsapp: null, whatsappMessage: null, ctaUrl: null, ctaLabel: null,
   status: 'approved', rejectionReason: null, endsAt: null, version: 1, createdAt: NOW, updatedAt: NOW, ...overrides,
 })
@@ -65,6 +65,20 @@ describe('HitsService photo', () => {
     const storage = new FakeStorage()
     const svg = { contentType: 'image/png', dataBase64: Buffer.from('<svg/>').toString('base64') } as const
     expect(await serviceFor(new FakeRepository(row()), storage).replacePhoto(SHOP, 'item-1', svg)).toEqual({ ok: false, error: { code: 'invalidShopPhoto' } })
+  })
+})
+
+describe('HitsService update', () => {
+  const edit = { title: 'Bolo', description: null, priceCents: 3990, promoPriceCents: 3490, tags: ['clubOnly' as const], contact: null, endsAt: null }
+
+  it('saves the promo price and tags and sends an approved item back to the review queue', async () => {
+    const result = await serviceFor(new FakeRepository(row())).update(SHOP, 'item-1', edit)
+    expect(result).toMatchObject({ ok: true, value: { status: 'pending', priceCents: 3990, promoPriceCents: 3490, tags: ['clubOnly'] } })
+  })
+
+  it('drops a tag the domain no longer knows instead of breaking the panel', async () => {
+    const result = await serviceFor(new FakeRepository(row({ tags: ['retired', 'new'] }))).update(SHOP, 'item-1', { ...edit, tags: [] })
+    expect(result).toMatchObject({ ok: true, value: { tags: [] } })
   })
 })
 

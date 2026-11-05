@@ -6,6 +6,7 @@ interface Props {
 }
 
 defineProps<Props>()
+const { t } = useI18n()
 </script>
 
 <template>
@@ -14,7 +15,17 @@ defineProps<Props>()
     <div class="flex flex-1 flex-col gap-1 px-3 pt-3 pb-3">
       <h3 class="text-base leading-snug font-semibold text-balance text-highlighted">{{ item.title }}</h3>
       <p class="truncate text-sm text-muted">{{ item.shopName }}</p>
-      <p class="font-display mt-1 text-lg font-bold text-highlighted tabular-nums">{{ item.price }}</p>
+      <PriceTag
+        :price="item.price.price"
+        :original="item.price.original"
+        :discount="item.price.discount"
+        :from-label="t('hitPrice.from')"
+        :to-label="t('hitPrice.to')"
+        class="font-display mt-1 text-lg font-bold text-highlighted"
+      />
+      <ul v-if="item.tags.length > 0" class="flex flex-wrap gap-2">
+        <li v-for="tag in item.tags" :key="tag.tag"><StampTag :label="tag.label" tone="reward" /></li>
+      </ul>
       <p v-if="item.earning" class="flex flex-wrap gap-1">
         <span class="rounded-full bg-(--color-sol-100) px-2 py-0.5 text-sm font-bold text-(--color-sol-900) dark:bg-(--color-sol-900) dark:text-(--color-sol-200)">
           {{ item.earning.label }}

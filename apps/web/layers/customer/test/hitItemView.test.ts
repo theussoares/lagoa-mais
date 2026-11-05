@@ -3,7 +3,7 @@ import type { z } from 'zod'
 import { HitsBannerSchema, PublicHitItemSchema } from '#shared/schemas/showcase'
 import type { PublicHitItem } from '#shared/schemas/showcase'
 import type { Translate } from '#layers/core/app/types/i18n'
-import { hitItemEarning, hitItemPrice, toHitItemCardModel, toHitsBannerModel } from '../app/utils/hitItemView'
+import { hitItemEarning, toHitItemCardModel, toHitsBannerModel } from '../app/utils/hitItemView'
 
 /** Devolve a chave e os parâmetros: o teste vê o que a tela pediria ao pt-BR.json. */
 const t: Translate = (key, named = {}, plural) =>
@@ -17,6 +17,8 @@ function item(overrides: Partial<z.input<typeof PublicHitItemSchema>> = {}): Pub
     title: 'Corte + barba',
     description: null,
     priceCents: 4500,
+    promoPriceCents: null,
+    tags: [],
     photoUrl: 'https://cdn.lagoa.test/hits/corte.webp',
     earning: { unit: 'stamp', units: 1, doubled: false },
     contact: null,
@@ -25,13 +27,22 @@ function item(overrides: Partial<z.input<typeof PublicHitItemSchema>> = {}): Pub
   })
 }
 
-describe('hitItemPrice', () => {
-  it('formats the price in reais', () => {
-    expect(hitItemPrice(5990, t).replace(/\s/g, ' ')).toBe('R$ 59,90')
+describe('toHitItemCardModel price and tags', () => {
+  it('formats the price in reais and says "Sob consulta" without one', () => {
+    expect(toHitItemCardModel(item({ priceCents: 5990 }), t).price).toMatchObject({ original: null, discount: null })
+    expect(toHitItemCardModel(item({ priceCents: 5990 }), t).price.price.replace(/\s/g, ' ')).toBe('R$ 59,90')
+    expect(toHitItemCardModel(item({ priceCents: null }), t).price.price).toBe('hitPrice.onRequest')
   })
 
-  it('says "Sob consulta" when the shop gave no price', () => {
-    expect(hitItemPrice(null, t)).toBe('hits.priceOnRequest')
+  it('shows de/por with the calculated percent when there is a promotion', () => {
+    const { price } = toHitItemCardModel(item({ priceCents: 3990, promoPriceCents: 3490 }), t)
+    expect(price.price.replace(/\s/g, ' ')).toBe('R$ 34,90')
+    expect(price.original?.replace(/\s/g, ' ')).toBe('R$ 39,90')
+    expect(price.discount).toBe('hitPrice.discount percent=12')
+  })
+
+  it('turns the tags into labels', () => {
+    expect(toHitItemCardModel(item({ tags: ['clubOnly'] }), t).tags).toEqual([{ tag: 'clubOnly', label: 'hitTags.clubOnly' }])
   })
 })
 

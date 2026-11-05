@@ -11,6 +11,8 @@ export interface AdminHitItemRecord {
   readonly title: string
   readonly description: string | null
   readonly priceCents: number | null
+  readonly promoPriceCents: number | null
+  readonly tags: readonly string[]
   readonly endsAt: Date | null
   readonly status: HitItemStatus
   readonly rejectionReason: string | null

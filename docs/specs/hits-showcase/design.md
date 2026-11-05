@@ -87,6 +87,8 @@ nem serviço.
 | `title` | text | 1–60 caracteres |
 | `description` | text null | até 140; opcional |
 | `price_cents` | integer null | `null` = sem preço ("sob consulta"); > 0 quando houver |
+| `promo_price_cents` | integer null | preço "por" do de/por (2026-11): só com `price_cents` e menor que ele (CHECK); o % de desconto **nunca é guardado nem digitado**, sai de `hitDiscountPercent` (`shared/domain/hitPrice.ts`, arredonda para baixo; abaixo de 1% não mostra) |
+| `tags` | text[] default `{}` | etiquetas da lista fechada `HIT_TAGS` (`clubOnly`, `new`, `lastUnits`), até 2, sem repetir (CHECK repete a lista) |
 | `photo_path` | text | caminho no bucket `shop-assets`, obrigatório |
 | `cta_kind`, `whatsapp`, `whatsapp_message`, `cta_url`, `cta_label` | | **botão próprio, opcional**: mesmas colunas e o mesmo CHECK de `shops` (reaproveitar `shop-contact-columns.ts`); tudo `null` = usa o botão da loja; loja sem botão e produto sem botão = card sem botão |
 | `status` | enum `hit_item_status` | `pending` · `approved` · `rejected` · `archived` |
@@ -95,6 +97,13 @@ nem serviço.
 | `created_at`, `updated_at`, `approved_at` | timestamptz | |
 
 Regras (`hit-item.rules.ts`, puras):
+
+- **Preço promocional e etiquetas (2026-11):** são campos visíveis, então editar qualquer um volta o item a `pending`
+  (mesma regra de `planMerchantEdit`). O cliente vê preço antigo riscado, o novo e "-N%"; "rende X" passa a usar o
+  preço que o cliente paga (`hitEffectivePriceCents`). Dados antigos seguem válidos (coluna nula e `{}`).
+- **`clubOnly` ("Só para clientes do clube") é só selo informativo:** o servidor não restringe quem vê o produto
+  (não há gancho de associação ao clube na vitrine, que é pública para o cliente logado). A rede confere a promessa
+  na moderação. Restrição real (esconder ou travar o produto de quem não tem cartão na loja) fica como follow-up.
 
 - Lojista cria → `pending`. **Editar qualquer campo visível** de um item `approved` ou `rejected` → volta a
   `pending`. Arquivar é do lojista e vale a qualquer hora; desarquivar volta a `pending`.

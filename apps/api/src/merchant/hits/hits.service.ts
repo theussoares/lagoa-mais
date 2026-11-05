@@ -1,5 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common'
 import { uuidv7 } from 'uuidv7'
+import { parseHitTags } from '#shared/domain/hitTag'
 import type { HitItemDraft, MerchantHitItem, MerchantHitItemList } from '#shared/schemas/hitItem'
 import type { ShopPhotoUpload } from '#shared/schemas/shop'
 import type { ErrorOf } from '#shared/types/errors'
@@ -24,6 +25,8 @@ function draftValues(draft: HitItemDraft): HitItemDraftValues {
     title: draft.title,
     description: draft.description,
     priceCents: draft.priceCents,
+    promoPriceCents: draft.promoPriceCents,
+    tags: draft.tags,
     endsAt: draft.endsAt === null ? null : new Date(draft.endsAt),
     ...columnsFromContact(draft.contact),
   }
@@ -44,6 +47,8 @@ export class HitsService {
       title: row.title,
       description: row.description,
       priceCents: row.priceCents,
+      promoPriceCents: row.promoPriceCents,
+      tags: parseHitTags(row.tags),
       contact: contactFromColumns(row),
       endsAt: row.endsAt === null ? null : row.endsAt.toISOString(),
       status: row.status,

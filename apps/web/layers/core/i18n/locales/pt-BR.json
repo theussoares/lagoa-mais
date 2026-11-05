@@ -760,6 +760,17 @@
     },
     "groupEmpty": "Nenhuma loja desse ramo por enquanto. Escolha outro ramo ou toque em Tudo."
   },
+  "hitPrice": {
+    "onRequest": "Sob consulta",
+    "from": "de",
+    "to": "por",
+    "discount": "-{percent}%"
+  },
+  "hitTags": {
+    "clubOnly": "Só para clientes do clube",
+    "new": "Novidade",
+    "lastUnits": "Últimas unidades"
+  },
   "hits": {
     "title": "Hits da Lagoa",
     "lead": "O que tá saindo na cidade",
@@ -772,7 +783,6 @@
       "point": "rende {n} pts",
       "doubled": "em dobro hoje"
     },
-    "priceOnRequest": "Sob consulta",
     "loadMore": "Ver mais",
     "empty": "Ainda não tem produto na vitrine. Volte daqui a pouco para ver as novidades.",
     "groupEmpty": "Nenhum produto desse ramo por enquanto. Escolha outro ramo."
@@ -970,7 +980,6 @@
     "new": "Novo produto",
     "capReached": "Você chegou ao máximo de produtos do seu plano. Arquive um para abrir vaga.",
     "empty": "Você ainda não cadastrou nenhum produto.",
-    "onRequest": "Sob consulta",
     "edit": "Editar",
     "archive": "Arquivar",
     "unarchive": "Desarquivar",
@@ -999,6 +1008,14 @@
         "label": "Preço (opcional)",
         "hint": "Em reais, como 12,50. Vazio mostra \"Sob consulta\"."
       },
+      "promoPrice": {
+        "label": "Preço promocional (opcional)",
+        "hint": "Menor que o preço. O card mostra o preço antigo riscado e o desconto, que a gente calcula."
+      },
+      "tags": {
+        "legend": "Etiquetas (opcional)",
+        "hint": "Até {max}. Aparecem no card do produto. A rede confere junto com o produto."
+      },
       "endsAt": {
         "label": "Sai do ar em (opcional)",
         "hint": "O último dia em que o produto aparece."
@@ -1025,6 +1042,9 @@
     "errors": {
       "missingTitle": "Escreva o nome do produto.",
       "invalidPrice": "Digite um preço em reais, como 12,50.",
+      "invalidPromoPrice": "Digite o preço promocional em reais, como 9,90.",
+      "promoNeedsPrice": "Para ter preço promocional, informe também o preço normal.",
+      "promoNotLower": "O preço promocional precisa ser menor que o preço normal.",
       "invalidEndsAt": "Escolha um dia que ainda não passou.",
       "missingPhoto": "Escolha uma foto do produto.",
       "unreadable": "Não deu para abrir essa imagem. Escolha outra foto."

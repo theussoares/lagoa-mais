@@ -30,6 +30,8 @@ const RECORD: AdminHitItemRecord = {
   title: 'Bolo',
   description: null,
   priceCents: 1990,
+  promoPriceCents: null,
+  tags: [],
   endsAt: null,
   status: 'approved',
   rejectionReason: null,

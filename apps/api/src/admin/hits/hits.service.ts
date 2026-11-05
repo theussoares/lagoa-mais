@@ -1,6 +1,7 @@
 import { Inject, Injectable, Optional } from '@nestjs/common'
 import { ADMIN_HIT_ITEMS_PAGE_SIZE } from '#shared/constants/domain'
 import type { AdminHitItem, AdminHitItemList, AdminHitItemListQuery, HitItemReview } from '#shared/schemas/admin'
+import { parseHitTags } from '#shared/domain/hitTag'
 import { err, ok, type Result } from '#shared/types/result'
 import { ENV } from '../../config/config.module'
 import type { Env } from '../../config/env'
@@ -47,6 +48,8 @@ export class AdminHitsService {
       title: row.title,
       description: row.description,
       priceCents: row.priceCents,
+      promoPriceCents: row.promoPriceCents,
+      tags: parseHitTags(row.tags),
       endsAt: row.endsAt === null ? null : row.endsAt.toISOString(),
       status: row.status,
       rejectionReason: row.rejectionReason,
