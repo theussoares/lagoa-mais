@@ -171,7 +171,7 @@ describe.skipIf(!TEST_DATABASE_URL)('merchant foundation against a real database
     // Números de teste inventados (não são de ninguém). `phone_hash` é único: cada teste da marca demo usa o seu.
     const pii = createTestPii()
     const service = (demoPhone: PhoneNumber | null = null) =>
-      new ClubSetupService(new DrizzleClubSetupRepository(data.db), pii, new SystemClock(), new DemoMerchant({ DEMO_MERCHANT_PHONE: demoPhone ?? undefined }, pii))
+      new ClubSetupService(new DrizzleClubSetupRepository(data.db), pii, new SystemClock(), new DemoMerchant({ DEMO_MERCHANT_PHONE: demoPhone ?? undefined, NODE_ENV: 'test' }, pii))
     const newOwner = (phone: string) => {
       const id = randomUUID()
       data.trackUser(id)

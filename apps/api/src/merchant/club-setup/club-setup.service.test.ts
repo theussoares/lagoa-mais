@@ -93,7 +93,7 @@ class InMemoryClubSetupRepository extends ClubSetupRepository {
 function setup(demoPhone: PhoneNumber | null = DEMO_PHONE) {
   const repo = new InMemoryClubSetupRepository()
   const pii = createTestPii()
-  return { repo, service: new ClubSetupService(repo, pii, { now: () => NOW }, new DemoMerchant({ DEMO_MERCHANT_PHONE: demoPhone ?? undefined }, pii)) }
+  return { repo, service: new ClubSetupService(repo, pii, { now: () => NOW }, new DemoMerchant({ DEMO_MERCHANT_PHONE: demoPhone ?? undefined, NODE_ENV: 'test' }, pii)) }
 }
 
 /** Todo canal de log que o processo tem: o que não passar por aqui não sai da API. */

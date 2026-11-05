@@ -22,3 +22,14 @@ export function isDemoOwner(ownerPhoneHash: Buffer, demoPhoneHash: Buffer | null
   if (ownerPhoneHash.length !== demoPhoneHash.length) return false
   return timingSafeEqual(ownerPhoneHash, demoPhoneHash)
 }
+
+/**
+ * Linha única do boot dizendo se a marca da loja demo está ligada (M-2). Nunca o celular nem o hash: só `on`/`off`.
+ * Em produção, `off` é aviso: a env esquecida faz a loja demo criada a partir dali nascer pública, e ninguém percebe
+ * até ela aparecer no Descobrir. Não derruba o boot (a env é opcional por desenho: a demo pode estar desligada).
+ */
+export function demoMarkingBootNotice(marking: boolean, nodeEnv: 'development' | 'test' | 'production'): { readonly level: 'log' | 'warn'; readonly message: string } {
+  if (marking) return { level: 'log', message: 'demo merchant marking: on' }
+  if (nodeEnv === 'production') return { level: 'warn', message: 'demo merchant marking: off (DEMO_MERCHANT_PHONE is empty in production)' }
+  return { level: 'log', message: 'demo merchant marking: off' }
+}

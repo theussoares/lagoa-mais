@@ -1,7 +1,7 @@
 import { createHmac, timingSafeEqual } from 'node:crypto'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { ClubSetupDraft } from '#shared/schemas/onboarding'
-import { isDemoOwner, mapDraftToProgramInsert, newCheckInCode } from './club-setup.rules'
+import { demoMarkingBootNotice, isDemoOwner, mapDraftToProgramInsert, newCheckInCode } from './club-setup.rules'
 
 // `vi.spyOn` sobre o namespace ESM de `node:crypto` não redefine o import nomeado da regra: o teste passaria sem provar
 // nada. O mock troca o módulo por um espião que chama o `timingSafeEqual` de verdade.
@@ -101,5 +101,18 @@ describe('isDemoOwner', () => {
   it('answers false for hashes of different lengths instead of throwing', () => {
     expect(isDemoOwner(demoHash.subarray(0, 16), demoHash)).toBe(false)
     expect(isDemoOwner(Buffer.alloc(0), demoHash)).toBe(false)
+  })
+})
+
+describe('demoMarkingBootNotice', () => {
+  it('says on when the demo phone is set, in any environment', () => {
+    expect(demoMarkingBootNotice(true, 'production')).toEqual({ level: 'log', message: 'demo merchant marking: on' })
+    expect(demoMarkingBootNotice(true, 'development')).toEqual({ level: 'log', message: 'demo merchant marking: on' })
+  })
+
+  it('warns when production boots without it, and only logs elsewhere', () => {
+    expect(demoMarkingBootNotice(false, 'production')).toMatchObject({ level: 'warn', message: expect.stringMatching(/^demo merchant marking: off/) })
+    expect(demoMarkingBootNotice(false, 'development')).toEqual({ level: 'log', message: 'demo merchant marking: off' })
+    expect(demoMarkingBootNotice(false, 'test')).toEqual({ level: 'log', message: 'demo merchant marking: off' })
   })
 })
