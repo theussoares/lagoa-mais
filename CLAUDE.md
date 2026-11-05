@@ -42,7 +42,8 @@ Onde ele fala em "CLAUDE.md", leia este arquivo de regras.
   **Loja demo** ([spec](./docs/specs/demo-shop-hidden/spec.md)): listagem pública usa `listedShop()` e agregado da rede usa
   `notDemoShop()` (`apps/api/src/shops/listed-shop.ts`): a loja demo (`shops.is_demo`) fica fora; acesso direto (QR,
   Carteira, Balcão, resgate, indicação) não filtra. Leitura `GET` nova fora de `admin/*` e `merchant/*` entra na
-  classificação de `public-listing.sweep.test.ts`; nenhum repository escreve `is_demo` à mão.
+  classificação de `public-listing.sweep.test.ts`. Só o Criar o clube (no `INSERT`) e o script `shop:mark-demo` escrevem
+  `is_demo`/`demo_marked_*`, e nenhum caminho os desliga (`shops/demo-mark-writers.sweep.test.ts`).
   **Limite de uso** ([ADR-0002](./docs/adr/0002-contador-de-limite-no-postgres.md)): o contador do `ThrottlerModule` é o `PostgresThrottlerStorage` (tabela `rate_limits`, compartilhada entre instâncias serverless); rota cujo limite sustenta segurança leva `@FailClosedThrottle()` (recusa se o contador cair), as demais deixam passar.
   **Ledger:** a única porta de escrita é o `LedgerStore` (`apps/api/src/ledger`):
   trava o cartão (`FOR UPDATE`) já com o vencimento aplicado, grava boas-vindas e
