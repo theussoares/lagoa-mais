@@ -12,6 +12,7 @@ import {
   type PosterData,
   ClubSetupRepository,
 } from './club-setup.repository'
+import { CLUB_SETUP_DEMO_MARKER } from '../../shops/demo-mark'
 import { mapDraftToProgramInsert } from './club-setup.rules'
 
 const CHECK_IN_CODE_ATTEMPTS = 5
@@ -56,6 +57,9 @@ export class DrizzleClubSetupRepository extends ClubSetupRepository {
           // Loja nova já imprime o cartaz certo: o aviso de "cartaz novo" é só das lojas antigas.
           posterReprintedAt: now,
           isDemo: marks.isDemo,
+          // Trilha da marca no mesmo INSERT (decisão 9.6 b); loja que não é demo fica sem trilha.
+          demoMarkedAt: marks.isDemo ? now : null,
+          demoMarkedBy: marks.isDemo ? CLUB_SETUP_DEMO_MARKER : null,
         })
         // RN-05: dono que já tem loja não passa por UPDATE nenhum, então a marca de uma loja existente nunca muda.
         .onConflictDoNothing({ target: shops.ownerUserId })

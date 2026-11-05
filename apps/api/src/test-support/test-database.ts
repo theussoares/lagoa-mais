@@ -166,6 +166,16 @@ export class TestDatabase {
     return row.isDemo
   }
 
+  /** A marca de demonstração com a trilha (`demo_marked_at`/`demo_marked_by`) como estão no banco agora. */
+  async demoMarkOf(shopId: string): Promise<{ isDemo: boolean; markedAt: Date | null; markedBy: string | null }> {
+    const [row] = await this.db
+      .select({ isDemo: schema.shops.isDemo, markedAt: schema.shops.demoMarkedAt, markedBy: schema.shops.demoMarkedBy })
+      .from(schema.shops)
+      .where(eq(schema.shops.id, shopId))
+    if (!row) throw new Error('shop expected')
+    return row
+  }
+
   /** Troca o programa da loja como o painel fará: desativa a versão atual e cria outra ativa. Devolve o id da nova. */
   async changeProgram(shop: TestShop, rules: ProgramRules, options: { rewardTitle?: string; bonusRules?: BonusRules } = {}): Promise<string> {
     const programId = randomUUID()

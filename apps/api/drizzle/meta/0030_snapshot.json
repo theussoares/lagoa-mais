@@ -1,5 +1,5 @@
 {
-  "id": "704f5f8b-c648-47e5-8b75-3001bc40b1ab",
+  "id": "b1e5cf33-b03b-4d8c-820b-d15f06185789",
   "prevId": "7b7b61a4-eb0d-4fea-b3f4-8da47ab819f4",
   "version": "7",
   "dialect": "postgresql",
@@ -571,6 +571,18 @@
           "primaryKey": false,
           "notNull": true,
           "default": false
+        },
+        "demo_marked_at": {
+          "name": "demo_marked_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "demo_marked_by": {
+          "name": "demo_marked_by",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
         },
         "poster_reprinted_at": {
           "name": "poster_reprinted_at",

@@ -5,6 +5,7 @@ import { PiiService } from '../common/pii.service'
 import { parseEnv } from '../config/env'
 import * as schema from './schema'
 import { markDemoShop, type MarkDemoShopOutcome } from './shop-mark-demo'
+import { CLUB_SETUP_DEMO_MARKER } from '../shops/demo-mark'
 import { isValidActorNickname } from './shop-status'
 
 export interface MarkDemoInvocation {
@@ -43,6 +44,7 @@ export function parseMarkDemoInvocation(argv: readonly string[], env: NodeJS.Pro
   }
   if (actor === undefined) return err(USAGE)
   if (!isValidActorNickname(actor)) return err('--actor must be a short operator nickname (a-z, 0-9, . _ -), never an e-mail')
+  if (actor === CLUB_SETUP_DEMO_MARKER) return err(`--actor ${CLUB_SETUP_DEMO_MARKER} is reserved for shops marked by the club setup`)
   return ok({ actor, dryRun })
 }
 
@@ -61,7 +63,7 @@ export function describeMarkDemoOutcome(outcome: MarkDemoShopOutcome, actor: str
   }
 }
 
-/** `ALLOW_SHOP_ADMIN=1 pnpm shop:mark-demo --actor <apelido> [--dry-run]`. Sem auditoria em tabela (decisão 9.6 a). */
+/** `ALLOW_SHOP_ADMIN=1 pnpm shop:mark-demo --actor <apelido> [--dry-run]`. Trilha em `shops.demo_marked_{at,by}` (decisão 9.6 b). */
 async function main(): Promise<void> {
   const invocation = parseMarkDemoInvocation(process.argv.slice(2), process.env)
   if (!invocation.ok) throw new Error(invocation.error)
@@ -71,7 +73,7 @@ async function main(): Promise<void> {
 
   const client = postgres(env.DATABASE_URL, { prepare: false })
   try {
-    const outcome = await markDemoShop(drizzle(client, { schema }), demoPhoneHash, { dryRun: invocation.value.dryRun })
+    const outcome = await markDemoShop(drizzle(client, { schema }), demoPhoneHash, { dryRun: invocation.value.dryRun, actor: invocation.value.actor })
     const line = describeMarkDemoOutcome(outcome, invocation.value.actor)
     if (!line.ok) throw new Error(line.error)
     console.log(line.value)

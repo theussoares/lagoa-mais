@@ -258,12 +258,15 @@ describe.skipIf(!TEST_DATABASE_URL)('merchant foundation against a real database
         const demoPhone = PhoneNumberSchema.parse('67900000080')
         const created = await createdShop(demoPhone, newOwner(demoPhone))
         expect(created).toMatchObject({ created: true, session: { shopStatus: 'pending' } })
-        expect(await data.isDemoOf(created.session.shopId)).toBe(true)
+        // Trilha no mesmo INSERT (decisão 9.6 b): sem ela não se sabe depois se a marca veio do fluxo ou de um operador.
+        const mark = await data.demoMarkOf(created.session.shopId)
+        expect(mark).toMatchObject({ isDemo: true, markedBy: 'club-setup' })
+        expect(mark.markedAt).toBeInstanceOf(Date)
       }, SLOW)
 
       it('does not mark the shop of any other phone (CA-02)', async () => {
         const created = await createdShop(PhoneNumberSchema.parse('67900000082'), newOwner('67900000081'))
-        expect(await data.isDemoOf(created.session.shopId)).toBe(false)
+        expect(await data.demoMarkOf(created.session.shopId)).toEqual({ isDemo: false, markedAt: null, markedBy: null })
       }, SLOW)
 
       it('marks nothing when the API has no DEMO_MERCHANT_PHONE (CA-03)', async () => {
