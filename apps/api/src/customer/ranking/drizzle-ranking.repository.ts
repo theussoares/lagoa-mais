@@ -1,7 +1,8 @@
 import { Inject, Injectable } from '@nestjs/common'
 import { and, count, eq, gte, lt, sql } from 'drizzle-orm'
 import { DB, type Database } from '../../database/database.module'
-import { customerProfiles, ledgerEntries } from '../../database/schema'
+import { customerProfiles, ledgerEntries, shops } from '../../database/schema'
+import { notDemoShop } from '../../shops/listed-shop'
 import { type RankedRow, RankingRepository, type RankingMembership, type RankingWindow } from './ranking.repository'
 
 type RankedRowRaw = { user_id: string; position: number | string; name: string; visits: number | string }
@@ -13,12 +14,14 @@ export class DrizzleRankingRepository extends RankingRepository {
   }
 
   async topAndMe(userId: string, { start, end }: RankingWindow, top: number): Promise<RankedRow[]> {
-    // Desempate: quem chegou àquele número primeiro fica na frente (`last_at` menor), depois o id.
+    // Desempate: quem chegou àquele número primeiro fica na frente (`last_at` menor), depois o id. Visita em loja demo
+    // não conta (RN-11); `shops` entra sem alias para o fragmento de `notDemoShop()` casar.
     const rows = await this.db.execute<RankedRowRaw>(sql`
       with scores as (
         select c.user_id, c.ranking_name as name, count(*)::int as visits, max(l.occurred_at) as last_at
         from customer_profiles c
         join ledger_entries l on l.customer_id = c.user_id
+        join ${shops} on ${shops.id} = l.shop_id and ${notDemoShop()}
         where c.ranking_opt_in and c.ranking_name is not null
           and l.counts_as_visit and l.occurred_at >= ${start.toISOString()} and l.occurred_at < ${end.toISOString()}
         group by c.user_id, c.ranking_name
@@ -33,10 +36,12 @@ export class DrizzleRankingRepository extends RankingRepository {
     return [...rows].map((row) => ({ userId: row.user_id, position: Number(row.position), name: row.name, visits: Number(row.visits) }))
   }
 
+  /** Mesmo critério do `topAndMe` (RN-11): senão a linha "você" mostraria um número diferente do top. */
   async visitsOf(userId: string, { start, end }: RankingWindow): Promise<number> {
     const [row] = await this.db
       .select({ total: count() })
       .from(ledgerEntries)
+      .innerJoin(shops, and(eq(shops.id, ledgerEntries.shopId), notDemoShop()))
       .where(and(eq(ledgerEntries.customerId, userId), eq(ledgerEntries.countsAsVisit, true), gte(ledgerEntries.occurredAt, start), lt(ledgerEntries.occurredAt, end)))
     return row?.total ?? 0
   }

@@ -39,6 +39,11 @@ Onde ele fala em "CLAUDE.md", leia este arquivo de regras.
   senão o planner ignora o índice e ordena a tabela inteira (medido: 9 ms → 0,15 ms
   em 20 mil linhas). Lista que cresce sempre sai com `limit` e sem N+1 (use
   `LATERAL ... LIMIT` para "as N mais novas de cada").
+  **Loja demo** ([spec](./docs/specs/demo-shop-hidden/spec.md)): listagem pública usa `listedShop()` e agregado da rede usa
+  `notDemoShop()` (`apps/api/src/shops/listed-shop.ts`): a loja demo (`shops.is_demo`) fica fora; acesso direto (QR,
+  Carteira, Balcão, resgate, indicação) não filtra. Leitura `GET` nova fora de `admin/*` e `merchant/*` entra na
+  classificação de `public-listing.sweep.test.ts`. Só o Criar o clube (no `INSERT`) e o script `shop:mark-demo` escrevem
+  `is_demo`/`demo_marked_*`, e nenhum caminho os desliga (`shops/demo-mark-writers.sweep.test.ts`).
   **Limite de uso** ([ADR-0002](./docs/adr/0002-contador-de-limite-no-postgres.md)): o contador do `ThrottlerModule` é o `PostgresThrottlerStorage` (tabela `rate_limits`, compartilhada entre instâncias serverless); rota cujo limite sustenta segurança leva `@FailClosedThrottle()` (recusa se o contador cair), as demais deixam passar.
   **Ledger:** a única porta de escrita é o `LedgerStore` (`apps/api/src/ledger`):
   trava o cartão (`FOR UPDATE`) já com o vencimento aplicado, grava boas-vindas e
@@ -163,6 +168,9 @@ Onde ele fala em "CLAUDE.md", leia este arquivo de regras.
 | Logo / banner da loja (Descobrir) | `logo` / `banner` (`ShopPhotoKind`, `shopPhoto`) |
 | Cabeçalho de tela / card herói | `screenHeader` / `heroCard` |
 | Situação da loja          | `shopStatus` (`pending` \| `approved` \| `suspended`) |
+| Loja de demonstração (criada pelo celular demo; fora da vitrine e dos agregados) | `isDemo` (coluna `shops.is_demo`) / `demoShop` (marca permanente, não é `shopStatus`) |
+| Celular demo do lojista (env da API) | `DEMO_MERCHANT_PHONE` (mesmo valor de `NUXT_DEMO_MERCHANT_PHONE` do web) |
+| Marcar loja demo existente (script) | `shop:mark-demo` |
 | Plano / cobrança          | `plan` / `billing`             |
 | Fundador / Fundador Pro   | `founder` / `founderPro`       |
 | Hits (vitrine de produtos) | `hits`                        |

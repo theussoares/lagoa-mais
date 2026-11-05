@@ -27,9 +27,14 @@ export type ShopStatusResult =
 
 const ACTOR = /^[a-z0-9._-]{2,40}$/
 
+/** Apelido de operador aceito pelos scripts da rede (`shop:status`, `shop:mark-demo`): curto, sem e-mail nem espaço. */
+export function isValidActorNickname(nickname: string): boolean {
+  return ACTOR.test(nickname)
+}
+
 /** Aprova/suspende a loja e/ou troca o plano e grava o evento na mesma transação, com a linha da loja travada. */
 export async function changeShopStatus(db: Pick<Database, 'transaction'>, change: ShopStatusChange): Promise<ShopStatusResult> {
-  if (change.actor.kind === 'script' && !ACTOR.test(change.actor.nickname)) return { ok: false, reason: 'invalidActor' }
+  if (change.actor.kind === 'script' && !isValidActorNickname(change.actor.nickname)) return { ok: false, reason: 'invalidActor' }
   if (change.status === undefined && change.plan === undefined) return { ok: false, reason: 'nothingToChange' }
   return db.transaction(async (tx): Promise<ShopStatusResult> => {
     const [shop] = await tx.select({ status: shops.status, plan: shops.plan }).from(shops).where(eq(shops.id, change.shopId)).for('update')

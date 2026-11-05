@@ -44,6 +44,8 @@ export interface PlacementTarget {
   readonly existing: readonly PlacementPeriod[]
   readonly surface: FeaturedSurface
   readonly shopStatus: ShopStatus
+  /** Loja de demonstração: nunca recebe destaque (RN-10), mesmo aprovada e com vaga livre. */
+  readonly shopIsDemo: boolean
   /** Produto do banner; `null` no carrossel ou quando o id não existe. */
   readonly hitItem: { readonly status: HitItemStatus; readonly shopId: string } | null
   readonly shopId: string
@@ -51,9 +53,9 @@ export interface PlacementTarget {
 
 export type PlacementError = ErrorOf<'slotsFull'> | ErrorOf<'invalidTarget'>
 
-/** Destaque novo só para loja aprovada agora; o banner, só com produto aprovado da própria loja; e só com vaga em todo o período. */
+/** Destaque novo só para loja aprovada agora e que não seja demo (ela nunca aparece para o cliente); o banner, só com produto aprovado da própria loja; e só com vaga em todo o período. */
 export function planPlacement(input: PlacementTarget): Result<void, PlacementError> {
-  if (input.shopStatus !== 'approved') return err({ code: 'invalidTarget' })
+  if (input.shopStatus !== 'approved' || input.shopIsDemo) return err({ code: 'invalidTarget' })
   if (input.surface === 'hitsBanner') {
     if (input.hitItem === null || input.hitItem.status !== 'approved' || input.hitItem.shopId !== input.shopId) return err({ code: 'invalidTarget' })
   }

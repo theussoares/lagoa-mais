@@ -34,7 +34,7 @@ export interface PlacementCandidate {
 }
 
 /** O que a regra precisa, lido dentro da transação e depois do lock da vitrine. */
-export type PlacementSnapshot = Pick<PlacementTarget, 'shopStatus' | 'hitItem' | 'existing'>
+export type PlacementSnapshot = Pick<PlacementTarget, 'shopStatus' | 'shopIsDemo' | 'hitItem' | 'existing'>
 
 export type CreatePlacementError = PlacementError | ErrorOf<'notFound'>
 export type CancelPlacementError = ErrorOf<'notFound' | 'invalidTransition'>

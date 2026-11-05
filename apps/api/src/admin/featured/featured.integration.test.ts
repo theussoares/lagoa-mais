@@ -172,6 +172,30 @@ describe.skipIf(!TEST_DATABASE_URL)('admin featured against a real database', ()
     expect(ids).not.toContain(founder.id)
   }, SLOW)
 
+  describe('demo shop (RN-10)', () => {
+    it('is not a Pro candidate, next to a real Pro shop that is (CA-31)', async () => {
+      const [real, demo] = [await data.createShop({ plan: 'founderPro' }), await data.createShop({ plan: 'founderPro', isDemo: true })]
+      // Sem o teto da tela: no banco compartilhado outras lojas Pro de teste podem ocupar as primeiras posições.
+      const candidates = (await new DrizzleAdminFeaturedRepository(data.db).listProShops(10_000)).map((shop) => shop.id)
+      expect(candidates).toContain(real.id)
+      expect(candidates).not.toContain(demo.id)
+      const start = freshMonth()
+      const listed = await service.list({ surface: 'discoverCarousel', from: localDateParts(start).isoDate, to: localDateParts(addDays(start, 1)).isoDate })
+      expect(listed.proShops.map((shop) => shop.id)).not.toContain(demo.id)
+    }, SLOW)
+
+    it('refuses a placement for the demo shop on both surfaces and stores nothing (CA-32)', async () => {
+      const demo = await data.createShop({ plan: 'founderPro', isDemo: true })
+      const item = await data.createHitItem(demo.id, { status: 'approved' })
+      const placementsOfDemo = async () => (await data.db.select({ id: featuredPlacements.id }).from(featuredPlacements).where(eq(featuredPlacements.shopId, demo.id))).length
+      const before = await placementsOfDemo()
+      const start = freshMonth()
+      expect(await service.create(admin, draft(demo.id, start, addDays(start, 3)))).toEqual({ ok: false, error: { code: 'invalidTarget' } })
+      expect(await service.create(admin, draft(demo.id, start, addDays(start, 3), { surface: 'hitsBanner', hitItemId: item.id }))).toEqual({ ok: false, error: { code: 'invalidTarget' } })
+      expect(await placementsOfDemo()).toBe(before)
+    }, SLOW)
+  })
+
   it('never stores a cancelled row without who cancelled it', async () => {
     const shop = await data.createShop()
     const start = freshMonth()
