@@ -150,7 +150,7 @@ describe.skipIf(!TEST_DATABASE_URL)('admin hits against a real database', () => 
   it('refuses a stale approval after the merchant edits (version 1 -> 2) and keeps the item pending', async () => {
     const shop = await data.createShop()
     const item = await data.createHitItem(shop.id)
-    const edited = await merchant.update(merchantContext(shop.id), item.id, { title: 'Editado', description: null, priceCents: 500, contact: null, endsAt: null })
+    const edited = await merchant.update(merchantContext(shop.id), item.id, { title: 'Editado', description: null, priceCents: 500, promoPriceCents: null, tags: [], contact: null, endsAt: null })
     expect(edited.ok).toBe(true)
     expect(await review(item.id, { action: 'approve', expectedVersion: 1 })).toEqual({ ok: false, error: { code: 'conflict' } })
     const [row] = await data.db.select().from(hitItems).where(eq(hitItems.id, item.id))

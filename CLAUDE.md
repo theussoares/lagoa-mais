@@ -178,6 +178,9 @@ Onde ele fala em "CLAUDE.md", leia este arquivo de regras.
 | Produto do Hits           | `hitItem`                      |
 | Situação do produto       | `hitItemStatus` (`pending` \| `approved` \| `rejected` \| `archived`) |
 | Banner do Hits            | `hitsBanner`                   |
+| Preço promocional do produto (de/por) | `promoPriceCents` (preço normal segue `priceCents`; só existe com preço normal e menor que ele) |
+| Desconto do produto (% calculado, nunca digitado) | `hitDiscountPercent` (`shared/domain/hitPrice.ts`, arredonda para baixo) |
+| Etiqueta do produto (lista fechada, até `HIT_ITEM_TAGS_MAX`) | `hitTag` (`clubOnly` \| `new` \| `lastUnits`; só selo informativo, a rede modera junto com o produto) |
 | Dia surpresa hoje (selo no Descobrir) | `surpriseDayToday`     |
 | Quanto o produto rende (selo do Hits) | `showcaseEarning`      |
 | Loja em destaque (carrossel do Descobrir) | `featuredShop`     |

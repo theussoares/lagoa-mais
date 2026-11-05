@@ -3,7 +3,7 @@ import type { HitItemDraft } from '#shared/schemas/hitItem'
 import type { ShopPhotoUpload } from '#shared/schemas/shop'
 import type { HitItemService } from '../app/services/HitItemService'
 
-export const draft: HitItemDraft = { title: 'Corte masculino', description: null, priceCents: 4500, contact: null, endsAt: null }
+export const draft: HitItemDraft = { title: 'Corte masculino', description: null, priceCents: 4500, promoPriceCents: null, tags: [], contact: null, endsAt: null }
 export const upload: ShopPhotoUpload = { contentType: 'image/webp', dataBase64: 'AAAA' }
 
 /** O que todo `HitItemService` (mock ou http) cumpre; só muda quem entrega a implementação. */

@@ -1,0 +1,4 @@
+ALTER TABLE "hit_items" ADD COLUMN "promo_price_cents" integer;--> statement-breakpoint
+ALTER TABLE "hit_items" ADD COLUMN "tags" text[] DEFAULT '{}'::text[] NOT NULL;--> statement-breakpoint
+ALTER TABLE "hit_items" ADD CONSTRAINT "hit_items_promo_price_check" CHECK ("hit_items"."promo_price_cents" IS NULL OR ("hit_items"."price_cents" IS NOT NULL AND "hit_items"."promo_price_cents" BETWEEN 1 AND 10000000 AND "hit_items"."promo_price_cents" < "hit_items"."price_cents"));--> statement-breakpoint
+ALTER TABLE "hit_items" ADD CONSTRAINT "hit_items_tags_check" CHECK (cardinality("hit_items"."tags") <= 2 AND "hit_items"."tags" <@ ARRAY['clubOnly', 'new', 'lastUnits']::text[]);

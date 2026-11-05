@@ -21,7 +21,17 @@ const { t } = useI18n()
       <div class="flex flex-col gap-2 p-4">
         <h3 class="text-base font-semibold text-highlighted">{{ preview.title || t('merchantHits.preview.titleEmpty') }}</h3>
         <p v-if="preview.description" class="text-[0.9375rem] text-toned">{{ preview.description }}</p>
-        <p class="font-semibold text-highlighted tabular-nums">{{ preview.priceLabel ?? t('merchantHits.onRequest') }}</p>
+        <PriceTag
+          :price="preview.price.price"
+          :original="preview.price.original"
+          :discount="preview.price.discount"
+          :from-label="t('hitPrice.from')"
+          :to-label="t('hitPrice.to')"
+          class="font-semibold text-highlighted"
+        />
+        <ul v-if="preview.tags.length > 0" class="flex flex-wrap gap-2" :aria-label="t('merchantHits.fields.tags.legend')">
+          <li v-for="tag in preview.tags" :key="tag.tag"><StampTag :label="tag.label" tone="reward" /></li>
+        </ul>
         <ActionButton v-if="preview.button" role="primary" block :icon="preview.button.icon" :label="preview.button.label" class="min-h-11" />
         <p v-else class="text-[0.9375rem] text-muted">{{ t('merchantHits.preview.shopButton') }}</p>
       </div>

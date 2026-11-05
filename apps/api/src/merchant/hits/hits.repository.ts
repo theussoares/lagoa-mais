@@ -9,6 +9,8 @@ export interface HitItemRow extends ShopContactColumns {
   readonly title: string
   readonly description: string | null
   readonly priceCents: number | null
+  readonly promoPriceCents: number | null
+  readonly tags: string[]
   readonly photoPath: string | null
   readonly status: HitItemStatus
   readonly rejectionReason: string | null
@@ -20,10 +22,10 @@ export interface HitItemRow extends ShopContactColumns {
 
 /** Colunas que a edição do lojista pode trocar; o que não vem aqui não muda. */
 export type HitItemPatch = Partial<
-  Pick<HitItemRow, 'title' | 'description' | 'priceCents' | 'photoPath' | 'status' | 'rejectionReason' | 'endsAt' | 'version'> & ShopContactColumns
+  Pick<HitItemRow, 'title' | 'description' | 'priceCents' | 'promoPriceCents' | 'tags' | 'photoPath' | 'status' | 'rejectionReason' | 'endsAt' | 'version'> & ShopContactColumns
 >
 
-export type HitItemDraftValues = Pick<HitItemRow, 'title' | 'description' | 'priceCents' | 'endsAt'> & ShopContactColumns
+export type HitItemDraftValues = Pick<HitItemRow, 'title' | 'description' | 'priceCents' | 'promoPriceCents' | 'tags' | 'endsAt'> & ShopContactColumns
 
 type MutationError = ErrorOf<'notFound' | 'limitReached' | 'invalidTransition'>
 

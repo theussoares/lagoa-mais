@@ -1,5 +1,6 @@
 /** Modelos da aba Hits do cliente (vitrine de produtos). Texto já traduzido. */
 
+import type { HitPriceModel, HitTagModel } from '#layers/core/app/types/hitPrice'
 import type { AsyncResultState } from '#layers/core/app/types/asyncResult'
 import type { ExternalLinkModel } from '#layers/ui/app/types/discover'
 import type { ShopGroup } from '#shared/domain/shopGroup'
@@ -17,8 +18,10 @@ export interface HitItemCardModel {
   readonly title: string
   readonly shopName: string
   readonly photoUrl: string
-  /** "R$ 59,90" ou "Sob consulta". */
-  readonly price: string
+  /** "R$ 59,90", "Sob consulta" ou o de/por com o desconto. */
+  readonly price: HitPriceModel
+  /** Etiquetas da loja no produto (selos informativos). */
+  readonly tags: readonly HitTagModel[]
   /** `null` quando não dá para dizer quanto rende: sem selo. */
   readonly earning: HitItemEarningModel | null
   /** Botão do produto (o dele ou o da loja); `null` sem botão. */

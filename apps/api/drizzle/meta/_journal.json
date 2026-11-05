@@ -218,6 +218,13 @@
       "when": 1793894383072,
       "tag": "0030_shop_is_demo",
       "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "7",
+      "when": 1793905372986,
+      "tag": "0031_hit_promo_price_tags",
+      "breakpoints": true
     }
   ]
 }

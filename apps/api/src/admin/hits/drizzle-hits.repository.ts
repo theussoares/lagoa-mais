@@ -23,6 +23,8 @@ const COLUMNS = {
   title: hitItems.title,
   description: hitItems.description,
   priceCents: hitItems.priceCents,
+  promoPriceCents: hitItems.promoPriceCents,
+  tags: hitItems.tags,
   endsAt: hitItems.endsAt,
   status: hitItems.status,
   rejectionReason: hitItems.rejectionReason,
@@ -50,6 +52,8 @@ interface Row {
   readonly title: string
   readonly description: string | null
   readonly priceCents: number | null
+  readonly promoPriceCents: number | null
+  readonly tags: readonly string[]
   readonly endsAt: Date | null
   readonly status: HitItemStatus
   readonly rejectionReason: string | null
@@ -78,6 +82,8 @@ function toRecord(row: Row): AdminHitItemRecord {
     title: row.title,
     description: row.description,
     priceCents: row.priceCents,
+    promoPriceCents: row.promoPriceCents,
+    tags: row.tags,
     endsAt: row.endsAt,
     status: row.status,
     rejectionReason: row.rejectionReason,

@@ -7,6 +7,7 @@ import {
   EMAIL_MAX_LENGTH,
   HIT_ITEM_REJECTION_REASON_MAX_LENGTH,
 } from '../constants/domain'
+import { HitTagsSchema } from '../domain/hitTag'
 import { IsoDateTimeSchema } from './common'
 import { PhoneNumberSchema } from './phone'
 import { HitItemStatusSchema } from './hitItem'
@@ -136,6 +137,8 @@ export const AdminHitItemSchema = z.object({
   title: z.string(),
   description: z.string().nullable(),
   priceCents: z.number().int().nullable(),
+  promoPriceCents: z.number().int().nullable(),
+  tags: HitTagsSchema,
   endsAt: IsoDateTimeSchema.nullable(),
   status: HitItemStatusSchema,
   rejectionReason: z.string().nullable(),

@@ -12,6 +12,8 @@ const COLUMNS = {
   title: hitItems.title,
   description: hitItems.description,
   priceCents: hitItems.priceCents,
+  promoPriceCents: hitItems.promoPriceCents,
+  tags: hitItems.tags,
   photoPath: hitItems.photoPath,
   itemCtaKind: hitItems.ctaKind,
   itemWhatsapp: hitItems.whatsapp,
@@ -25,6 +27,8 @@ interface Row extends CatalogRow {
   readonly title: string
   readonly description: string | null
   readonly priceCents: number | null
+  readonly promoPriceCents: number | null
+  readonly tags: readonly string[]
   readonly photoPath: string | null
   readonly itemCtaKind: string | null
   readonly itemWhatsapp: string | null
@@ -41,6 +45,8 @@ function toRecord(row: Row): PublicHitRecord | null {
     title: row.title,
     description: row.description,
     priceCents: row.priceCents,
+    promoPriceCents: row.promoPriceCents,
+    tags: row.tags,
     photoPath: row.photoPath,
     itemContact: { ctaKind: row.itemCtaKind, whatsapp: row.itemWhatsapp, whatsappMessage: row.itemWhatsappMessage, ctaUrl: row.itemCtaUrl, ctaLabel: row.itemCtaLabel },
     shop: toCatalogShop(row),

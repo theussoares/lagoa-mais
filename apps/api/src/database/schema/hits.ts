@@ -17,6 +17,10 @@ export const hitItems = pgTable(
     description: text('description'),
     /** `null` = sob consulta. */
     priceCents: integer('price_cents'),
+    /** Preço "por" do de/por: só com `price_cents` e menor que ele (CHECK). O desconto em % nunca é guardado. */
+    promoPriceCents: integer('promo_price_cents'),
+    /** Etiquetas da lista fechada `HIT_TAGS` (o drizzle-kit não resolve `#shared`; o CHECK repete a lista). */
+    tags: text('tags').array().notNull().default(sql`'{}'::text[]`),
     /** Caminho no bucket `shop-assets` (nunca a URL); `null` até a foto chegar, que vem depois de criar o item. */
     photoPath: text('photo_path'),
     /** Botão próprio do produto: mesmas colunas e mesmo CHECK de `shops`; tudo `null` = usa o botão da loja. */
@@ -44,6 +48,11 @@ export const hitItems = pgTable(
       .on(t.createdAt, t.id)
       .where(sql`${t.status} = 'pending'`),
     check('hit_items_price_check', sql`${t.priceCents} IS NULL OR ${t.priceCents} BETWEEN 1 AND 10000000`),
+    check(
+      'hit_items_promo_price_check',
+      sql`${t.promoPriceCents} IS NULL OR (${t.priceCents} IS NOT NULL AND ${t.promoPriceCents} BETWEEN 1 AND 10000000 AND ${t.promoPriceCents} < ${t.priceCents})`,
+    ),
+    check('hit_items_tags_check', sql`cardinality(${t.tags}) <= 2 AND ${t.tags} <@ ARRAY['clubOnly', 'new', 'lastUnits']::text[]`),
     check('hit_items_title_check', sql`char_length(${t.title}) BETWEEN 1 AND 60`),
     check('hit_items_rejection_reason_check', sql`${t.status} <> 'rejected' OR ${t.rejectionReason} IS NOT NULL`),
     check('hit_items_whatsapp_check', sql`${t.whatsapp} IS NULL OR ${t.whatsapp} ~ '^[1-9]{2}9[0-9]{8}$'`),

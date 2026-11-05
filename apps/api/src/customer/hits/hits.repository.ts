@@ -8,6 +8,8 @@ export interface PublicHitRecord {
   readonly title: string
   readonly description: string | null
   readonly priceCents: number | null
+  readonly promoPriceCents: number | null
+  readonly tags: readonly string[]
   readonly photoPath: string
   readonly itemContact: ShopContactColumns
   readonly shop: CatalogShop | null
