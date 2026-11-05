@@ -3,6 +3,9 @@
 import { fileURLToPath } from 'node:url'
 import { SECURITY_HEADERS } from '../web/server/utils/securityHeaders'
 import { SECTION_PATHS } from './app/content/routes'
+import { readBuildInfo } from '../web/server/utils/buildInfo'
+
+const BUILD_INFO = readBuildInfo()
 
 export default defineNuxtConfig({
   // Mesmo tema, fontes e componentes de carimbo do app: a LP mostra o produto de verdade.
@@ -51,6 +54,10 @@ export default defineNuxtConfig({
   },
   runtimeConfig: {
     public: {
+      /** Versão SemVer do produto (arquivo `VERSION` da raiz). */
+      appVersion: BUILD_INFO.version,
+      /** Commit curto do build, só fora de produção. */
+      appCommit: BUILD_INFO.commit,
       /** WhatsApp da rede, só dígitos com DDI. É número comercial, público. */
       whatsappNumber: '5567992171768',
       /** Onde o lojista já aprovado entra no Balcão. */

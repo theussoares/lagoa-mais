@@ -8,6 +8,7 @@ const { session } = useMerchantSession()
 const theme = useThemePreference()
 const themeLabels = computed(() => ({ legend: t('theme.legend'), light: t('theme.light'), dark: t('theme.dark') }))
 const photos = useShopPhotos()
+const appVersion = useAppVersion()
 </script>
 
 <template>
@@ -58,5 +59,6 @@ const photos = useShopPhotos()
         </PanelModule>
       </div>
     </div>
+    <AppVersion :label="appVersion.label" :commit="appVersion.commit" :caption="t('app.versionCaption')" />
   </div>
 </template>

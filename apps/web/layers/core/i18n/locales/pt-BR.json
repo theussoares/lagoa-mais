@@ -1,7 +1,8 @@
 {
   "app": {
     "name": "Lagoa+",
-    "skipToContent": "Pular para o conteúdo"
+    "skipToContent": "Pular para o conteúdo",
+    "versionCaption": "Versão do Lagoa+"
   },
   "units": {
     "stamp": "nenhum carimbo | 1 carimbo | {count} carimbos",
