@@ -165,6 +165,7 @@ Onde ele fala em "CLAUDE.md", leia este arquivo de regras.
 | Criar o clube (cadastro)  | `clubSetup`                    |
 | Ticket do cadastro (celular confirmado sem loja) | `signUpTicket` |
 | Cartaz do balcão (QR)     | `poster` (`checkInPoster`)     |
+| Cor do cartaz (sai do nome da loja) | `posterTheme` (`deep` \| `lake` \| `leaf`) |
 | Logo / banner da loja (Descobrir) | `logo` / `banner` (`ShopPhotoKind`, `shopPhoto`) |
 | Cabeçalho de tela / card herói | `screenHeader` / `heroCard` |
 | Situação da loja          | `shopStatus` (`pending` \| `approved` \| `suspended`) |

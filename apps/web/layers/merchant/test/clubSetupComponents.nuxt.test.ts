@@ -56,12 +56,17 @@ const options: ProgramFieldOptions = {
 const poster: CheckInPosterModel = {
   brand: 'Lagoa+',
   shopName: 'Lava-jato Brilho',
-  headline: 'Junte 10 carimbos e ganhe Lavagem grátis',
-  instruction: 'Escaneie para ganhar seu carimbo.',
-  codeLabel: 'Sem câmera? Digite o código',
-  code: 'ABC123',
+  theme: 'deep',
+  nameScale: 'medium',
+  eyebrow: 'Clube de fidelidade',
+  goal: 'Junte 10 carimbos e ganhe',
+  rewardTitle: 'Lavagem grátis',
+  stampSlots: 10,
+  steps: ['Aponte a câmera', 'Entre no clube', 'Peça o QR da visita'],
   qr: { size: 21, d: 'M0 0h1v1h-1z' },
   qrLabel: 'QR code do check-in',
+  codeLabel: 'Sem câmera? Digite o código',
+  code: 'ABC123',
 }
 
 describe('club setup components: Steps and Header', () => {
@@ -173,10 +178,13 @@ describe('club setup components: PosterStep and Poster', () => {
     expect(testing.emitted('approve')).toHaveLength(1)
   })
 
-  it('draws the poster with the shop, the headline, the labelled QR and the readable code', async () => {
+  it('draws the poster with the shop, the goal and reward, the steps, the labelled QR and the readable code', async () => {
     const page = await mountIt(Poster, { poster })
     expect(page.get('h2').text()).toBe('Lava-jato Brilho')
-    expect(page.text()).toContain(poster.headline)
+    expect(page.text()).toContain(poster.goal)
+    expect(page.text()).toContain(poster.rewardTitle)
+    expect(page.findAll('ol li').map((step) => step.text())).toEqual(poster.steps.map((step, index) => `${index + 1}${step}`))
+    expect(page.findAll('ul li')).toHaveLength(poster.stampSlots)
     expect(page.text()).toContain('ABC123')
     const qr = page.get('svg[role="img"]')
     expect(qr.attributes('aria-label')).toBe('QR code do check-in')

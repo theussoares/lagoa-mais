@@ -857,9 +857,14 @@
     }
   },
   "poster": {
-    "headline": "Entre no clube e junte {units} para ganhar {reward}",
-    "instruction": "Aponte a câmera do celular para o código e entre no clube. Na hora de pagar, peça o QR da visita no caixa.",
-    "codeLabel": "Ou digite o código da loja no app",
+    "eyebrow": "Clube de fidelidade",
+    "goal": "Junte {units} e ganhe",
+    "steps": {
+      "scan": "Aponte a câmera para o QR",
+      "join": "Entre no clube da loja",
+      "earn": "Ao pagar, peça o QR da visita"
+    },
+    "codeLabel": "Sem câmera? Digite o código da loja no app",
     "qrLabel": "QR de entrada no clube da {shop}"
   },
   "merchantSettings": {
