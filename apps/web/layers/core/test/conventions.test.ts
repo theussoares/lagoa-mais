@@ -39,7 +39,6 @@ const TRANSITIONAL_PAGE_TEMPLATE: readonly string[] = [
   'layers/customer/app/pages/sign-in.vue',
   'layers/merchant/app/pages/campaigns.vue',
   'layers/merchant/app/pages/customers.vue',
-  'layers/merchant/app/pages/home.vue',
   'layers/merchant/app/pages/merchant-sign-in.vue',
   'layers/merchant/app/pages/program.vue',
 ]

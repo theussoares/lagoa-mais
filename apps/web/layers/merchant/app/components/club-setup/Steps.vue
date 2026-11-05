@@ -9,12 +9,12 @@ defineProps<Props>()
 </script>
 
 <template>
-  <ol :aria-label="$t('clubSetup.stepsLabel')" class="flex flex-wrap items-center gap-1.5">
+  <ol :aria-label="$t('clubSetup.stepsLabel')" class="flex flex-wrap items-center gap-1 sm:gap-1.5">
     <li
       v-for="(item, index) in steps"
       :key="item.key"
       :aria-current="item.state === 'current' ? 'step' : undefined"
-      class="flex h-9 items-center gap-2 rounded-full pr-3.5 pl-1.5 text-sm font-semibold"
+      class="flex h-9 items-center gap-1.5 sm:gap-2 rounded-full pr-2.5 sm:pr-3.5 pl-1 sm:pl-1.5 text-xs sm:text-sm font-semibold"
       :class="item.state === 'current' ? 'bg-primary/10 text-highlighted' : item.state === 'done' ? 'text-highlighted' : 'text-muted'"
     >
       <span

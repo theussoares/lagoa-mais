@@ -69,9 +69,9 @@ function backToPhone(): void {
   <div class="grid min-h-dvh lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
     <MerchantSignInAside :brand="t('app.name')" :title="t('merchantSignIn.asideTitle')" :steps="steps" />
 
-    <div class="flex items-center justify-center px-6 py-10">
-      <div class="flex w-full max-w-[420px] flex-col gap-8">
-        <p class="letreiro text-xl text-highlighted lg:hidden">{{ t('app.name') }}</p>
+    <div class="flex items-center justify-center px-4 py-8 sm:px-6 sm:py-10">
+      <div class="flex w-full max-w-[420px] flex-col gap-6 sm:gap-8">
+        <p class="letreiro w-fit rounded-lg border-[1.5px] border-cyan-400/90 px-2.5 py-1 text-sm font-extrabold tracking-wider text-cyan-400 lg:hidden">{{ t('app.name') }}</p>
 
         <form v-if="step.name === 'phone'" class="flex flex-col gap-6" novalidate @submit.prevent="requestCode(phoneDraft)">
           <PageTitle :title="t('merchantSignIn.title')" :lead="t('merchantSignIn.lead')">
@@ -143,6 +143,7 @@ function backToPhone(): void {
               :disabled="pending"
               :highlight="codeError !== undefined"
               :color="codeError ? 'error' : 'primary'"
+              :ui="{ root: 'w-full justify-between sm:justify-start gap-1.5 sm:gap-2', base: 'w-11 sm:w-12 min-h-12' }"
               @complete="submitCode"
             />
           </UFormField>

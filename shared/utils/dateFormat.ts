@@ -13,6 +13,7 @@ const shortDateTimeFormat = new Intl.DateTimeFormat(LOCALE, {
 })
 const weekdayShortDateFormat = new Intl.DateTimeFormat(LOCALE, { weekday: 'short', day: 'numeric', month: 'short', timeZone: PILOT_TIME_ZONE })
 const longWeekdayDateFormat = new Intl.DateTimeFormat(LOCALE, { weekday: 'long', day: 'numeric', month: 'long', timeZone: PILOT_TIME_ZONE })
+const numericDayMonthFormat = new Intl.DateTimeFormat(LOCALE, { day: '2-digit', month: '2-digit', timeZone: PILOT_TIME_ZONE })
 
 /** "14:32", no fuso da cidade. */
 export function formatTime(iso: string): string {
@@ -37,4 +38,9 @@ export function formatWeekdayShortDate(date: Date): string {
 /** "sexta-feira, 2 de outubro", no fuso da cidade. */
 export function formatLongWeekdayDate(date: Date): string {
   return longWeekdayDateFormat.format(date)
+}
+
+/** "12/09", no fuso da cidade. */
+export function formatNumericDayMonth(iso: string): string {
+  return numericDayMonthFormat.format(new Date(iso))
 }

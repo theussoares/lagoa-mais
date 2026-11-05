@@ -40,7 +40,7 @@ defineExpose({ focus })
 
     <StubPerforation />
 
-    <div class="flex flex-col gap-4 p-4">
+    <div class="flex flex-col gap-4 p-3.5 sm:p-4">
       <div class="flex flex-col gap-2">
         <span :id="codeLabelId" class="text-[0.9375rem] font-medium text-highlighted">{{ codeLabel }}</span>
         <UPinInput
@@ -52,7 +52,7 @@ defineExpose({ focus })
           :highlight="invalid"
           :color="invalid ? 'error' : 'secondary'"
           :aria-labelledby="codeLabelId"
-          :ui="{ base: 'uppercase [font-stretch:62%] w-13' }"
+          :ui="{ root: 'w-full justify-between sm:justify-start gap-1.5 sm:gap-2', base: 'uppercase [font-stretch:62%] w-11 sm:w-13 min-h-12' }"
           @complete="emit('complete', $event)"
         />
       </div>

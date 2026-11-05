@@ -108,18 +108,19 @@ onBeforeRouteLeave((to) => {
         heading-level="h3"
       />
 
-      <div class="fixed inset-x-0 bottom-0 z-10 border-t border-(--lagoa-rule) bg-default/95 backdrop-blur left-(--merchant-sidebar-width)">
-        <div class="mx-auto flex max-w-[1200px] items-center justify-end gap-3 px-8 py-3">
-          <p aria-live="polite" class="mr-auto flex items-center gap-1.5 text-[0.9375rem]" :class="saveMessage?.tone === 'error' ? 'text-error' : 'text-success'">
+      <div class="fixed inset-x-0 bottom-[calc(env(safe-area-inset-bottom)+4.5rem)] lg:bottom-0 left-0 lg:left-(--merchant-sidebar-width) z-20 border-t border-(--lagoa-rule) bg-default/95 backdrop-blur">
+        <div class="mx-auto flex max-w-[1200px] flex-wrap items-center justify-end gap-2 sm:gap-3 px-4 sm:px-8 py-2.5 sm:py-3">
+          <p aria-live="polite" class="mr-auto flex min-w-0 items-center gap-1.5 text-sm sm:text-[0.9375rem]" :class="saveMessage?.tone === 'error' ? 'text-error' : 'text-success'">
             <template v-if="saveMessage">
               <UIcon :name="saveMessage.tone === 'error' ? 'i-ph-warning-circle' : 'i-ph-check-circle'" class="size-4 shrink-0" aria-hidden="true" />{{ saveMessage.text }}
             </template>
-            <span v-else-if="editor.isDirty.value" class="text-muted">{{ t('program.save.unsaved') }}</span>
+            <span v-else-if="editor.isDirty.value" class="truncate text-muted">{{ t('program.save.unsaved') }}</span>
           </p>
           <UButton
             variant="ghost"
             color="neutral"
             size="lg"
+            class="min-h-11"
             :label="t('program.save.discard')"
             :disabled="!editor.isDirty.value || saveState.status === 'saving'"
             @click="editor.discard"
@@ -128,6 +129,7 @@ onBeforeRouteLeave((to) => {
             type="submit"
             size="lg"
             icon="i-ph-floppy-disk"
+            class="min-h-11"
             :label="t('program.save.submit')"
             :loading="saveState.status === 'saving'"
             :disabled="!editor.isDirty.value"

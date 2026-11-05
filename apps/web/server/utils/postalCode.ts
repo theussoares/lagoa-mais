@@ -36,11 +36,80 @@ function isNotFound(raw: unknown): boolean {
   return typeof raw === 'object' && raw !== null && 'erro' in raw
 }
 
+export const POSTAL_CODE_CACHE_TTL_MS = 60 * 60 * 1000
+export const POSTAL_CODE_CACHE_MAX_ENTRIES = 200
+
+interface PostalCodeCacheEntry {
+  readonly address: PostalCodeAddress
+  readonly expiresAt: number
+}
+
+/** Cache em memória para consultas bem-sucedidas de CEP: economiza chamadas externas com TTL de 1 hora. */
+export class PostalCodeCache {
+  private readonly entries = new Map<string, PostalCodeCacheEntry>()
+
+  constructor(
+    private readonly ttlMs: number = POSTAL_CODE_CACHE_TTL_MS,
+    private readonly maxEntries: number = POSTAL_CODE_CACHE_MAX_ENTRIES,
+    private readonly now: () => number = Date.now,
+  ) {}
+
+  get(code: string): PostalCodeAddress | undefined {
+    const entry = this.entries.get(code)
+    if (entry === undefined) return undefined
+    if (entry.expiresAt <= this.now()) {
+      this.entries.delete(code)
+      return undefined
+    }
+    return entry.address
+  }
+
+  set(code: string, address: PostalCodeAddress): void {
+    if (this.entries.size >= this.maxEntries) {
+      const now = this.now()
+      for (const [key, entry] of this.entries) {
+        if (entry.expiresAt <= now) this.entries.delete(key)
+      }
+      if (this.entries.size >= this.maxEntries) {
+        const oldestKey = this.entries.keys().next().value
+        if (oldestKey !== undefined) this.entries.delete(oldestKey)
+      }
+    }
+    this.entries.set(code, { address, expiresAt: this.now() + this.ttlMs })
+  }
+
+  clear(): void {
+    this.entries.clear()
+  }
+
+  size(): number {
+    return this.entries.size
+  }
+}
+
+const defaultCache = new PostalCodeCache()
+
+export function getPostalCodeCache(): PostalCodeCache {
+  return defaultCache
+}
+
+export function clearPostalCodeCache(): void {
+  defaultCache.clear()
+}
+
 /**
  * Consulta o ViaCEP pelo servidor (o navegador não fala com ele: CSP). O CEP já chega validado em 8 dígitos;
+ * respostas encontradas são guardadas em cache in-memory por 1 hora.
  * qualquer falha de rede, status ou formato vira `unavailable`, que a tela trata como "preencha à mão".
  */
-export async function lookupPostalCode(code: string, fetcher: typeof fetch = fetch): Promise<PostalCodeLookup> {
+export async function lookupPostalCode(
+  code: string,
+  fetcher: typeof fetch = fetch,
+  cache: PostalCodeCache = defaultCache,
+): Promise<PostalCodeLookup> {
+  const cached = cache.get(code)
+  if (cached !== undefined) return { status: 'found', address: cached }
+
   const response = await fetcher(`${VIACEP_BASE_URL}/${code}/json/`, {
     headers: { accept: 'application/json' },
     redirect: 'error',
@@ -59,5 +128,7 @@ export async function lookupPostalCode(code: string, fetcher: typeof fetch = fet
   }
   if (isNotFound(raw)) return { status: 'notFound' }
   const address = parseViaCep(raw)
-  return address === null ? { status: 'notFound' } : { status: 'found', address }
+  if (address === null) return { status: 'notFound' }
+  cache.set(code, address)
+  return { status: 'found', address }
 }

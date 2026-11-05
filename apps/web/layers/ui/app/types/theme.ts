@@ -6,3 +6,8 @@ export interface ThemeChoiceLabels {
   readonly light: string
   readonly dark: string
 }
+
+export interface ThemeToggleLabels {
+  readonly switchToLight: string
+  readonly switchToDark: string
+}

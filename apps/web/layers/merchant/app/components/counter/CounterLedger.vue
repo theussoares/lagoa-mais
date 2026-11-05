@@ -14,7 +14,7 @@ defineProps<Props>()
       <li
         v-for="entry in entries"
         :key="entry.id"
-        class="grid min-h-14 grid-cols-[3.25rem_minmax(0,1fr)_auto_2.5rem] items-center gap-x-4 border-b border-(--lagoa-rule) py-2 text-[0.9375rem] last:border-b-0"
+        class="grid min-h-14 grid-cols-[2.75rem_minmax(0,1fr)_auto_2.25rem] sm:grid-cols-[3.25rem_minmax(0,1fr)_auto_2.5rem] items-center gap-x-2.5 sm:gap-x-4 border-b border-(--lagoa-rule) py-2 text-sm sm:text-[0.9375rem] last:border-b-0"
       >
         <span class="tabular text-muted">{{ entry.time }}</span>
         <span class="flex min-w-0 flex-wrap items-center gap-x-2.5 gap-y-1">

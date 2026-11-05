@@ -19,7 +19,7 @@ const emit = defineEmits<Emits>()
 </script>
 
 <template>
-  <div class="mx-auto grid w-full max-w-[1200px] flex-1 items-start gap-10 px-8 py-8 lg:grid-cols-12 print:block print:p-0">
+  <div class="mx-auto grid w-full max-w-[1200px] flex-1 items-start gap-6 px-4 py-5 sm:gap-10 sm:px-8 sm:py-8 lg:grid-cols-12 print:block print:p-0">
     <section class="flex flex-col gap-5 lg:col-span-6 print:hidden">
       <PageTitle :title="$t('clubSetup.poster.title')" :lead="$t('clubSetup.poster.lead')" focusable />
       <InkNote
@@ -36,10 +36,10 @@ const emit = defineEmits<Emits>()
         icon="i-ph-check-circle"
         :description="$t('clubSetup.poster.approved')"
       />
-      <div class="flex flex-wrap gap-3">
-        <UButton size="lg" icon="i-ph-printer" :label="$t('clubSetup.poster.print')" :disabled="!poster" @click="emit('print')" />
-        <UButton size="lg" variant="outline" color="neutral" icon="i-ph-download-simple" :label="$t('clubSetup.poster.download')" :disabled="!poster" @click="emit('download')" />
-        <UButton :to="MERCHANT_PANEL_PATH" size="lg" variant="outline" color="neutral" trailing-icon="i-ph-arrow-right" :label="$t('clubSetup.poster.goToPanel')" />
+      <div class="flex flex-col sm:flex-row sm:flex-wrap gap-2.5 sm:gap-3">
+        <UButton size="lg" class="min-h-11 justify-center" icon="i-ph-printer" :label="$t('clubSetup.poster.print')" :disabled="!poster" @click="emit('print')" />
+        <UButton size="lg" class="min-h-11 justify-center" variant="outline" color="neutral" icon="i-ph-download-simple" :label="$t('clubSetup.poster.download')" :disabled="!poster" @click="emit('download')" />
+        <UButton :to="MERCHANT_PANEL_PATH" size="lg" class="min-h-11 justify-center" variant="outline" color="neutral" trailing-icon="i-ph-arrow-right" :label="$t('clubSetup.poster.goToPanel')" />
       </div>
     </section>
 
