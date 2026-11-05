@@ -1,4 +1,9 @@
 /**
+ * LIMITE (Mo-2): a varredura só olha `GET`. Rota `POST`/`PUT` que devolva lista pública de lojas ou produtos (busca por
+ * corpo, por exemplo) passa por ela sem ser vista: precisa de classificação manual aqui (e de `listedShop()` no
+ * repository) e de um teste próprio provando que a loja demo não aparece. Job ou arquivo estático gerado também não
+ * entram na varredura.
+ *
  * Toda rota `GET` fora de `admin/*` e `merchant/*` está numa destas listas, por escrito (RN-06/RN-08). Rota nova quebra
  * `customer/public-listing.sweep.test.ts` até alguém decidir: se lista loja ou produto para quem não chegou pela loja,
  * entra em `PUBLIC_LISTING_ROUTES` e o repository usa `listedShop()`/`notDemoShop()`; se é acesso direto ou dado do
