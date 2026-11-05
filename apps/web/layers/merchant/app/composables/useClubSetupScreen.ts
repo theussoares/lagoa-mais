@@ -14,8 +14,6 @@ export function useClubSetupScreen(): ClubSetupScreen {
   const { step, form, shopErrors, programErrors, submitState, posterState } = setup
   const { approveForTesting } = useShopStatus()
   const { print } = usePrint()
-  const { savePng } = useQrDownload()
-  const toast = useToast()
   const postal = usePostalCodeLookup((addressLine) => {
     form.value = { ...form.value, shop: { ...form.value.shop, addressLine } }
   })
@@ -35,11 +33,7 @@ export function useClubSetupScreen(): ClubSetupScreen {
     if (approveForTesting !== null && (await approveForTesting())) await setup.loadPoster()
   }
 
-  async function downloadPoster(): Promise<void> {
-    if (poster.value === null) return
-    const saved = await savePng(`${t('clubSetup.poster.fileName')}.png`, poster.value.qr)
-    if (!saved) toast.add({ color: 'error', icon: 'i-ph-warning-circle', title: t('clubSetup.poster.downloadError') })
-  }
+  const { download: downloadPoster } = usePosterDownload(poster)
 
   // Etapa nova: o foco vai para o título, e o leitor de tela anuncia onde o lojista está.
   watch(step, async () => {

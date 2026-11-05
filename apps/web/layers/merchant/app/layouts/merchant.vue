@@ -21,6 +21,7 @@ const items = computed<SpineNavItem[]>(() => [
   { label: t('nav.customers'), icon: 'i-ph-users', to: '/clientes' },
   { label: t('nav.program'), icon: 'i-ph-seal', to: '/programa' },
   { label: t('nav.hits'), icon: 'i-ph-fire', to: '/hits' },
+  { label: t('nav.poster'), icon: 'i-ph-qr-code', to: '/cartaz' },
   { label: t('nav.shopLink'), icon: 'i-ph-cursor-click', to: '/botao-do-card' },
   ...(campaignsEnabled ? [{ label: t('nav.campaigns'), icon: 'i-ph-megaphone', to: '/campanhas' }] : []),
 ])

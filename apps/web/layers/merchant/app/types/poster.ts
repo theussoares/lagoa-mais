@@ -26,3 +26,12 @@ export interface CheckInPosterModel {
   readonly codeLabel: string
   readonly code: string
 }
+
+/** Retorno de `usePosterScreen`. */
+export interface PosterScreen {
+  readonly status: 'loading' | 'error' | 'ready'
+  readonly poster: CheckInPosterModel | null
+  readonly print: () => void
+  readonly download: () => Promise<void>
+  readonly reload: () => Promise<void>
+}

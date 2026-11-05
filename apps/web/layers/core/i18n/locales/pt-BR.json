@@ -155,6 +155,7 @@
     "campaigns": "Campanhas",
     "mainLabel": "Navegação principal",
     "shopLink": "Botão do card",
+    "poster": "Cartaz",
     "hits": "Hits"
   },
   "moreMenu": {
@@ -865,7 +866,18 @@
       "earn": "Ao pagar, peça o QR da visita"
     },
     "codeLabel": "Sem câmera? Digite o código da loja no app",
-    "qrLabel": "QR de entrada no clube da {shop}"
+    "qrLabel": "QR de entrada no clube da {shop}",
+    "fileName": "qr-code-lagoa-mais",
+    "downloadError": "Não conseguimos baixar o QR agora. Tente de novo."
+  },
+  "merchantPoster": {
+    "pageTitle": "Cartaz",
+    "title": "Cartaz do balcão",
+    "lead": "Imprima ou baixe o cartaz sempre que precisar: para trocar um que estragou ou colocar um novo no balcão.",
+    "print": "Imprimir cartaz",
+    "download": "Baixar QR",
+    "hint": "O cartaz sempre acompanha o programa de agora: meta e prêmio mudam sozinhos quando você edita o clube em Programa e prêmios.",
+    "loadError": "Não deu para carregar o cartaz agora. Confira a internet e tente de novo."
   },
   "merchantSettings": {
     "title": "Configurações",
@@ -1086,8 +1098,6 @@
       "approved": "Loja aprovada: a entrada pelo cartaz e o Balcão já valem.",
       "print": "Imprimir cartaz",
       "download": "Baixar QR",
-      "fileName": "qr-code-lagoa-mais",
-      "downloadError": "Não conseguimos baixar o QR agora. Tente de novo.",
       "goToPanel": "Ir para o Início",
       "loadError": "Não conseguimos montar o cartaz agora."
     }
