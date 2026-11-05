@@ -2,7 +2,7 @@ import { drizzle } from 'drizzle-orm/postgres-js'
 import postgres from 'postgres'
 import { err, ok, type Result } from '#shared/types/result'
 import { PiiService } from '../common/pii.service'
-import { parseEnv } from '../config/env'
+import { parseEnv, type Env } from '../config/env'
 import * as schema from './schema'
 import { markDemoShop, type MarkDemoShopOutcome } from './shop-mark-demo'
 import { CLUB_SETUP_DEMO_MARKER } from '../shops/demo-mark'
@@ -63,28 +63,49 @@ export function describeMarkDemoOutcome(outcome: MarkDemoShopOutcome, actor: str
   }
 }
 
+/**
+ * Linha de erro para o que não é recusa nossa (driver, rede, bug). Fixa de propósito: a mensagem do `postgres` pode
+ * trazer host, usuário ou o valor que falhou, e o terminal do operador costuma ir parar em print e chat.
+ */
+export const UNEXPECTED_FAILURE_LINE = 'shop:mark-demo failed'
+
 /** `ALLOW_SHOP_ADMIN=1 pnpm shop:mark-demo --actor <apelido> [--dry-run]`. Trilha em `shops.demo_marked_{at,by}` (decisão 9.6 b). */
-async function main(): Promise<void> {
+async function main(): Promise<Result<string, string>> {
   const invocation = parseMarkDemoInvocation(process.argv.slice(2), process.env)
-  if (!invocation.ok) throw new Error(invocation.error)
-  const env = parseEnv(process.env)
-  if (env.DEMO_MERCHANT_PHONE === undefined) throw new Error('Refusing to run: DEMO_MERCHANT_PHONE is not set')
+  if (!invocation.ok) return invocation
+  let env: Env
+  try {
+    env = parseEnv(process.env)
+  } catch (error) {
+    // `parseEnv` só lança a própria mensagem, que lista nomes de env e nunca valores.
+    return err(error instanceof Error ? error.message : 'Invalid environment')
+  }
+  if (env.DEMO_MERCHANT_PHONE === undefined) return err('Refusing to run: DEMO_MERCHANT_PHONE is not set')
   const demoPhoneHash = new PiiService(env).hashPhone(env.DEMO_MERCHANT_PHONE)
 
   const client = postgres(env.DATABASE_URL, { prepare: false })
   try {
     const outcome = await markDemoShop(drizzle(client, { schema }), demoPhoneHash, { dryRun: invocation.value.dryRun, actor: invocation.value.actor })
-    const line = describeMarkDemoOutcome(outcome, invocation.value.actor)
-    if (!line.ok) throw new Error(line.error)
-    console.log(line.value)
+    return describeMarkDemoOutcome(outcome, invocation.value.actor)
   } finally {
     await client.end()
   }
 }
 
 if (require.main === module) {
-  main().catch((error: unknown) => {
-    console.error(error instanceof Error ? error.message : 'shop:mark-demo failed')
-    process.exitCode = 1
-  })
+  main().then(
+    (result) => {
+      if (result.ok) {
+        console.log(result.value)
+        return
+      }
+      // Recusas nossas: texto escrito aqui, sem valor de env nem argumento.
+      console.error(result.error)
+      process.exitCode = 1
+    },
+    () => {
+      console.error(UNEXPECTED_FAILURE_LINE)
+      process.exitCode = 1
+    },
+  )
 }
