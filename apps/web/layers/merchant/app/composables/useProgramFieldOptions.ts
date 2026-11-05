@@ -1,5 +1,6 @@
 import type { ComputedRef, Ref } from 'vue'
-import { BONUS_UNITS_MAX, POINTS_RATE_MAX, PROGRAM_TARGET_MAX, PROGRAM_TARGET_MIN, STAMPS_TARGET_MAX } from '#shared/constants/domain'
+import { POINTS_RATE_MAX, PROGRAM_TARGET_MAX, PROGRAM_TARGET_MIN, STAMPS_TARGET_MAX } from '#shared/constants/domain'
+import { bonusUnitsMax, welcomeUnitsMax } from '#shared/domain/bonusRules'
 import { unitOf } from '#shared/domain/programStrategies'
 import type { ProgramDraft } from '#shared/schemas/program'
 import type { SelectOption } from '#layers/ui/app/types/form'
@@ -34,13 +35,11 @@ function cooldownOptionsOf(draft: ProgramDraft | null, translate: Translate): Se
 
 function limitsOf(draft: ProgramDraft | null): ProgramFieldLimits {
   const rules = draft?.rules
-  const target = rules?.target ?? PROGRAM_TARGET_MIN
   return {
     target: { min: PROGRAM_TARGET_MIN, max: rules?.mode === 'stamps' ? STAMPS_TARGET_MAX : PROGRAM_TARGET_MAX },
     rate: { min: RATE_MIN, max: POINTS_RATE_MAX },
-    // Boas-vindas precisam deixar pelo menos uma visita até o prêmio.
-    welcomeUnits: { min: BONUS_UNITS_MIN, max: Math.max(BONUS_UNITS_MIN, Math.min(BONUS_UNITS_MAX, target - 1)) },
-    referralUnits: { min: BONUS_UNITS_MIN, max: BONUS_UNITS_MAX },
+    welcomeUnits: { min: BONUS_UNITS_MIN, max: rules === undefined ? BONUS_UNITS_MIN : welcomeUnitsMax(rules) },
+    referralUnits: { min: BONUS_UNITS_MIN, max: rules === undefined ? BONUS_UNITS_MIN : bonusUnitsMax(rules) },
   }
 }
 

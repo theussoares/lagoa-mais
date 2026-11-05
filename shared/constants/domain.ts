@@ -108,6 +108,8 @@ export const SMS_SEND_WINDOW_MINUTES = 60
 export const REFERENCE_TICKET_REAIS = 20
 export const REMINDER_MESSAGE_MAX_LENGTH = 140
 export const REMINDER_BONUS_MIN_UNITS = 0
+/** Teto do presente do lembrete, em visitas (limitado ainda a meta - 1). */
+export const REMINDER_BONUS_MAX_VISITS = 10
 /** Presente sugerido no lembrete, em visitas: 1 carimbo, ou os pontos de uma visita. */
 export const REMINDER_BONUS_SUGGESTED_VISITS = 1
 export const CAMPAIGN_HISTORY_LIMIT = 10
