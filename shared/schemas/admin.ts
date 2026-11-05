@@ -1,6 +1,9 @@
 import { z } from 'zod'
 import {
+  ADMIN_MFA_CODE_LENGTH,
   ADMIN_NAME_MAX_LENGTH,
+  ADMIN_PASSWORD_MAX_LENGTH,
+  ADMIN_PASSWORD_MIN_LENGTH,
   ADMIN_SHOPS_SEARCH_MAX_LENGTH,
   ADMIN_NAME_MIN_LENGTH,
   ADMIN_REASON_MAX_LENGTH,
@@ -38,6 +41,61 @@ export const AdminLoginAttemptSchema = z.strictObject({
   email: z.string().trim().toLowerCase().pipe(z.email().max(EMAIL_MAX_LENGTH)),
 })
 export type AdminLoginAttempt = z.infer<typeof AdminLoginAttemptSchema>
+
+const AdminEmailSchema = z.string().trim().toLowerCase().pipe(z.email().max(EMAIL_MAX_LENGTH))
+/** Token do widget do Turnstile; o BFF confere no Cloudflare antes de qualquer outra coisa. */
+const CaptchaTokenSchema = z.string().min(1).max(2048)
+
+/** Entrar no painel (navegador → BFF do admin). A senha da tentativa não passa pelo teto: quem decide é o Supabase. */
+export const AdminSignInSchema = z.strictObject({
+  email: AdminEmailSchema,
+  password: z.string().min(1).max(ADMIN_PASSWORD_MAX_LENGTH),
+  captchaToken: CaptchaTokenSchema,
+})
+export type AdminSignIn = z.infer<typeof AdminSignInSchema>
+
+export const AdminPasswordResetRequestSchema = z.strictObject({ email: AdminEmailSchema, captchaToken: CaptchaTokenSchema })
+export type AdminPasswordResetRequest = z.infer<typeof AdminPasswordResetRequestSchema>
+
+const MfaCodeSchema = z.string().regex(new RegExp(`^\\d{${ADMIN_MFA_CODE_LENGTH}}$`))
+
+export const AdminMfaCodeSchema = z.strictObject({ code: MfaCodeSchema })
+export type AdminMfaCode = z.infer<typeof AdminMfaCodeSchema>
+
+export const AdminNewPasswordSchema = z.string().min(ADMIN_PASSWORD_MIN_LENGTH).max(ADMIN_PASSWORD_MAX_LENGTH)
+
+/** Definir a senha pelo link do convite ou da recuperação: os tokens vêm do fragmento do link, nunca da URL do servidor. */
+export const AdminSetPasswordSchema = z.strictObject({
+  accessToken: z.string().min(1).max(4096),
+  refreshToken: z.string().min(1).max(512),
+  password: AdminNewPasswordSchema,
+  /** Código do autenticador, quando a conta já tem um (link de recuperação). O BFF responde `mfaCodeRequired` se faltar. */
+  code: MfaCodeSchema.optional(),
+})
+export type AdminSetPassword = z.infer<typeof AdminSetPasswordSchema>
+
+/** Trocar a senha pede o código atual do autenticador: uma sessão roubada não troca a senha sozinha. */
+export const AdminPasswordChangeSchema = z.strictObject({ password: AdminNewPasswordSchema, currentCode: MfaCodeSchema })
+export type AdminPasswordChange = z.infer<typeof AdminPasswordChangeSchema>
+
+
+/** Cadastrar autenticador: no primeiro acesso, nada; para trocar o que já existe, o código atual dele. */
+export const AdminMfaEnrollRequestSchema = z.strictObject({ currentCode: MfaCodeSchema.optional() })
+export type AdminMfaEnrollRequest = z.infer<typeof AdminMfaEnrollRequestSchema>
+
+/** Depois da senha: cadastrar o autenticador (primeiro acesso) ou digitar o código. */
+export const AdminMfaNextSchema = z.enum(['enroll', 'verify'])
+export type AdminMfaNext = z.infer<typeof AdminMfaNextSchema>
+
+/** O que o painel sabe da sessão: completa (com o nome), no meio do MFA, ou nenhuma (`null`). */
+export const AdminSessionSchema = z
+  .union([z.object({ admin: z.object({ name: z.string() }) }), z.object({ next: AdminMfaNextSchema })])
+  .nullable()
+export type AdminSession = z.infer<typeof AdminSessionSchema>
+
+/** Cadastro do autenticador: o QR (SVG) e a chave para quem digita no app. */
+export const AdminMfaEnrollmentSchema = z.object({ qrSvg: z.string(), secret: z.string() })
+export type AdminMfaEnrollment = z.infer<typeof AdminMfaEnrollmentSchema>
 
 /** Ação do admin sobre uma loja. Suspender exige o motivo. */
 export const AdminShopActionSchema = z.discriminatedUnion('action', [

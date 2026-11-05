@@ -33,6 +33,11 @@ export class AdminTeamService {
     return records.map((record) => this.toAdminUser(record))
   }
 
+  async me(admin: AdminContext): Promise<Result<AdminUser, ErrorOf<'notFound'>>> {
+    const record = await this.team.find(admin.adminId)
+    return record === null ? err({ code: 'notFound', entity: 'adminUser' }) : ok(this.toAdminUser(record))
+  }
+
   async invite(admin: AdminContext, invite: AdminInvite): Promise<Result<AdminUser, AdminInviteError>> {
     return this.create(invite, { kind: 'admin', adminId: admin.adminId })
   }

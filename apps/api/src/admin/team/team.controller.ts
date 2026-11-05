@@ -21,6 +21,12 @@ export class AdminTeamController {
     return this.team.list()
   }
 
+  /** Quem está no painel (o nome no menu). O `AdminGuard` já garantiu que está ativo. */
+  @Get('me')
+  async me(@CurrentAdmin() admin: AdminContext): Promise<AdminUser> {
+    return unwrap(await this.team.me(admin))
+  }
+
   @Post('invite')
   async invite(@CurrentAdmin() admin: AdminContext, @Body(new ZodValidationPipe(AdminInviteSchema)) invite: AdminInvite): Promise<AdminUser> {
     return unwrap(await this.team.invite(admin, invite))
