@@ -316,6 +316,8 @@ composables  → stores (Pinia, estado)
   meia-noite local (23h e 3h do dia seguinte valem duas), ou **sem limite** (o cliente ganha a cada QR da visita; cada QR continua de uso único e 5 min). A recusa não consome o QR da visita.
 - **Regras bônus:** boas-vindas (cartão começa com 2 carimbos), aniversário em
   dobro, traga um amigo (+1 quando o amigo faz a 1ª visita), dia surpresa em dobro.
+  Teto das unidades de boas-vindas e indicação (`bonusUnitsMax`, `shared/domain/bonusRules.ts`, o mesmo no schema e na tela): carimbo até 10; ponto até
+  `meta - 1` (nunca abaixo de 10). Boas-vindas ainda ficam abaixo da meta.
   Multiplicadores não se somam: vale o maior (aniversário no dia surpresa = 2×,
   não 4×). Quem nasceu em 29/02 comemora em 28/02 nos anos sem 29.
 - **Aniversário:** o cliente informa dia e mês no Perfil. A primeira data é

@@ -1,4 +1,4 @@
-import { BONUS_UNITS_MAX, REMINDER_BONUS_MIN_UNITS, REMINDER_BONUS_SUGGESTED_VISITS } from '../constants/domain'
+import { REMINDER_BONUS_MAX_VISITS, REMINDER_BONUS_MIN_UNITS, REMINDER_BONUS_SUGGESTED_VISITS } from '../constants/domain'
 import type { ReminderBonusLimits, ReminderReach } from '../schemas/campaign'
 import type { IsoDateTime } from '../schemas/common'
 import type { ProgramRules } from '../schemas/program'
@@ -46,7 +46,7 @@ export function summarizeReach(eligibilities: readonly ReminderEligibility[]): R
  */
 export function reminderBonusLimits(rules: ProgramRules): ReminderBonusLimits {
   const worth = visitWorthOf(rules)
-  const max = Math.max(REMINDER_BONUS_MIN_UNITS, Math.min(worth * BONUS_UNITS_MAX, rules.target - 1))
+  const max = Math.max(REMINDER_BONUS_MIN_UNITS, Math.min(worth * REMINDER_BONUS_MAX_VISITS, rules.target - 1))
   return { min: REMINDER_BONUS_MIN_UNITS, max, suggested: Math.min(worth * REMINDER_BONUS_SUGGESTED_VISITS, max) }
 }
 

@@ -1,5 +1,7 @@
 import type { Birthday, IsoDate } from '../schemas/common'
-import type { BonusRules } from '../schemas/program'
+import type { BonusRules, ProgramRules } from '../schemas/program'
+import { BONUS_UNITS_MAX } from '../constants/domain'
+import { unitOf } from './programStrategies'
 
 export interface EarnContext {
   readonly today: { readonly isoDate: IsoDate; readonly monthDay: string }
@@ -72,4 +74,18 @@ export function applyVisitBonuses(
 
 export function welcomeUnits(rules: BonusRules): number {
   return rules.welcomeBonus.enabled ? rules.welcomeBonus.units : 0
+}
+
+/**
+ * Teto de unidades de um bônus fixo (boas-vindas, indicação). Carimbo: 10, já que o cartão tem no máximo 20.
+ * Ponto: acompanha a meta (até `meta - 1`), senão 10 pontos de uma meta de 100 não serviriam de bônus. Nunca abaixo de 10,
+ * para não recusar programa salvo com meta pequena.
+ */
+export function bonusUnitsMax(rules: ProgramRules): number {
+  return unitOf(rules) === 'stamp' ? BONUS_UNITS_MAX : Math.max(BONUS_UNITS_MAX, rules.target - 1)
+}
+
+/** Boas-vindas também precisam deixar pelo menos uma visita até o prêmio. */
+export function welcomeUnitsMax(rules: ProgramRules): number {
+  return Math.max(1, Math.min(bonusUnitsMax(rules), rules.target - 1))
 }
