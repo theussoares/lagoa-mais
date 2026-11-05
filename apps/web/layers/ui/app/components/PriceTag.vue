@@ -17,11 +17,14 @@ withDefaults(defineProps<Props>(), { original: null, discount: null, fromLabel: 
 <template>
   <!-- A fonte e o tamanho vêm de quem usa; o preço antigo é sempre menor e apagado. -->
   <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1 tabular-nums">
-    <p v-if="original" class="text-sm font-normal text-muted">
-      <span v-if="fromLabel">{{ fromLabel }} </span><s>{{ original }}</s>
+    <!-- Rótulo e preço em flex com gap: espaço em branco no fim de um elemento some na compilação do Vue. -->
+    <p v-if="original" class="flex items-baseline gap-1 text-sm font-normal text-muted">
+      <span v-if="fromLabel">{{ fromLabel }}</span>
+      <s>{{ original }}</s>
     </p>
-    <p>
-      <span v-if="original && toLabel" class="text-sm font-normal text-muted">{{ toLabel }} </span>{{ price }}
+    <p class="flex items-baseline gap-1">
+      <span v-if="original && toLabel" class="text-sm font-normal text-muted">{{ toLabel }}</span>
+      <span>{{ price }}</span>
     </p>
     <StampTag v-if="original && discount" :label="discount" tone="success" />
   </div>
