@@ -6,6 +6,7 @@ interface Props {
 defineProps<Props>()
 const emit = defineEmits<{ 'update:open': [open: boolean] }>()
 const { t } = useI18n()
+const appVersion = useAppVersion()
 
 const entries = [
   { to: '/ranking', label: 'moreMenu.ranking', icon: 'i-ph-trophy' },
@@ -33,6 +34,7 @@ const entries = [
           </li>
         </ul>
       </nav>
+      <AppVersion class="mt-4 text-center" :label="appVersion.label" :commit="appVersion.commit" :caption="t('app.versionCaption')" />
     </template>
   </UDrawer>
 </template>

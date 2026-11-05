@@ -4,6 +4,7 @@ on:
   pull_request:
   push:
     branches: [main]
+    tags: ['v*']
 
 jobs:
   check:
@@ -25,6 +26,9 @@ jobs:
       DATABASE_URL: postgresql://postgres:postgres@localhost:5432/lagoa_test
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -44,3 +48,5 @@ jobs:
         run: pnpm build:api
       - name: Web tests
         run: pnpm test
+        env:
+          RELEASE_PR_TITLE: ${{ github.base_ref == 'main' && github.event.pull_request.title || '' }}

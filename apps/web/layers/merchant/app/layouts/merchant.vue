@@ -7,6 +7,7 @@ const { session, signOut } = useMerchantSession()
 const shopStatus = useShopStatus()
 const { approveForTesting } = shopStatus
 const campaignsEnabled = useCampaignsEnabled()
+const appVersion = useAppVersion()
 
 // A rede pode ter aprovado ou suspendido a loja desde o login.
 onMounted(() => void shopStatus.refresh())
@@ -66,6 +67,7 @@ const themeToggleLabels = computed(() => ({
         <UIcon name="i-ph-sign-out" class="size-5 shrink-0 text-muted group-hover:text-highlighted group-hover:scale-105 transition-all duration-150" aria-hidden="true" />
         {{ t('merchantNav.signOut') }}
       </button>
+      <AppVersion class="px-3 pt-2" :label="appVersion.label" :commit="appVersion.commit" :caption="t('app.versionCaption')" />
     </aside>
 
     <main id="main" class="min-w-0 flex-1 px-4 pt-4 pb-[calc(env(safe-area-inset-bottom)+6.5rem)] sm:px-6 lg:px-8 lg:py-7">

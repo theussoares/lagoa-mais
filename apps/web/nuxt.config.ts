@@ -2,6 +2,9 @@
 // automaticamente pelo Nuxt 4 e ganham os aliases #layers/<nome>.
 import { fileURLToPath } from 'node:url'
 import { SECURITY_HEADERS } from './server/utils/securityHeaders'
+import { readBuildInfo } from './server/utils/buildInfo'
+
+const BUILD_INFO = readBuildInfo()
 
 /** Rotas do lojista (layer `merchant`): SPA, sem SSR (desktop, sessão conferida no servidor pelos middlewares). */
 const MERCHANT_SPA_ROUTES = ['/painel', '/configuracoes', '/campanhas', '/balcao/**', '/programa', '/hits', '/botao-do-card', '/cartaz', '/clientes']
@@ -34,6 +37,10 @@ export default defineNuxtConfig({
     demoMerchantPhone: '',
     demoOtp: '',
     public: {
+      /** Versão SemVer do produto (arquivo `VERSION` da raiz, docs/releases.md). Não é segredo; fica fora de log de segurança e de URL. */
+      appVersion: BUILD_INFO.version,
+      /** Commit curto do build, só fora de produção (vazio em produção). */
+      appCommit: BUILD_INFO.commit,
       /** URL do projeto Supabase (não é segredo): login no servidor e fotos do bucket público. */
       supabaseUrl: '',
       /** Painel do lojista: `http` (BFF + API, padrão) ou `mock` (navegador; só testes e demonstração offline). Env: NUXT_PUBLIC_MERCHANT_BACKEND. */
