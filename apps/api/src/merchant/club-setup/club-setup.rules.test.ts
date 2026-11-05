@@ -1,6 +1,14 @@
-import { describe, expect, it } from 'vitest'
+import { createHmac, timingSafeEqual } from 'node:crypto'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { ClubSetupDraft } from '#shared/schemas/onboarding'
-import { mapDraftToProgramInsert, newCheckInCode } from './club-setup.rules'
+import { demoMarkingBootNotice, isDemoOwner, mapDraftToProgramInsert, newCheckInCode } from './club-setup.rules'
+
+// `vi.spyOn` sobre o namespace ESM de `node:crypto` não redefine o import nomeado da regra: o teste passaria sem provar
+// nada. O mock troca o módulo por um espião que chama o `timingSafeEqual` de verdade.
+vi.mock('node:crypto', async (importOriginal) => {
+  const original = await importOriginal<typeof import('node:crypto')>()
+  return { ...original, timingSafeEqual: vi.fn(original.timingSafeEqual) }
+})
 
 describe('club-setup rules', () => {
   it('generates a valid 6-char readable check-in code', () => {
@@ -62,5 +70,49 @@ describe('club-setup rules', () => {
     expect(row.earnPer).toBe('real')
     expect(row.earnUnits).toBe(2)
     expect(row.expirationMonths).toBe(6)
+  })
+})
+
+describe('isDemoOwner', () => {
+  const hmac = (value: string) => createHmac('sha256', 'test-pepper').update(value).digest()
+  const demoHash = hmac('phone:demo')
+
+  beforeEach(() => {
+    vi.mocked(timingSafeEqual).mockClear()
+  })
+
+  it('recognises the same hash, comparing in constant time', () => {
+    expect(isDemoOwner(Buffer.from(demoHash), demoHash)).toBe(true)
+    expect(timingSafeEqual).toHaveBeenCalledTimes(1)
+  })
+
+  it('refuses a hash that differs by a single byte', () => {
+    const other = Buffer.from(demoHash)
+    other[other.length - 1] = (other[other.length - 1] ?? 0) ^ 1
+    expect(isDemoOwner(other, demoHash)).toBe(false)
+    expect(timingSafeEqual).toHaveBeenCalledTimes(1)
+  })
+
+  it('makes nobody demo when no demo phone is configured', () => {
+    expect(isDemoOwner(demoHash, null)).toBe(false)
+    expect(timingSafeEqual).not.toHaveBeenCalled()
+  })
+
+  it('answers false for hashes of different lengths instead of throwing', () => {
+    expect(isDemoOwner(demoHash.subarray(0, 16), demoHash)).toBe(false)
+    expect(isDemoOwner(Buffer.alloc(0), demoHash)).toBe(false)
+  })
+})
+
+describe('demoMarkingBootNotice', () => {
+  it('says on when the demo phone is set, in any environment', () => {
+    expect(demoMarkingBootNotice(true, 'production')).toEqual({ level: 'log', message: 'demo merchant marking: on' })
+    expect(demoMarkingBootNotice(true, 'development')).toEqual({ level: 'log', message: 'demo merchant marking: on' })
+  })
+
+  it('warns when production boots without it, and only logs elsewhere', () => {
+    expect(demoMarkingBootNotice(false, 'production')).toMatchObject({ level: 'warn', message: expect.stringMatching(/^demo merchant marking: off/) })
+    expect(demoMarkingBootNotice(false, 'development')).toEqual({ level: 'log', message: 'demo merchant marking: off' })
+    expect(demoMarkingBootNotice(false, 'test')).toEqual({ level: 'log', message: 'demo merchant marking: off' })
   })
 })

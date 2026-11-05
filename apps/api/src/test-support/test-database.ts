@@ -7,7 +7,7 @@ import { visitQrExpiresAt } from '#shared/domain/visitQr'
 import { earnRateOf, unitOf } from '#shared/domain/programStrategies'
 import type { Birthday } from '#shared/schemas/common'
 import type { BonusRules, ExpirationPolicy, ProgramRules } from '#shared/schemas/program'
-import type { ShopStatus } from '#shared/schemas/shop'
+import type { ShopPlan, ShopStatus } from '#shared/schemas/shop'
 import type { VisitQrCancelReason, VisitQrEarn, VisitQrStatus } from '#shared/schemas/visitQr'
 import { generateReadableCode } from '../common/readable-code'
 import { generateVisitToken, hashVisitToken } from '../common/visit-token'
@@ -78,7 +78,11 @@ export class TestDatabase {
     this.db = drizzle(this.client, { schema })
   }
 
-  async createCustomer(options: { birthday?: Birthday | null; withProfile?: boolean } = {}): Promise<string> {
+  /**
+   * `phoneHash` troca o hash de bytes soltos por um conhecido (ex.: o `PiiService.hashPhone` de um número de teste), para
+   * o que acha o usuário pelo celular, como o `shop:mark-demo`. O padrão é único por usuário.
+   */
+  async createCustomer(options: { birthday?: Birthday | null; withProfile?: boolean; phoneHash?: Buffer } = {}): Promise<string> {
     const id = randomUUID()
     const bytes = Buffer.from(`t-${id}`)
     await this.db.insert(schema.appUsers).values({
@@ -86,7 +90,7 @@ export class TestDatabase {
       emailEncrypted: bytes,
       emailHash: Buffer.from(`email-${id}`),
       phoneEncrypted: bytes,
-      phoneHash: Buffer.from(`phone-${id}`),
+      phoneHash: options.phoneHash ?? Buffer.from(`phone-${id}`),
     })
     this.userIds.push(id)
     if (options.withProfile !== false) {
@@ -114,8 +118,13 @@ export class TestDatabase {
     cooldownHours?: number
     cooldownMode?: 'rolling' | 'calendarDay' | 'unlimited'
     expiration?: ExpirationPolicy
+    /** Loja de demonstração (`shops.is_demo`); sem a opção, a coluna fica no padrão do banco (`false`). */
+    isDemo?: boolean
+    plan?: ShopPlan
+    /** Hash do celular do dono, para achar a loja pelo número (ver `createCustomer`). */
+    ownerPhoneHash?: Buffer
   } = {}): Promise<TestShop> {
-    const ownerId = await this.createCustomer({ withProfile: false })
+    const ownerId = await this.createCustomer({ withProfile: false, ...(options.ownerPhoneHash && { phoneHash: options.ownerPhoneHash }) })
     const rules = options.rules ?? { mode: 'stamps', target: 10 }
     const shop = { id: randomUUID(), programId: randomUUID(), checkInCode: generateReadableCode(6) }
     await this.db.insert(schema.shops).values({
@@ -127,6 +136,8 @@ export class TestDatabase {
       addressLine: 'Rua de teste, 1',
       checkInCode: shop.checkInCode,
       status: options.status ?? 'approved',
+      ...(options.isDemo !== undefined && { isDemo: options.isDemo }),
+      ...(options.plan && { plan: options.plan }),
     })
     this.shopIds.push(shop.id)
     await this.db.insert(schema.programs).values({
@@ -146,6 +157,23 @@ export class TestDatabase {
       ...(options.cooldownMode && { checkInCooldownMode: options.cooldownMode }),
     })
     return shop
+  }
+
+  /** A marca de demonstração como está no banco agora. */
+  async isDemoOf(shopId: string): Promise<boolean> {
+    const [row] = await this.db.select({ isDemo: schema.shops.isDemo }).from(schema.shops).where(eq(schema.shops.id, shopId))
+    if (!row) throw new Error('shop expected')
+    return row.isDemo
+  }
+
+  /** A marca de demonstração com a trilha (`demo_marked_at`/`demo_marked_by`) como estão no banco agora. */
+  async demoMarkOf(shopId: string): Promise<{ isDemo: boolean; markedAt: Date | null; markedBy: string | null }> {
+    const [row] = await this.db
+      .select({ isDemo: schema.shops.isDemo, markedAt: schema.shops.demoMarkedAt, markedBy: schema.shops.demoMarkedBy })
+      .from(schema.shops)
+      .where(eq(schema.shops.id, shopId))
+    if (!row) throw new Error('shop expected')
+    return row
   }
 
   /** Troca o programa da loja como o painel fará: desativa a versão atual e cria outra ativa. Devolve o id da nova. */

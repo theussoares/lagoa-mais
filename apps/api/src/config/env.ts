@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { PhoneNumberSchema } from '#shared/schemas/phone'
 
 const EnvSchema = z
   .object({
@@ -33,6 +34,12 @@ const EnvSchema = z
     SUPABASE_SERVICE_ROLE_KEY: z.string().min(1).optional(),
     /** Endereço do painel da rede (`https://admin...`): o link do convite de admin leva a `<ADMIN_APP_URL>/definir-senha`. */
     ADMIN_APP_URL: z.url().optional(),
+    /**
+     * Celular do lojista demo (mesmo valor de `NUXT_DEMO_MERCHANT_PHONE` do web): a loja que ele cria nasce fora da
+     * vitrine (`shops.is_demo`). Só o hash é usado. Vazio conta como ausente; valor fora do formato derruba o boot, porque
+     * aceitar em silêncio faria a loja demo nascer pública, que é o que a marca existe para evitar.
+     */
+    DEMO_MERCHANT_PHONE: z.preprocess((value) => (value === '' ? undefined : value), PhoneNumberSchema.optional()),
   })
   .superRefine((env, context) => {
     if (env.NODE_ENV !== 'production') return

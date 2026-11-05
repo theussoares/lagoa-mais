@@ -1,3 +1,4 @@
+import { timingSafeEqual } from 'node:crypto'
 import { CHECK_IN_CODE_LENGTH } from '#shared/constants/domain'
 import { earnRateOf, unitOf } from '#shared/domain/programStrategies'
 import type { ClubSetupDraft } from '#shared/schemas/onboarding'
@@ -10,3 +11,25 @@ export function newCheckInCode(): CheckInCode {
 
 /** A linha do programa sai de uma função só (a do `PUT /program`): criar o clube e trocar as regras não divergem. */
 export { mapDraftToProgramInsert } from '../program/program.rules'
+
+/**
+ * RN-01/RN-02: o dono é o lojista demo se o HMAC do celular do JWT é o do `DEMO_MERCHANT_PHONE`. Sem número demo
+ * configurado, ninguém é demo. Tempo constante (`timingSafeEqual`), nunca `===`/`equals`; o early return por tamanho
+ * não vaza nada (o tamanho de um HMAC-SHA256 é público) e evita o `RangeError` do `timingSafeEqual`.
+ */
+export function isDemoOwner(ownerPhoneHash: Buffer, demoPhoneHash: Buffer | null): boolean {
+  if (demoPhoneHash === null) return false
+  if (ownerPhoneHash.length !== demoPhoneHash.length) return false
+  return timingSafeEqual(ownerPhoneHash, demoPhoneHash)
+}
+
+/**
+ * Linha única do boot dizendo se a marca da loja demo está ligada (M-2). Nunca o celular nem o hash: só `on`/`off`.
+ * Em produção, `off` é aviso: a env esquecida faz a loja demo criada a partir dali nascer pública, e ninguém percebe
+ * até ela aparecer no Descobrir. Não derruba o boot (a env é opcional por desenho: a demo pode estar desligada).
+ */
+export function demoMarkingBootNotice(marking: boolean, nodeEnv: 'development' | 'test' | 'production'): { readonly level: 'log' | 'warn'; readonly message: string } {
+  if (marking) return { level: 'log', message: 'demo merchant marking: on' }
+  if (nodeEnv === 'production') return { level: 'warn', message: 'demo merchant marking: off (DEMO_MERCHANT_PHONE is empty in production)' }
+  return { level: 'log', message: 'demo merchant marking: off' }
+}

@@ -1,5 +1,5 @@
 {
-  "id": "dfc19235-b2fd-4c0c-bd32-d8971c10926b",
+  "id": "b1e5cf33-b03b-4d8c-820b-d15f06185789",
   "prevId": "7b7b61a4-eb0d-4fea-b3f4-8da47ab819f4",
   "version": "7",
   "dialect": "postgresql",
@@ -564,6 +564,25 @@
           "primaryKey": false,
           "notNull": true,
           "default": "'founder'"
+        },
+        "is_demo": {
+          "name": "is_demo",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "demo_marked_at": {
+          "name": "demo_marked_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "demo_marked_by": {
+          "name": "demo_marked_by",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
         },
         "poster_reprinted_at": {
           "name": "poster_reprinted_at",
@@ -2366,19 +2385,6 @@
           "primaryKey": false,
           "notNull": false
         },
-        "promo_price_cents": {
-          "name": "promo_price_cents",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "tags": {
-          "name": "tags",
-          "type": "text[]",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'{}'::text[]"
-        },
         "photo_path": {
           "name": "photo_path",
           "type": "text",
@@ -2552,14 +2558,6 @@
         "hit_items_price_check": {
           "name": "hit_items_price_check",
           "value": "\"hit_items\".\"price_cents\" IS NULL OR \"hit_items\".\"price_cents\" BETWEEN 1 AND 10000000"
-        },
-        "hit_items_promo_price_check": {
-          "name": "hit_items_promo_price_check",
-          "value": "\"hit_items\".\"promo_price_cents\" IS NULL OR (\"hit_items\".\"price_cents\" IS NOT NULL AND \"hit_items\".\"promo_price_cents\" BETWEEN 1 AND 10000000 AND \"hit_items\".\"promo_price_cents\" < \"hit_items\".\"price_cents\")"
-        },
-        "hit_items_tags_check": {
-          "name": "hit_items_tags_check",
-          "value": "cardinality(\"hit_items\".\"tags\") <= 2 AND \"hit_items\".\"tags\" <@ ARRAY['clubOnly', 'new', 'lastUnits']::text[]"
         },
         "hit_items_title_check": {
           "name": "hit_items_title_check",

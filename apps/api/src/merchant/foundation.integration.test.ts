@@ -13,11 +13,12 @@ import { DrizzleReferralSettlement } from '../ledger/drizzle-referral-settlement
 import { LedgerStore } from '../ledger/ledger.store'
 import { claimVisit } from '../test-support/claim-visit'
 import { TEST_DATABASE_URL, TestDatabase } from '../test-support/test-database'
-import { PhoneNumberSchema } from '#shared/schemas/phone'
+import { PhoneNumberSchema, type PhoneNumber } from '#shared/schemas/phone'
 import { createTestPii } from '../test-support/pii'
 import { ClubSetupService } from './club-setup/club-setup.service'
 import { DrizzleClubSetupRepository } from './club-setup/drizzle-club-setup.repository'
 import { newCheckInCode } from './club-setup/club-setup.rules'
+import { DemoMerchant } from './club-setup/demo-merchant'
 import { DrizzleMerchantTermsRepository } from './terms/drizzle-terms.repository'
 import { DrizzleMerchantShopResolver } from './access/drizzle-merchant-shop.resolver'
 
@@ -167,7 +168,10 @@ describe.skipIf(!TEST_DATABASE_URL)('merchant foundation against a real database
         checkIn: { enabled: true, cooldownHours: 4, cooldownMode: 'rolling' as const },
       },
     }
-    const service = () => new ClubSetupService(new DrizzleClubSetupRepository(data.db), createTestPii(), new SystemClock())
+    // Números de teste inventados (não são de ninguém). `phone_hash` é único: cada teste da marca demo usa o seu.
+    const pii = createTestPii()
+    const service = (demoPhone: PhoneNumber | null = null) =>
+      new ClubSetupService(new DrizzleClubSetupRepository(data.db), pii, new SystemClock(), new DemoMerchant({ DEMO_MERCHANT_PHONE: demoPhone ?? undefined, NODE_ENV: 'test' }, pii))
     const newOwner = (phone: string) => {
       const id = randomUUID()
       data.trackUser(id)
@@ -214,6 +218,7 @@ describe.skipIf(!TEST_DATABASE_URL)('merchant foundation against a real database
         draft,
         () => codes.shift() ?? newCheckInCode(),
         new Date(),
+        { isDemo: false },
       )
       expect(outcome.kind).toBe('created')
       if (outcome.kind === 'created') data.trackShop(outcome.club.shopId)
@@ -240,6 +245,56 @@ describe.skipIf(!TEST_DATABASE_URL)('merchant foundation against a real database
       expect(await service().createClub(erased, draft)).toEqual({ ok: false, error: { code: 'unauthorized' } })
       expect(await data.db.select({ id: shops.id }).from(shops).where(eq(shops.ownerUserId, erased.id))).toHaveLength(0)
     }, SLOW)
+
+    describe('demo shop mark', () => {
+      const createdShop = async (demoPhone: PhoneNumber | null, owner: ReturnType<typeof newOwner>) => {
+        const result = await service(demoPhone).createClub(owner, draft)
+        if (!result.ok) throw new Error('club setup should succeed')
+        data.trackShop(result.value.session.shopId)
+        return result.value
+      }
+
+      it('marks the shop created by the demo phone (CA-01) and nothing else about it changes', async () => {
+        const demoPhone = PhoneNumberSchema.parse('67900000080')
+        const created = await createdShop(demoPhone, newOwner(demoPhone))
+        expect(created).toMatchObject({ created: true, session: { shopStatus: 'pending' } })
+        // Trilha no mesmo INSERT (decisão 9.6 b): sem ela não se sabe depois se a marca veio do fluxo ou de um operador.
+        const mark = await data.demoMarkOf(created.session.shopId)
+        expect(mark).toMatchObject({ isDemo: true, markedBy: 'club-setup' })
+        expect(mark.markedAt).toBeInstanceOf(Date)
+      }, SLOW)
+
+      it('does not mark the shop of any other phone (CA-02)', async () => {
+        const created = await createdShop(PhoneNumberSchema.parse('67900000082'), newOwner('67900000081'))
+        expect(await data.demoMarkOf(created.session.shopId)).toEqual({ isDemo: false, markedAt: null, markedBy: null })
+      }, SLOW)
+
+      it('marks nothing when the API has no DEMO_MERCHANT_PHONE (CA-03)', async () => {
+        const created = await createdShop(null, newOwner('67900000083'))
+        expect(await data.isDemoOf(created.session.shopId)).toBe(false)
+      }, SLOW)
+
+      it('leaves the existing shop of the demo owner unmarked when called again (CA-05)', async () => {
+        // A loja nasceu antes da coluna (ou da env): só o `shop:mark-demo` a marca depois.
+        const demoPhone = PhoneNumberSchema.parse('67900000084')
+        const owner = newOwner(demoPhone)
+        const before = await createdShop(null, owner)
+        const again = await service(demoPhone).createClub(owner, draft)
+        expect(again).toMatchObject({ ok: true, value: { created: false, session: { shopId: before.session.shopId } } })
+        expect(await data.isDemoOf(before.session.shopId)).toBe(false)
+      }, SLOW)
+
+      it('creates one marked shop when two tabs of the demo owner submit at once', async () => {
+        const demoPhone = PhoneNumberSchema.parse('67900000085')
+        const owner = newOwner(demoPhone)
+        const [a, b] = await Promise.all([service(demoPhone).createClub(owner, draft), service(demoPhone).createClub(owner, draft)])
+        if (!a.ok || !b.ok) throw new Error('both calls should succeed')
+        data.trackShop(a.value.session.shopId)
+        expect(b.value.session.shopId).toBe(a.value.session.shopId)
+        expect(await data.db.select({ id: shops.id }).from(shops).where(eq(shops.ownerUserId, owner.id))).toHaveLength(1)
+        expect(await data.isDemoOf(a.value.session.shopId)).toBe(true)
+      }, SLOW)
+    })
 
     it('reads and marks the poster reprint notice', async () => {
       const shop = await data.createShop()

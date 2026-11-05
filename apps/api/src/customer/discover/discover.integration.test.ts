@@ -1,7 +1,8 @@
 import { eq } from 'drizzle-orm'
 import { FEATURED_CAROUSEL_MAX } from '#shared/constants/domain'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
-import { featuredPlacements, programs, shops } from '../../database/schema'
+import { featuredPlacements, loyaltyCards, programs, shops } from '../../database/schema'
+import { createDemoShopScenario, type DemoShopScenario } from '../../test-support/demo-shop-scenario'
 import { NO_BONUS_RULES, TEST_DATABASE_URL, TestDatabase } from '../../test-support/test-database'
 import { SystemClock } from '../../common/clock'
 import { DiscoverService } from './discover.service'
@@ -128,5 +129,39 @@ describe.skipIf(!TEST_DATABASE_URL)('discover against a real database', () => {
 
   it('answers an empty list of challenges (out of the MVP)', async () => {
     expect(await service.listChallenges()).toEqual({ ok: true, value: [] })
+  })
+
+  // A loja demo é igual à real em tudo (aprovada, Pro, destaque pago vigente, boas-vindas, dia surpresa); só a marca
+  // a tira. Como o banco é compartilhado, confere presença da real e ausência da demo, com limite alto.
+  describe('demo shop', () => {
+    const NOW = new Date('2026-10-21T15:00:00Z')
+    let scenario: DemoShopScenario
+    const repository = () => new DrizzleDiscoverRepository(data.db)
+
+    beforeAll(async () => {
+      scenario = await createDemoShopScenario(data, NOW)
+    })
+
+    it('leaves the demo shop out of the Discover list, the real one in (CA-10)', async () => {
+      const ids = (await repository().listApprovedShops(10_000)).map((shop) => shop.id)
+      expect(ids).toContain(scenario.real.id)
+      expect(ids).not.toContain(scenario.demo.id)
+    }, SLOW)
+
+    it('leaves the demo shop out of the paid and of the Pro featured groups (CA-11)', async () => {
+      const list = await repository().listFeaturedShops(NOW, '2026-10-21', 10_000)
+      expect(list.find((entry) => entry.shop.id === scenario.real.id)?.sponsored).toBe(true)
+      expect(list.map((entry) => entry.shop.id)).not.toContain(scenario.demo.id)
+      // Sem o destaque pago, a demo ainda é Pro: o grupo Pro também precisa barrá-la.
+      await data.db.update(featuredPlacements).set({ cancelledAt: NOW, cancelledByAdminId: (await data.createAdminUser()).id }).where(eq(featuredPlacements.shopId, scenario.demo.id))
+      expect((await repository().listFeaturedShops(NOW, '2026-10-21', 10_000)).map((entry) => entry.shop.id)).not.toContain(scenario.demo.id)
+    }, SLOW)
+
+    it('keeps the demo shop out of Discover for a customer who has a card in it (CA-14, Discover part)', async () => {
+      const customer = await data.createCustomer()
+      await data.db.insert(loyaltyCards).values({ shopId: scenario.demo.id, customerId: customer, programId: scenario.demo.programId })
+      const listed = await service.listShops()
+      expect(listed.ok && listed.value.map((shop) => shop.id)).not.toContain(scenario.demo.id)
+    }, SLOW)
   })
 })

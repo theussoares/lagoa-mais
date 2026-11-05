@@ -6,6 +6,7 @@ import { err, ok, type Result } from '#shared/types/result'
 import { DB, type Database } from '../../database/database.module'
 import { adminUsers, featuredPlacements, hitItems, shops } from '../../database/schema'
 import type { PlacementError, PlacementPeriod } from '../../featured/featured.rules'
+import { listedShop } from '../../shops/listed-shop'
 import {
   type AdminPlacementRecord,
   AdminFeaturedRepository,
@@ -114,7 +115,8 @@ export class DrizzleAdminFeaturedRepository extends AdminFeaturedRepository {
     return this.db
       .select({ id: shops.id, name: shops.name })
       .from(shops)
-      .where(and(eq(shops.plan, 'founderPro'), eq(shops.status, 'approved')))
+      // Candidata a destaque é loja que pode aparecer para o cliente: aprovada e não demo (RN-10).
+      .where(and(eq(shops.plan, 'founderPro'), listedShop()))
       .orderBy(shops.name, shops.id)
       .limit(limit)
   }
@@ -131,14 +133,14 @@ export class DrizzleAdminFeaturedRepository extends AdminFeaturedRepository {
     return this.db.transaction(async (tx) => {
       // Um lock por vitrine, antes de ler os vigentes: duas criações para a última vaga viram fila, e a segunda já vê a primeira.
       await tx.execute(sql`select pg_advisory_xact_lock(hashtext('featured:' || ${candidate.surface}::text))`)
-      const [shop] = await tx.select({ status: shops.status }).from(shops).where(eq(shops.id, candidate.shopId))
+      const [shop] = await tx.select({ status: shops.status, isDemo: shops.isDemo }).from(shops).where(eq(shops.id, candidate.shopId))
       if (!shop) return err({ code: 'notFound', entity: 'shop' })
       const [hitItem] =
         candidate.hitItemId === null
           ? []
           : await tx.select({ status: hitItems.status, shopId: hitItems.shopId }).from(hitItems).where(eq(hitItems.id, candidate.hitItemId))
       const existing = await activePeriodsIn(tx, { surface: candidate.surface, from: candidate.startsAt, to: candidate.endsAt })
-      const decision = decide({ shopStatus: shop.status, hitItem: hitItem ?? null, existing })
+      const decision = decide({ shopStatus: shop.status, shopIsDemo: shop.isDemo, hitItem: hitItem ?? null, existing })
       if (!decision.ok) return decision
       const [inserted] = await tx
         .insert(featuredPlacements)

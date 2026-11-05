@@ -11,16 +11,19 @@ import type { NewAppUser } from '../../accounts/app-user.writer'
 import type { AuthenticatedRequest, AuthUser } from '../../auth/auth.types'
 import { Clock } from '../../common/clock'
 import { PiiService } from '../../common/pii.service'
+import { ENV } from '../../config/config.module'
 import { TEST_USER } from '../../test-support/fake-auth.guard'
 import { createTestPii } from '../../test-support/pii'
 import { ClubSetupController } from './club-setup.controller'
 import { ShopController } from './shop.controller'
 import {
   type CreateClubOutcome,
+  type NewShopMarks,
   type PosterData,
   ClubSetupRepository,
 } from './club-setup.repository'
 import { ClubSetupService } from './club-setup.service'
+import { DemoMerchant } from './demo-merchant'
 import { MerchantShopGuard } from '../access/merchant-shop.guard'
 
 const sampleDraft: ClubSetupDraft = {
@@ -45,27 +48,33 @@ const sampleDraft: ClubSetupDraft = {
 }
 
 const OWNER: AuthUser = { ...TEST_USER, phone: PhoneNumberSchema.parse('67991230374') }
+// Número de teste inventado para o lojista demo (não é de ninguém).
+const DEMO_PHONE = PhoneNumberSchema.parse('67911110000')
+const DEMO_OWNER: AuthUser = { ...TEST_USER, phone: DEMO_PHONE }
+let signedIn: AuthUser = OWNER
 
 /** Troca o JWT por um lojista que entrou por SMS (o Criar o clube exige o celular do token). */
 class OwnerAuthGuard implements CanActivate {
   canActivate(context: ExecutionContext): boolean {
-    context.switchToHttp().getRequest<AuthenticatedRequest>().user = OWNER
+    context.switchToHttp().getRequest<AuthenticatedRequest>().user = signedIn
     return true
   }
 }
 
 class TestClubSetupRepository extends ClubSetupRepository {
-  shop: { id: string; status: ShopStatus; name: string } | null = null
+  shop: { id: string; status: ShopStatus; name: string; isDemo: boolean } | null = null
   poster: PosterData | null = null
   phoneTaken = false
   posterReprinted = false
+  lastMarks: NewShopMarks | null = null
 
-  async createClub(_owner: NewAppUser, draft: ClubSetupDraft, newCheckInCode: () => string): Promise<CreateClubOutcome> {
+  async createClub(_owner: NewAppUser, draft: ClubSetupDraft, newCheckInCode: () => string, _now: Date, marks: NewShopMarks): Promise<CreateClubOutcome> {
+    this.lastMarks = marks
     if (this.phoneTaken) return { kind: 'phoneTaken' }
-    if (this.shop) return { kind: 'existing', club: { shopId: this.shop.id, shopName: this.shop.name, shopStatus: this.shop.status, merchantTermsVersion: null } }
-    this.shop = { id: '018f98a2-7b2a-7182-9f33-6d004bbbb111', status: 'pending', name: draft.shop.name }
+    if (this.shop) return { kind: 'existing', club: { shopId: this.shop.id, shopName: this.shop.name, shopStatus: this.shop.status, merchantTermsVersion: null, isDemo: this.shop.isDemo } }
+    this.shop = { id: '018f98a2-7b2a-7182-9f33-6d004bbbb111', status: 'pending', name: draft.shop.name, isDemo: marks.isDemo }
     this.poster = { shopName: draft.shop.name, status: 'pending', checkInCode: newCheckInCode(), rewardTitle: draft.program.reward.title, unit: 'stamp', target: 8 }
-    return { kind: 'created', club: { shopId: this.shop.id, shopName: this.shop.name, shopStatus: 'pending', merchantTermsVersion: null } }
+    return { kind: 'created', club: { shopId: this.shop.id, shopName: this.shop.name, shopStatus: 'pending', merchantTermsVersion: null, isDemo: this.shop.isDemo } }
   }
 
   async getPoster(): Promise<PosterData | null> {
@@ -103,6 +112,8 @@ describe('merchant club-setup HTTP', () => {
       controllers: [ClubSetupController, ShopController],
       providers: [
         ClubSetupService,
+        DemoMerchant,
+        { provide: ENV, useValue: { DEMO_MERCHANT_PHONE: DEMO_PHONE } },
         { provide: PiiService, useValue: createTestPii() },
         { provide: Clock, useValue: { now: () => new Date('2026-10-09T12:00:00Z') } },
         { provide: ClubSetupRepository, useValue: repository },
@@ -125,6 +136,8 @@ describe('merchant club-setup HTTP', () => {
     repository.poster = null
     repository.phoneTaken = false
     repository.posterReprinted = false
+    repository.lastMarks = null
+    signedIn = OWNER
   })
 
   it('POST /merchant/club-setup creates shop and program, returning MerchantSession', async () => {
@@ -202,5 +215,20 @@ describe('merchant club-setup HTTP', () => {
       .expect(400)
 
     expect(response.body.code).toBe('validation')
+  })
+
+  // CA-04: a marca segue só o celular do JWT (RN-01). O `ClubSetupDraftSchema` não é estrito, então o campo extra é
+  // descartado pelo Zod antes do service; o que importa é que ele não decide nada.
+  it('marks the demo phone shop even when the body says isDemo: false, and never answers the mark', async () => {
+    signedIn = DEMO_OWNER
+    const response = await request(app.getHttpServer()).post('/merchant/club-setup').send({ ...sampleDraft, isDemo: false }).expect(201)
+    expect(repository.lastMarks).toEqual({ isDemo: true })
+    expect(JSON.stringify(response.body)).not.toMatch(/isDemo|is_demo/)
+  })
+
+  it.each([{ isDemo: true }, { is_demo: true }, { shop: { ...sampleDraft.shop, isDemo: true } }])('ignores %j sent by any other phone', async (extra) => {
+    const response = await request(app.getHttpServer()).post('/merchant/club-setup').send({ ...sampleDraft, ...extra }).expect(201)
+    expect(repository.lastMarks).toEqual({ isDemo: false })
+    expect(JSON.stringify(response.body)).not.toMatch(/isDemo|is_demo/)
   })
 })
