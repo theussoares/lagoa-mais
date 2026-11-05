@@ -6,6 +6,14 @@ import { failWith } from '../../utils/authResponse'
 import { mfaStep } from '../../utils/mfaPlan'
 import { openMfaContext } from '../../utils/mfaSession'
 
+function jsonOrNull(text: string): unknown {
+  try {
+    return JSON.parse(text || 'null')
+  } catch {
+    return null
+  }
+}
+
 const SESSION_GONE: readonly number[] = [401, 403]
 
 /** Onde o admin está: sem sessão (`null`), no meio do MFA (`next`) ou dentro (nome). Quem decide se ainda é admin é a API. */
@@ -20,6 +28,6 @@ export default defineEventHandler(async (event): Promise<AdminSession | { code: 
     endAdminSession(event, { secure: readAdminConfig().production })
     return null
   }
-  const admin = AdminUserSchema.safeParse(JSON.parse(me.value.body.toString('utf8') || 'null'))
+  const admin = AdminUserSchema.safeParse(jsonOrNull(me.value.body.toString('utf8')))
   return admin.success ? { admin: { name: admin.data.name } } : failWith(event, me.value.status >= 500 ? 'network' : 'internal')
 })

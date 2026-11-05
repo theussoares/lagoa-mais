@@ -75,7 +75,8 @@ export class AdminLogin {
 
   /** Um cadastro pela metade de antes (a pessoa fechou a aba) é descartado: fica só o novo. */
   async enroll(pending: readonly string[]): Promise<AdminAuthOutcome<AdminMfaEnrollment>> {
-    for (const factorId of pending) await this.supabase.auth.mfa.unenroll({ factorId })
+    const discarded = await this.unenroll(pending)
+    if (!discarded.ok) return discarded
     const { data, error } = await this.supabase.auth.mfa.enroll({ factorType: 'totp' })
     if (error !== null) return { ok: false, code: refreshErrorCodeOf(error) }
     return { ok: true, value: { qrSvg: data.totp.qr_code, secret: data.totp.secret } }
@@ -88,13 +89,24 @@ export class AdminLogin {
     return { ok: true, value: tokensOf(data) }
   }
 
-  async unenroll(factorIds: readonly string[]): Promise<void> {
-    for (const factorId of factorIds) await this.supabase.auth.mfa.unenroll({ factorId })
+  /** Para na primeira falha: um autenticador antigo que não saiu continua valendo como segundo fator. */
+  async unenroll(factorIds: readonly string[]): Promise<AdminAuthOutcome<true>> {
+    for (const factorId of factorIds) {
+      const { error } = await this.supabase.auth.mfa.unenroll({ factorId })
+      if (error !== null) return { ok: false, code: refreshErrorCodeOf(error) }
+    }
+    return { ok: true, value: true }
   }
 
   async updatePassword(password: string): Promise<AdminAuthOutcome<true>> {
     const { error } = await this.supabase.auth.updateUser({ password })
     return error === null ? { ok: true, value: true } : { ok: false, code: passwordErrorCodeOf(error) }
+  }
+
+  /** Derruba as sessões que não são esta (`others`) ou todas (`global`): trocar a senha não pode deixar refresh token antigo vivo. */
+  async revokeSessions(scope: 'others' | 'global'): Promise<AdminAuthOutcome<true>> {
+    const { error } = await this.supabase.auth.signOut({ scope })
+    return error === null ? { ok: true, value: true } : { ok: false, code: refreshErrorCodeOf(error) }
   }
 
   async sendPasswordReset(email: string, redirectTo: string): Promise<void> {

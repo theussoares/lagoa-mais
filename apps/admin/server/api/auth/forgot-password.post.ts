@@ -4,7 +4,7 @@ import { AdminPasswordResetRequestSchema } from '#shared/schemas/admin'
 import { createAdminLogin, readAdminConfig } from '../../utils/adminConfig'
 import { failWith, rejectInput } from '../../utils/authResponse'
 import { passesCaptcha, reserveAdminLoginAttempt } from '../../utils/loginAttempts'
-import { requestPasswordReset } from '../../utils/loginFlow'
+import { requestPasswordReset, resetLinkOrigin } from '../../utils/loginFlow'
 import { parsedBody } from '../../../../web/server/utils/input'
 
 export default defineEventHandler(async (event) => {
@@ -12,7 +12,8 @@ export default defineEventHandler(async (event) => {
   if (body === null) return rejectInput(event)
   const config = readAdminConfig()
   const clientIp = getRequestIP(event, { xForwardedFor: true })
-  const origin = config.appUrl === '' ? getRequestURL(event).origin : config.appUrl.replace(/\/+$/, '')
+  const origin = resetLinkOrigin(config.appUrl, getRequestURL(event).origin, config.production)
+  if (origin === null) return failWith(event, 'internal')
   const result = await requestPasswordReset(
     {
       verifyCaptcha: (token) => passesCaptcha(config, token, clientIp),

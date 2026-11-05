@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 import type { AdminAuthOutcome, AdminSecurityEntry, PasswordSignIn } from '../types/auth'
-import { type LoginDeps, type PasswordResetDeps, login, requestPasswordReset } from '../utils/loginFlow'
+import { type LoginDeps, type PasswordResetDeps, login, requestPasswordReset, resetLinkOrigin } from '../utils/loginFlow'
 
 const EMAIL = 'ana@rede.test'
 const tokens = { accessToken: 'at', refreshToken: 'rt', expiresIn: 3600, userId: 'admin-1' }
@@ -86,5 +86,16 @@ describe('requestPasswordReset', () => {
     expect(await requestPasswordReset(limited, { email: EMAIL, captchaToken: 'c' })).toEqual({ ok: false, code: 'rateLimited' })
     expect(noCaptcha.sendReset).not.toHaveBeenCalled()
     expect(limited.sendReset).not.toHaveBeenCalled()
+  })
+})
+
+describe('resetLinkOrigin', () => {
+  it('uses the configured URL (without trailing slash), never the request host, in production', () => {
+    expect(resetLinkOrigin('https://admin.lagoamais.com.br/', 'https://evil.test', true)).toBe('https://admin.lagoamais.com.br')
+  })
+
+  it('refuses production without the configured URL, but falls back to the request host in development', () => {
+    expect(resetLinkOrigin('', 'https://evil.test', true)).toBeNull()
+    expect(resetLinkOrigin('', 'http://localhost:3002', false)).toBe('http://localhost:3002')
   })
 })

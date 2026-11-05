@@ -17,5 +17,7 @@ export default defineEventHandler(async (event) => {
   if (!confirmed.ok) return failWith(event, confirmed.code)
   if (confirmed.value !== null) startAdminSession(event, confirmed.value, { secure: readAdminConfig().production })
   const updated = await context.value.auth.updatePassword(body.password)
-  return updated.ok ? { ok: true } : failWith(event, updated.code)
+  if (!updated.ok) return failWith(event, updated.code)
+  const revoked = await context.value.auth.revokeSessions('others')
+  return revoked.ok ? { ok: true } : failWith(event, revoked.code)
 })

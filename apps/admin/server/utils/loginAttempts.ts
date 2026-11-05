@@ -35,8 +35,14 @@ export function captchaCheck(turnstileSecret: string, production: boolean): Capt
   return production ? 'refuse' : 'skip'
 }
 
+/** Em produção, o token tem de vir do host do painel. Em desenvolvimento a chave de teste não devolve o host certo. */
+function captchaHostname(config: AdminBffConfig): string | undefined {
+  if (!config.production || config.appUrl === '') return undefined
+  return URL.canParse(config.appUrl) ? new URL(config.appUrl).hostname : undefined
+}
+
 export async function passesCaptcha(config: AdminBffConfig, token: string, clientIp: string | undefined): Promise<boolean> {
   const check = captchaCheck(config.turnstileSecret, config.production)
   if (check === 'skip') return true
-  return check === 'verify' && verifyTurnstile(token, config.turnstileSecret, clientIp)
+  return check === 'verify' && verifyTurnstile(token, config.turnstileSecret, clientIp, fetch, captchaHostname(config))
 }

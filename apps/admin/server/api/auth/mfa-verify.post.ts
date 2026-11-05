@@ -27,8 +27,12 @@ export default defineEventHandler(async (event) => {
     logAdminSecurityEvent(event, { event: 'auth.login', outcome: 'failure', code: verified.code })
     return failWith(event, verified.code)
   }
-  await auth.unenroll(target.replaces)
-  logAdminSecurityEvent(event, { event: 'auth.login', outcome: 'success', code: aal === 'aal2' ? 'mfaReplaced' : 'mfaOk', userId: verified.value.userId })
+  const replaced = await auth.unenroll(target.replaces)
   startAdminSession(event, verified.value, { secure: config.production })
+  if (!replaced.ok) {
+    logAdminSecurityEvent(event, { event: 'auth.login', outcome: 'failure', code: 'mfaReplaceFailed', userId: verified.value.userId })
+    return failWith(event, replaced.code)
+  }
+  logAdminSecurityEvent(event, { event: 'auth.login', outcome: 'success', code: aal === 'aal2' ? 'mfaReplaced' : 'mfaOk', userId: verified.value.userId })
   return { ok: true }
 })

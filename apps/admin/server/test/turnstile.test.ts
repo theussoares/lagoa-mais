@@ -26,3 +26,12 @@ describe('verifyTurnstile', () => {
     expect(fetcher).not.toHaveBeenCalled()
   })
 })
+
+describe('verifyTurnstile hostname', () => {
+  it('requires the token to come from the expected host when one is given', async () => {
+    const ok = async (): Promise<Response> => answer({ success: true, hostname: 'admin.lagoamais.com.br' })
+    expect(await verifyTurnstile('t', 's', undefined, ok, 'admin.lagoamais.com.br')).toBe(true)
+    expect(await verifyTurnstile('t', 's', undefined, ok, 'outro.example')).toBe(false)
+    expect(await verifyTurnstile('t', 's', undefined, async () => answer({ success: true }), 'admin.lagoamais.com.br')).toBe(false)
+  })
+})

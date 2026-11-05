@@ -24,3 +24,34 @@ describe('AdminLogin.use', () => {
     })
   })
 })
+
+describe('AdminLogin factor and session revocation', () => {
+  it('stops at the first failed unenroll and reports it (the old authenticator is still valid)', async () => {
+    const unenroll = vi.fn()
+      .mockResolvedValueOnce({ error: null })
+      .mockResolvedValueOnce({ error: { status: 500 } })
+    const login = new AdminLogin({ auth: { mfa: { unenroll } } } as unknown as SupabaseClient)
+    expect(await login.unenroll(['f1', 'f2', 'f3'])).toEqual({ ok: false, code: 'internal' })
+    expect(unenroll).toHaveBeenCalledTimes(2)
+    expect(await new AdminLogin({ auth: { mfa: { unenroll: vi.fn(async () => ({ error: null })) } } } as unknown as SupabaseClient).unenroll(['f1'])).toEqual({ ok: true, value: true })
+  })
+
+  it('does not enroll a new factor while a half-done one could not be discarded', async () => {
+    const enroll = vi.fn()
+    const unenroll = vi.fn(async () => ({ error: { status: 500 } }))
+    const login = new AdminLogin({ auth: { mfa: { unenroll, enroll } } } as unknown as SupabaseClient)
+    expect(await login.enroll(['pending-1'])).toEqual({ ok: false, code: 'internal' })
+    expect(enroll).not.toHaveBeenCalled()
+  })
+
+  it('revokes the other (or every) session with the requested scope and reports a failure', async () => {
+    const signOut = vi.fn(async () => ({ error: null }))
+    const login = new AdminLogin({ auth: { signOut } } as unknown as SupabaseClient)
+    expect(await login.revokeSessions('others')).toEqual({ ok: true, value: true })
+    await login.revokeSessions('global')
+    expect(signOut).toHaveBeenNthCalledWith(1, { scope: 'others' })
+    expect(signOut).toHaveBeenNthCalledWith(2, { scope: 'global' })
+    const failing = new AdminLogin({ auth: { signOut: vi.fn(async () => ({ error: { status: 502 } })) } } as unknown as SupabaseClient)
+    expect(await failing.revokeSessions('global')).toEqual({ ok: false, code: 'internal' })
+  })
+})

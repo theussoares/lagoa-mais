@@ -48,3 +48,12 @@ export async function requestPasswordReset(deps: PasswordResetDeps, input: Admin
   await deps.sendReset(input.email).catch(() => undefined)
   return { ok: true, value: true }
 }
+
+/**
+ * Origem do link de "esqueci a senha". Em produção só vale a configurada (`NUXT_APP_URL`): o host do pedido é de quem
+ * pediu, e o link iria parar onde ele quisesse. Fora de produção cai no host do pedido para o desenvolvimento local.
+ */
+export function resetLinkOrigin(appUrl: string, requestOrigin: string, production: boolean): string | null {
+  if (appUrl !== '') return appUrl.replace(/\/+$/, '')
+  return production ? null : requestOrigin
+}

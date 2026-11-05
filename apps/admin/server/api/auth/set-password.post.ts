@@ -6,7 +6,7 @@ import { parsedBody } from '../../../../web/server/utils/input'
 
 /**
  * Senha pelo link do convite ou da recuperação. Conta que já tem autenticador (recuperação) só troca com o código dele:
- * o link abre uma sessão só com o e-mail, e o Supabase pede `aal2` para trocar a senha. Não abre sessão no painel:
+ * o link abre uma sessão só com o e-mail, e o Supabase pede `aal2` para trocar a senha. Troca a senha e derruba todas as sessões da conta (um refresh token roubado não sobrevive à troca). Não abre sessão no painel:
  * depois a pessoa entra com a senha nova e o autenticador. Link de conta que não é de admin vale o mesmo que vencido.
  */
 export default defineEventHandler(async (event) => {
@@ -19,6 +19,7 @@ export default defineEventHandler(async (event) => {
   const { auth } = context.value
   const updated = await auth.updatePassword(body.password)
   if (!updated.ok) return failWith(event, updated.code === 'unauthorized' ? 'linkExpired' : updated.code)
-  await auth.signOut(confirmed.value ?? context.value.tokens)
+  const revoked = await auth.revokeSessions('global')
+  if (!revoked.ok) return failWith(event, revoked.code)
   return { ok: true }
 })
