@@ -67,6 +67,8 @@ class Shop {
   +text ctaLabel?  «texto do botão, até 24; só com whatsapp»
   +enum status  «pending | approved | suspended»
   +bool isDemo  «loja de demonstração: fora da vitrine e dos agregados; só liga»
+  +timestamptz demoMarkedAt?  «quando a marca ligou; gravada com ela, nunca reescrita»
+  +text demoMarkedBy?  «'club-setup' ou apelido do operador do shop:mark-demo»
   +timestamptz createdAt
 }
 class Program {
@@ -240,6 +242,8 @@ em log nem URL.
 5. **IDs UUID v7**, com os brand types do Zod (`ShopId`, `CustomerId`…).
 6. **Loja de demonstração fora da rede** ([spec](./specs/demo-shop-hidden/spec.md)). `Shop.isDemo` (`shops.is_demo`)
    nasce `true` só no Criar o clube do `DEMO_MERCHANT_PHONE` ou pelo script `shop:mark-demo`, e nunca volta a `false`.
+   A trilha fica na própria linha: `demo_marked_at`/`demo_marked_by` (`'club-setup'` no `INSERT` do Criar o clube, o
+   apelido do operador no `UPDATE` do script), gravadas junto com a marca e nunca reescritas; `null` em loja não demo.
    Toda listagem pública usa `listedShop()` e **todo agregado da rede** (métricas da rede, vagas de Fundador/Fundador
    Pro, números públicos da LP, ranking) usa `notDemoShop()` (`apps/api/src/shops/listed-shop.ts`), RN-07. O primeiro
    módulo de métricas da rede nasce com esse filtro e com um teste que prova que a demo não conta. Número de **uma**

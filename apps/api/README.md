@@ -27,6 +27,7 @@ pnpm typecheck:api && pnpm build:api
 | `TRUST_PROXY_HOPS` | Quantos proxies estão na frente (0 local, 1 atrás de um load balancer). Errado = limite pelo IP errado. |
 | `BFF_SHARED_SECRET` | Segredo (≥ 32 caracteres) que o BFF do Nuxt manda em `x-bff-secret`. Com ele a API confia no IP do cliente em `x-client-ip` para o limite por IP. |
 | `CORS_ORIGIN` | Origens do app, separadas por vírgula. Com o BFF do Nuxt o navegador não chama a API: em produção deixe **vazio** (nenhuma origem liberada). |
+| `DEMO_MERCHANT_PHONE` | Opcional. Celular do lojista demo (DDD + número, só dígitos, sem `55`), **o mesmo valor** de `NUXT_DEMO_MERCHANT_PHONE` do web: a loja que ele cria no Criar o clube nasce `shops.is_demo` (fora da vitrine). Só o hash é usado. Vazio desliga a marca (em produção o boot loga um aviso); formato inválido derruba o boot. Ver `docs/security/demo-login.md`. |
 | `ALLOW_SEED` | Só em `.env` de banco de dev: libera `pnpm --filter @lagoa/api db:seed`. |
 
 ## Estrutura
@@ -173,7 +174,8 @@ rodar depois do deploy que mantém os contadores). `DELETE /customer/account` de
 `ALLOW_SHOP_ADMIN=1 pnpm --filter @lagoa/api shop:mark-demo --actor <apelido> [--dry-run]` marca como demo (`shops.is_demo`, fora
 da vitrine e dos agregados) a loja do dono cujo celular é o `DEMO_MERCHANT_PHONE`: backfill da loja demo que nasceu antes da
 coluna. Não aceita `--shop` (o alvo vem sempre do número demo), é idempotente, imprime só id e nome da loja (nunca o
-celular) e não desmarca. Rodar **antes** de qualquer troca do número demo; depois da troca a loja antiga fica inalcançável
+celular) e não desmarca. Grava a trilha na mesma transação (`demo_marked_at` pelo relógio do banco, `demo_marked_by` =
+apelido do `--actor`; `club-setup` é reservado) e nunca a reescreve em loja já marcada. Rodar **antes** de qualquer troca do número demo; depois da troca a loja antiga fica inalcançável
 pelo script. A env `DEMO_MERCHANT_PHONE` (opcional; inválida derruba o boot) também faz a loja criada por esse celular no
 Criar o clube já nascer marcada.
 

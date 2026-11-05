@@ -10,7 +10,10 @@ produção, desligada por padrão.
   mesmo `verifyOtp` do login normal e grava os mesmos cookies httpOnly. O token é um JWT real do Supabase: **a API
   continua sem bypass de autenticação**, mas reconhece o **lojista** demo na criação do clube: quando o hash do celular
   do JWT (`PiiService.hashPhone`, comparado em tempo constante) é o de `DEMO_MERCHANT_PHONE`, a loja nasce marcada
-  `shops.is_demo` ([spec](../specs/demo-shop-hidden/spec.md)). O cliente demo não tem marca nenhuma.
+  `shops.is_demo` ([spec](../specs/demo-shop-hidden/spec.md)), com a trilha `demo_marked_at`/`demo_marked_by =
+  'club-setup'` no mesmo `INSERT`. O cliente demo não tem marca nenhuma.
+- No boot, a API loga uma linha `demo merchant marking: on|off` (nunca o número nem o hash); em produção com
+  `DEMO_MERCHANT_PHONE` vazio a linha é um **aviso** (`WARN`), porque a loja demo criada dali em diante nasceria pública.
 - `GET /api/auth/demo` devolve só `{ customer, merchant }` (booleanos). É o que faz os botões "Entrar na conta pública de
   demonstração" aparecerem. O número e o código nunca saem do servidor.
 - **Cada superfície liga sozinha.** O cliente liga com `NUXT_DEMO_CUSTOMER_PHONE` + `NUXT_DEMO_OTP`; o lojista, com
@@ -45,6 +48,10 @@ produção, desligada por padrão.
      existir), a loja demo nasce pública. Formato inválido (com `55`, máscara ou espaço) derruba o boot da API; vazio
      desliga a marca.
    Faça novo deploy (web e API) para valer.
+   **Depois do deploy, confira:** o log de boot da API diz `demo merchant marking: on` (nunca o `WARN` de `off`), e
+   `ALLOW_SHOP_ADMIN=1 pnpm --filter @lagoa/api shop:mark-demo --actor <apelido> --dry-run` responde `already marked`
+   para a loja demo. Se responder `would mark`, rode sem `--dry-run` (passo 4); `userNotFound`/`shopNotFound` quer dizer
+   que a env não é o número que criou a loja demo.
 3. **Cliente:** abra `app.lagoamais.com.br/entrar`, toque no botão da demonstração e preencha um nome fictício (o número
    demo ainda não tem cadastro na primeira vez).
 4. **Lojista:** abra `balcao.lagoamais.com.br/balcao/entrar`, toque no botão da demonstração. Na primeira vez cai no
@@ -52,7 +59,8 @@ produção, desligada por padrão.
    `DEMO_MERCHANT_PHONE` da API preenchido, ela já nasce marcada como demo. **Se a loja demo já existia antes desta
    marca** (ou foi criada com a env da API vazia), marque-a pelo script, primeiro no banco de teste e depois no de
    produção: `ALLOW_SHOP_ADMIN=1 pnpm --filter @lagoa/api shop:mark-demo --actor <apelido> --dry-run`, confira o id e o
-   nome impressos, e rode de novo sem `--dry-run`. Nunca `UPDATE` à mão em produção.
+   nome impressos, e rode de novo sem `--dry-run`. O script grava quem marcou (`demo_marked_by` = apelido) e quando
+   (`demo_marked_at`) e nunca reescreve essa trilha. Nunca `UPDATE` à mão em produção.
 5. **Confira no Supabase** (Authentication > Users) que as duas contas demo **não ganharam e-mail nem senha** (só o
    celular). Se ganharam, remova o e-mail/senha ou apague a conta e recrie.
 6. **Rode o OTP periodicamente:** troque o OTP (Supabase + `NUXT_DEMO_OTP`) a cada algumas semanas, e a cada vez que
@@ -60,13 +68,11 @@ produção, desligada por padrão.
 
 ## Regras de operação
 
-- **A loja demo só fica aprovada durante a apresentação.** O admin da rede aprova antes e **suspende logo depois**.
-  O motivo deixou de ser "aparecer no Descobrir" (a marca `is_demo` já a tira de toda vitrine): agora é que **ninguém de
-  fora entre no clube nem ganhe visita pelo QR da loja demo fotografado na apresentação**. Loja suspensa recusa entrar no
-  clube, check-in e resgate como qualquer loja suspensa. (Regra atual; a troca por "pode ficar aprovada sempre" é
-  decisão pendente do dono, decisão 9.5 da spec, e não depende de código.)
-- **Limpe clientes reais da loja demo** antes e depois: qualquer cliente real que escaneie o QR da loja demo ou ganhe
-  carimbo lá vira dado dentro de uma conta pública. A loja demo só deve ter clientes fictícios.
+- **A loja demo pode ficar aprovada sempre** (decisão 9.5 da spec, do dono). A suspensão depois da apresentação existia
+  para ela não aparecer no Descobrir; com a marca `is_demo` ela não aparece mais em vitrine, destaque, Hits nem ranking.
+- **Limpe clientes reais da loja demo** antes e depois de cada apresentação: ela continua aberta a quem tem o QR ou o
+  link, e qualquer cliente real que escaneie o QR da loja demo (fotografado na apresentação, por exemplo) ou ganhe carimbo
+  lá vira dado dentro de uma conta pública. A loja demo só deve ter clientes fictícios.
 - **Não digite dados reais na conta de cliente demo** (nome, e-mail, aniversário, aviso/consentimento): qualquer
   pessoa que use o botão vê o que estiver lá. Use sempre nome fictício.
 - **A loja demo fica fora do Descobrir, Hits, destaques, ranking e agregados da rede**, mas segue acessível por QR/link.
@@ -74,7 +80,7 @@ produção, desligada por padrão.
   ranking na conta de cliente demo.**
 - **Rode o `shop:mark-demo` antes de trocar o número demo.** Trocar `DEMO_MERCHANT_PHONE` não desmarca a loja antiga
   (a marca é permanente), mas o script só acha a loja do número atual: uma loja antiga ainda sem marca fica inalcançável
-  por ele, e aí o caminho é suspendê-la.
+  por ele, e aí o caminho é suspendê-la (ela não tem marca e voltaria à vitrine).
 - Reponha o cenário antes de cada apresentação: o lojista demo pode editar o programa e lançar visitas, e quem estiver
   na demo pode bagunçá-lo.
 

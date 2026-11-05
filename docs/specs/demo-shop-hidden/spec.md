@@ -38,10 +38,12 @@ ser aprovada para lançar visita na apresentação, e o admin continua podendo s
 ## 3. Escopo
 
 1. Migration nova (`0030_shop_is_demo`, gerada pelo `db:generate`): `shops.is_demo boolean NOT NULL DEFAULT false`.
-   Toda loja existente fica `false`.
+   Toda loja existente fica `false`. Mais a trilha da marca (decisão 9.6 b): `demo_marked_at timestamptz` e
+   `demo_marked_by text`, anuláveis.
 2. Env de servidor da API `DEMO_MERCHANT_PHONE` (opcional, `apps/api/.env.example` e `env.ts`).
 3. **Criar o clube** (`apps/api/src/merchant/club-setup`): ao **inserir** a loja, `is_demo = true` quando o hash do
-   celular do JWT bate com o hash de `DEMO_MERCHANT_PHONE`.
+   celular do JWT bate com o hash de `DEMO_MERCHANT_PHONE`, com `demo_marked_at = now` e `demo_marked_by = 'club-setup'`
+   no mesmo `INSERT`.
 4. Filtro `is_demo = false` nas leituras públicas e agregadas listadas na seção 5.
 5. Destaque pago: a loja demo não é candidata nem pode receber destaque (admin).
 6. Script `shop:mark-demo` para marcar a loja demo que já existe (backfill), seguindo o padrão de
@@ -112,7 +114,8 @@ os do Descobrir, em `listApprovedShops` e nos dois `featuredGroup`. Confirmado q
   pode logar o `shopId` e `isDemo: true`.
 - **RN-03 (env ausente ou vazia).** Sem `DEMO_MERCHANT_PHONE`, a API sobe normalmente e toda loja nasce
   `is_demo = false`. Valor presente mas fora do formato `PhoneNumber` (11 dígitos, DDD + 9, sem `55`): ver 9.1
-  (recomendado: o boot recusa, como as outras envs).
+  (recomendado: o boot recusa, como as outras envs). No boot a API loga uma linha `demo merchant marking: on|off`
+  (nunca o valor nem o hash); em `NODE_ENV=production` com a env vazia, a linha é `Logger.warn`. O boot não falha.
 - **RN-04 (marca permanente).** `is_demo` só vira `true` por dois caminhos: a inserção do Criar o clube (RN-01) e o
   script `shop:mark-demo` (RN-09). Nenhuma rota HTTP lê o valor do corpo nem muda a marca. Trocar o número demo **não**
   desmarca a loja antiga: ela continua escondida (se a rede quiser aposentá-la, suspende).
@@ -129,8 +132,9 @@ os do Descobrir, em `listApprovedShops` e nos dois `featuredGroup`. Confirmado q
   `shopStatus` (suspensa continua recusando visita, como hoje).
 - **RN-09 (backfill).** `pnpm shop:mark-demo` (mesmas travas do `shop:status`: `ALLOW_SHOP_ADMIN=1`, recusa em CI,
   `--actor <apelido>` obrigatório, `--dry-run`) lê `DEMO_MERCHANT_PHONE` e `PII_HASH_PEPPER` do ambiente, acha o
-  `app_users` pelo `phone_hash` e a loja desse dono, e grava `is_demo = true`. Idempotente (rodar duas vezes não muda
-  nada na segunda). Recusa e não grava se: env ausente/inválida, nenhum usuário com esse hash, usuário sem loja. Saída:
+  `app_users` pelo `phone_hash` e a loja desse dono, e grava `is_demo = true` com `demo_marked_at` (relógio do banco) e
+  `demo_marked_by` (o apelido do `--actor`) no mesmo `UPDATE`. Idempotente (rodar duas vezes não muda nada na segunda):
+  loja já marcada, pelo script ou pelo Criar o clube, nunca tem a trilha reescrita. `--actor club-setup` é recusado. Recusa e não grava se: env ausente/inválida, nenhum usuário com esse hash, usuário sem loja. Saída:
   `shopId`, nome da loja e "já estava marcada" ou "marcada"; nunca o celular. Não aceita `--shop` arbitrário (o alvo é
   sempre derivado do número demo, para não marcar loja real por engano de id).
 - **RN-10 (destaque).** Loja demo não pode receber destaque pago (`planPlacement` → `invalidTarget`) e não aparece como
@@ -202,7 +206,8 @@ boas-vindas > 0 e dia surpresa hoje, cada uma com um produto do Hits aprovado co
 - **CA-40.** Dado no banco de teste uma loja do dono demo com `is_demo = false`, quando roda
   `ALLOW_SHOP_ADMIN=1 pnpm shop:mark-demo --actor po --dry-run`, então nada muda e a saída diz qual loja seria marcada
   (id e nome, sem celular).
-- **CA-41.** Sem `--dry-run`, então `is_demo = true`; rodando de novo, a saída diz "já estava marcada" e nada muda.
+- **CA-41.** Sem `--dry-run`, então `is_demo = true`, `demo_marked_by = 'po'` e `demo_marked_at` preenchido; rodando de
+  novo (com outro `--actor` ou em `--dry-run`), a saída diz "já estava marcada" e nada muda, nem a trilha.
 - **CA-42.** Sem `ALLOW_SHOP_ADMIN=1`, com `CI` definido, sem `--actor`, sem `DEMO_MERCHANT_PHONE` ou sem usuário/loja
   para o número: o script sai com erro e não grava.
 - **CA-43.** A migration `0030` aplicada num banco com lojas deixa todas com `is_demo = false` e `NOT NULL`.
@@ -266,14 +271,17 @@ boas-vindas > 0 e dia surpresa hoje, cada uma com um produto do Hits aprovado co
 - **Recomendo (a)**, alinhado à decisão do dono (a marca é da loja). Visita do cliente demo na loja demo já sai do
   ranking pela RN-11. Registrar em `demo-login.md`: não aceitar o ranking na conta de cliente demo.
 
-**9.5 Regra "a loja demo só fica aprovada durante a apresentação".**
+**9.5 Regra "a loja demo só fica aprovada durante a apresentação".** **Decidido pelo dono: (b).** A loja demo pode
+ficar aprovada sempre; a limpeza de clientes reais continua valendo.
 - (a) Mantém: aprovar antes, suspender depois.
 - (b) Pode ficar aprovada sempre, já que não aparece mais na vitrine.
 - **Recomendo (b), com a regra de limpar clientes reais mantida.** O motivo principal da suspensão (aparecer no
   Descobrir) deixa de existir; o risco que sobra (alguém com foto do QR da loja demo entrar no clube) não é resolvido
   pela suspensão de forma confiável e se trata pela limpeza. Decisão do dono; muda o texto de `demo-login.md`.
 
-**9.6 Auditoria do script.** `shop_status_events` hoje só registra situação e plano.
+**9.6 Auditoria do script.** `shop_status_events` hoje só registra situação e plano. **Decidido: (b), trilha em
+colunas** (`shops.demo_marked_at`/`demo_marked_by`, na mesma migration `0030`), gravadas junto com a marca pelos dois
+caminhos que a ligam e nunca reescritas.
 - (a) Só a saída do terminal (como `backfill-card-visits`).
 - (b) Linha de auditoria (tabela de eventos ou coluna `demo_marked_at`).
 - **Recomendo (a).** É uma operação única e rara; (b) fica para o arquiteto se o `cto` quiser trilha.

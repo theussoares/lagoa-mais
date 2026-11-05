@@ -4,8 +4,9 @@ Status: **aprovado com ajustes pelo `cto`** (ajustes já aplicados neste arquivo
 [`spec.md`](./spec.md) (aprovada pelo PO). Tamanho G.
 
 Decisões abertas da spec adotadas aqui (instrução do tech-lead): **9.1 (a)** env inválida derruba o boot; **9.2 (a)**
-admin vê `isDemo` só leitura; **9.3 (b)** sem aviso ao lojista demo; **9.4 (a)** cliente demo fora do escopo; **9.6 (a)**
-script só com saída no terminal. **9.5 fica com o dono**: nada no código depende dela (seção 9).
+admin vê `isDemo` só leitura; **9.3 (b)** sem aviso ao lojista demo; **9.4 (a)** cliente demo fora do escopo. Depois da
+revisão de segurança, o dono decidiu **9.6 (b)**: trilha em colunas (`shops.demo_marked_at`/`demo_marked_by`, mesma
+migration `0030`), e **9.5 (b)**: a loja demo pode ficar aprovada sempre (seção 9).
 
 Lido antes de escrever: `CLAUDE.md`, `EQUIPE.md`, `docs/database-model.md`, `docs/security/SECURITY_RULES.md`,
 `docs/security/demo-login.md`, e o código citado em cada seção abaixo (club-setup, `PiiService`, `env.ts`, schema `shops`,
@@ -16,9 +17,11 @@ Lido antes de escrever: `CLAUDE.md`, `EQUIPE.md`, `docs/database-model.md`, `doc
 
 ## 1. Resumo da solução
 
-- Uma coluna `shops.is_demo boolean NOT NULL DEFAULT false` (migration `0030_shop_is_demo`).
+- Uma coluna `shops.is_demo boolean NOT NULL DEFAULT false` e a trilha `demo_marked_at timestamptz` /
+  `demo_marked_by text` (anuláveis), na mesma migration `0030_shop_is_demo`.
 - **Um único filtro** em `apps/api/src/shops/listed-shop.ts` (`notDemoShop()` e `listedShop()`), usado por toda leitura
-  pública e por todo agregado da rede. Nenhum repository escreve `is_demo` à mão.
+  pública e por todo agregado da rede. Só o `INSERT` do Criar o clube e o script `shop:mark-demo` escrevem `is_demo` e a
+  trilha, e nenhum caminho os desliga (`shops/demo-mark-writers.sweep.test.ts`).
 - O Criar o clube recebe uma peça nova, `DemoMerchant` (provider Nest), que calcula **no boot** o HMAC do
   `DEMO_MERCHANT_PHONE` e compara com o hash do celular do JWT por `timingSafeEqual` (regra pura `isDemoOwner`). A marca
   entra no `INSERT` da loja; o `ON CONFLICT DO NOTHING` que já existe garante que loja existente nunca muda (RN-05).
@@ -122,6 +125,8 @@ export class DemoMerchant {
 - Hash calculado uma vez, na construção do singleton (boot). Usa o mesmo `PiiService.hashPhone` do cadastro: o hash do
   número demo é byte a byte o `app_users.phone_hash` do dono demo, o que também serve ao script.
 - Registrado em `ClubSetupModule.providers`. `ENV` e `PiiService` já são globais.
+- `onModuleInit` loga uma linha `demo merchant marking: on|off` (regra pura `demoMarkingBootNotice`), nunca o número nem o
+  hash; em `NODE_ENV=production` com a env vazia, `Logger.warn`. O boot não falha (a env é opcional).
 - Mora em `merchant/club-setup` porque só o Criar o clube usa. Se outra superfície precisar (ex.: 9.3 a no futuro), sobe
   para `common/`.
 
@@ -182,7 +187,10 @@ export function parseMarkDemoInvocation(argv: readonly string[], env: NodeJS.Pro
   `new PiiService(env).hashPhone(...)` → `markDemoShop` → uma linha no terminal → `client.end()`.
 - `--actor` usa a mesma validação do `shop:status`: exportar de `shop-status.ts` um
   `isValidActorNickname(nickname: string): boolean` (hoje é a const `ACTOR` privada) e usar nos dois. O apelido só
-  aparece na saída do terminal (9.6 a: sem tabela de auditoria).
+  aparece na saída do terminal e em `shops.demo_marked_by`, com `demo_marked_at = now()` do banco, no mesmo `UPDATE`
+  que liga a marca (9.6 b). O `UPDATE` filtra `is_demo = false`: loja já marcada nunca tem a trilha reescrita.
+  `club-setup` é recusado como `--actor` (é o valor que o Criar o clube grava). Erro inesperado (driver) imprime a
+  linha fixa `shop:mark-demo failed`, nunca `error.message`.
 - `--shop` presente = erro (`--shop is not accepted: the target comes from DEMO_MERCHANT_PHONE`).
 - Ajuste CTO: `wouldMark` só quando a loja ainda está `false`; no `--dry-run` sobre loja já marcada o resultado é
   `alreadyMarked` (a saída do dry-run não pode prometer uma mudança que não vai acontecer). O `FOR UPDATE` vale também no
@@ -448,23 +456,19 @@ lojas.
 Por que a varredura chama services e não HTTP: não há precedente de app Nest inteiro contra o banco de teste no repo, e o
 filtro mora no repository; a parte "toda rota está classificada" já é coberta pelo teste unitário sobre os controllers.
 
-## 9. Decisão 9.5 (pendente do dono)
+## 9. Decisão 9.5 (decidida pelo dono: b)
 
-O código não lê `shops.status` de forma diferente para a demo, então as duas respostas funcionam sem mudança:
-
-- **(a) mantém "aprova antes, suspende depois":** `demo-login.md` só troca o motivo (deixa de ser "aparecer no
-  Descobrir" e passa a ser "ninguém de fora entrar no clube pelo QR fotografado").
-- **(b) pode ficar aprovada sempre:** `demo-login.md` troca a regra pela de limpeza de clientes reais.
-
-A trilha C escreve `demo-login.md` com a regra **atual (a)** e o motivo novo, e deixa a frase da (b) pronta na descrição
-do PR. Se o dono escolher (b), é a troca de um parágrafo, sem código.
+O código não lê `shops.status` de forma diferente para a demo, então a decisão não muda código. O dono escolheu **(b)**:
+a loja demo **pode ficar aprovada sempre**, porque não aparece mais em vitrine, destaque, Hits nem ranking. Sai de
+`demo-login.md` o "aprova antes, suspende depois"; fica a regra de **limpar clientes reais** da loja demo antes e depois
+de cada apresentação (ela segue aberta a quem tem o QR ou o link).
 
 ## 10. Riscos
 
 | Risco | Efeito | Mitigação |
 | --- | --- | --- |
 | Deploy da API antes da migration | Descobrir, Hits e ranking caem (coluna inexistente). | Ordem da seção 7. O deploy é automático no push (`vercel.json`), então a migration entra **antes do merge**; `infra` confere `db:check` e registra no PR. |
-| Leitura pública nova que esquece o filtro | Demo volta a aparecer. | Filtro único `listedShop()` + `public-listing.sweep.test.ts` (rota `GET` nova sem classificação quebra) + CA-50. Frase no `CLAUDE.md`. A varredura cobre todo `GET` de `src` fora de `admin/*` e `merchant/*` (ajuste CTO). Limite que sobra: leitura pública que não seja `GET` de controller (ex.: job que gera arquivo estático) não é vista. |
+| Leitura pública nova que esquece o filtro | Demo volta a aparecer. | Filtro único `listedShop()` + `public-listing.sweep.test.ts` (rota `GET` nova sem classificação quebra) + CA-50. Frase no `CLAUDE.md`. A varredura cobre todo `GET` de `src` fora de `admin/*` e `merchant/*` (ajuste CTO). Limite que sobra: leitura pública que não seja `GET` de controller (ex.: `POST` de busca que devolva lista, job que gera arquivo estático) não é vista; o topo de `public-listing-routes.ts` diz que ela precisa de classificação manual. |
 | Agregado da rede novo (métricas, vagas de Fundador) que esquece `notDemoShop()` | Demo conta em número da rede. | RN-07 no `CLAUDE.md` e no `database-model.md`. Não há agregado hoje; o primeiro módulo de métricas leva o seu teste. |
 | `DEMO_MERCHANT_PHONE` diferente de `NUXT_DEMO_MERCHANT_PHONE` | Loja demo nasce pública. | Passo de ativação em `demo-login.md` exige as duas iguais; `shop:mark-demo` corrige. A API não consegue conferir a env do web (projetos separados). |
 | Env apontando para celular real | Só a loja **criada depois** por aquele celular nasce escondida. | Spec 8.4 (risco aceito); revisão da env; o boot nunca marca nem desmarca loja existente. |
@@ -479,5 +483,5 @@ do PR. Se o dono escolher (b), é a troca de um parágrafo, sem código.
 ## 11. Fora do escopo (confirma a spec)
 
 Conta de cliente demo, aviso ao lojista demo, desmarcar loja, filtro nos fluxos de acesso direto, tela de admin,
-auditoria em tabela do script, refatorar `admin-surface.sweep.test.ts` ou `shop-status.cli.ts` além de exportar
+tabela de auditoria própria para a marca (a trilha mora em `shops.demo_marked_*`), refatorar `admin-surface.sweep.test.ts` ou `shop-status.cli.ts` além de exportar
 `isValidActorNickname`, schema estrito no `ClubSetupDraftSchema`.
