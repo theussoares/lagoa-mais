@@ -24,7 +24,17 @@ const { t } = useI18n()
       </span>
       <div class="flex min-w-0 flex-1 flex-col gap-1">
         <p class="truncate text-base font-semibold text-highlighted">{{ row.item.title }}</p>
-        <p class="text-[0.9375rem] text-toned tabular-nums">{{ row.priceLabel ?? t('merchantHits.onRequest') }}</p>
+        <PriceTag
+          :price="row.price.price"
+          :original="row.price.original"
+          :discount="row.price.discount"
+          :from-label="t('hitPrice.from')"
+          :to-label="t('hitPrice.to')"
+          class="text-[0.9375rem] text-toned"
+        />
+        <ul v-if="row.tags.length > 0" class="flex flex-wrap gap-2">
+          <li v-for="tag in row.tags" :key="tag.tag"><StampTag :label="tag.label" tone="reward" /></li>
+        </ul>
         <HitsStatusBadge :status="row.status" :reason="row.rejectionReason" :missing-photo="row.missingPhoto" />
       </div>
       <div class="flex w-full sm:w-auto justify-end gap-2">

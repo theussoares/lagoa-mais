@@ -9,7 +9,7 @@ import { ShopPhotoStorage } from '../shop-photo/shop-photo.storage'
 import { DrizzleHitsRepository } from './drizzle-hits.repository'
 import { HitsService } from './hits.service'
 
-const draft = (title: string, extra: Partial<HitItemDraft> = {}): HitItemDraft => ({ title, description: null, priceCents: 1990, contact: null, endsAt: null, ...extra })
+const draft = (title: string, extra: Partial<HitItemDraft> = {}): HitItemDraft => ({ title, description: null, priceCents: 1990, promoPriceCents: null, tags: [], contact: null, endsAt: null, ...extra })
 const PNG = { contentType: 'image/png', dataBase64: pngHeader(800, 600).toString('base64') } as const
 
 class FakeStorage extends ShopPhotoStorage {

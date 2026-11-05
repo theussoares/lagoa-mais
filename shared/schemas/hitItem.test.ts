@@ -3,7 +3,7 @@ import { FeaturedPlacementDraftSchema, FeaturedRangeQuerySchema } from './featur
 import { HitItemDraftSchema } from './hitItem'
 import { HitItemReviewSchema } from './admin'
 
-const minimalDraft = { title: 'Corte masculino', description: null, priceCents: null, contact: null, endsAt: null }
+const minimalDraft = { title: 'Corte masculino', description: null, priceCents: null, promoPriceCents: null, tags: [], contact: null, endsAt: null }
 
 describe('HitItemDraftSchema', () => {
   it('accepts the minimal draft', () => {
@@ -22,6 +22,22 @@ describe('HitItemDraftSchema', () => {
   it('rejects a non-https contact url', () => {
     const contact = { kind: 'url', url: 'http://loja.example', ctaLabel: 'Ver' }
     expect(HitItemDraftSchema.safeParse({ ...minimalDraft, contact }).success).toBe(false)
+  })
+
+  it('accepts a promo price below the price, with tags', () => {
+    const draft = { ...minimalDraft, priceCents: 3990, promoPriceCents: 3490, tags: ['clubOnly'] }
+    expect(HitItemDraftSchema.safeParse(draft).success).toBe(true)
+  })
+
+  it('rejects a promo price without a price, or not lower than it, naming the code', () => {
+    const noPrice = HitItemDraftSchema.safeParse({ ...minimalDraft, promoPriceCents: 3490 })
+    const equal = HitItemDraftSchema.safeParse({ ...minimalDraft, priceCents: 3490, promoPriceCents: 3490 })
+    expect(noPrice.error?.issues[0]).toMatchObject({ path: ['promoPriceCents'], message: 'promoNeedsPrice' })
+    expect(equal.error?.issues[0]).toMatchObject({ path: ['promoPriceCents'], message: 'promoNotLower' })
+  })
+
+  it('rejects a discount percent sent by the client', () => {
+    expect(HitItemDraftSchema.safeParse({ ...minimalDraft, discountPercent: 12 }).success).toBe(false)
   })
 
   it('rejects unknown fields', () => {

@@ -15,6 +15,8 @@ const item = {
   title: 'Corte masculino',
   description: null,
   priceCents: 4500,
+  promoPriceCents: null,
+  tags: [],
   photoUrl: 'https://cdn.test/corte.jpg',
   earning: { unit: 'stamp', units: 1, doubled: false },
   contact: null,

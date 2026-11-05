@@ -56,6 +56,27 @@ describe.skipIf(!TEST_DATABASE_URL)('hits tables (integration)', () => {
     expect(await violatedConstraint(insert)).toBe('hit_items_price_check')
   })
 
+  it('accepts a lower promo price with tags, and old rows default to no promo and no tags', async () => {
+    const [promo] = await testDb.db.insert(schema.hitItems).values({ shopId: shop.id, title: 'Café', priceCents: 3990, promoPriceCents: 3490, tags: ['clubOnly', 'new'] }).returning()
+    const [plain] = await testDb.db.insert(schema.hitItems).values({ shopId: shop.id, title: 'Pão' }).returning()
+    expect(promo).toMatchObject({ promoPriceCents: 3490, tags: ['clubOnly', 'new'] })
+    expect(plain).toMatchObject({ promoPriceCents: null, tags: [] })
+  })
+
+  it('rejects a promo price that is not lower than the price, or without a price', async () => {
+    const equal = testDb.db.insert(schema.hitItems).values({ shopId: shop.id, title: 'Café', priceCents: 3990, promoPriceCents: 3990 })
+    const noPrice = testDb.db.insert(schema.hitItems).values({ shopId: shop.id, title: 'Café', promoPriceCents: 500 })
+    expect(await violatedConstraint(equal)).toBe('hit_items_promo_price_check')
+    expect(await violatedConstraint(noPrice)).toBe('hit_items_promo_price_check')
+  })
+
+  it('rejects a tag outside the list, and more than two tags', async () => {
+    const unknown = testDb.db.insert(schema.hitItems).values({ shopId: shop.id, title: 'Café', tags: ['vip'] })
+    const three = testDb.db.insert(schema.hitItems).values({ shopId: shop.id, title: 'Café', tags: ['clubOnly', 'new', 'lastUnits'] })
+    expect(await violatedConstraint(unknown)).toBe('hit_items_tags_check')
+    expect(await violatedConstraint(three)).toBe('hit_items_tags_check')
+  })
+
   it('rejects a title longer than 60 characters', async () => {
     const insert = testDb.db.insert(schema.hitItems).values({ shopId: shop.id, title: 'a'.repeat(61), photoPath: 'hits/x.jpg' })
     expect(await violatedConstraint(insert)).toBe('hit_items_title_check')

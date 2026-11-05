@@ -112,6 +112,15 @@ describe.skipIf(!TEST_DATABASE_URL)('customer hits against a real database', () 
     expect(byId.get(stampItem.id)?.earning).toEqual({ unit: 'stamp', units: 1, doubled: false })
   }, SLOW)
 
+  it('earns on the promo price, and returns the promo price and tags as stored', async () => {
+    const perReal = await data.createShop({ rules: { mode: 'pointsPerCurrency', pointsPerReal: 2, target: 100 } })
+    const full = await approvedItem(perReal.id, { priceCents: 5000 })
+    const promo = await approvedItem(perReal.id, { priceCents: 5000, promoPriceCents: 2500, tags: ['clubOnly', 'lastUnits'] })
+    const byId = new Map((await everything()).flat().map((item) => [item.id, item]))
+    expect(byId.get(full.id)?.earning).toMatchObject({ units: 100 })
+    expect(byId.get(promo.id)).toMatchObject({ priceCents: 5000, promoPriceCents: 2500, tags: ['clubOnly', 'lastUnits'], earning: { units: 50 } })
+  }, SLOW)
+
   it('doubles the earning on the shop surprise day and shows the item button before the shop one', async () => {
     const shop = await data.createShop({ bonusRules: { ...NO_BONUS_RULES, surpriseDay: { enabled: true, multiplier: 2, date: '2026-10-21' } } })
     await data.db.update(shops).set({ ctaKind: 'url', ctaUrl: 'https://loja.example/oferta', ctaLabel: 'Ver loja' }).where(eq(shops.id, shop.id))

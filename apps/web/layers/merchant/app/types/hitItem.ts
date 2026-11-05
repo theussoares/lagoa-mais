@@ -1,4 +1,6 @@
 import type { ComputedRef, Ref } from 'vue'
+import type { HitPriceModel, HitTagModel } from '#layers/core/app/types/hitPrice'
+import type { HitTag } from '#shared/domain/hitTag'
 import type { ShopPhotoUpload } from '#shared/schemas/shop'
 import type { HitItemDraft, HitItemStatus, MerchantHitItem } from '#shared/schemas/hitItem'
 import type { HitItemError } from '../services/HitItemService'
@@ -13,6 +15,9 @@ export interface HitItemForm {
   readonly description: string
   /** "12,50"; vazio = sob consulta. */
   readonly price: string
+  /** Preço promocional, no mesmo formato; vazio = sem promoção. */
+  readonly promoPrice: string
+  readonly tags: readonly HitTag[]
   readonly endsAt: string
   /** `true` = o produto usa o botão da loja (`contact: null`). */
   readonly useShopButton: boolean
@@ -27,7 +32,8 @@ export type HitItemDraftResult =
 export interface HitItemRow {
   readonly item: MerchantHitItem
   readonly status: HitItemStatus
-  readonly priceLabel: string | null
+  readonly price: HitPriceModel
+  readonly tags: readonly HitTagModel[]
   /** Sem foto o item não entra na análise da rede. */
   readonly missingPhoto: boolean
   readonly rejectionReason: string | null
@@ -49,7 +55,8 @@ export interface HitItemSaveError {
 export interface HitItemPreview {
   readonly title: string
   readonly description: string | null
-  readonly priceLabel: string | null
+  readonly price: HitPriceModel
+  readonly tags: readonly HitTagModel[]
   readonly photoUrl: string | null
   readonly button: ShopContactPreview | null
 }

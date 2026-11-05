@@ -137,6 +137,8 @@ export const SIGN_UP_TICKET_TTL_MINUTES = 60
 export const HIT_ITEM_TITLE_MAX_LENGTH = 60
 export const HIT_ITEM_DESCRIPTION_MAX_LENGTH = 140
 export const HIT_ITEM_PRICE_MAX_CENTS = 10_000_000
+/** Etiquetas por produto: poucas, para o card não virar um painel de avisos. */
+export const HIT_ITEM_TAGS_MAX = 2
 /** Itens não arquivados por loja, por plano. */
 export const HIT_ITEMS_MAX_FOUNDER = 5
 export const HIT_ITEMS_MAX_FOUNDER_PRO = 20

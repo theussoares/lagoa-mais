@@ -1,7 +1,9 @@
 import { z } from 'zod'
 import { HIT_ITEM_DESCRIPTION_MAX_LENGTH, HIT_ITEM_TITLE_MAX_LENGTH } from '../constants/domain'
+import { HitTagsSchema } from '../domain/hitTag'
 import { ShowcaseEarningSchema } from '../domain/showcaseEarning'
 import { ShopGroupSchema } from '../domain/shopGroup'
+import { refineHitPrices } from './hitItem'
 import { ShopIdSchema } from './ids'
 import { ShopCategorySchema, ShopPublicContactSchema, ShopSummarySchema } from './shop'
 
@@ -11,6 +13,8 @@ export const PublicHitItemSchema = z.object({
   title: z.string().min(1).max(HIT_ITEM_TITLE_MAX_LENGTH),
   description: z.string().min(1).max(HIT_ITEM_DESCRIPTION_MAX_LENGTH).nullable(),
   priceCents: z.number().int().positive().nullable(),
+  promoPriceCents: z.number().int().positive().nullable(),
+  tags: HitTagsSchema,
   photoUrl: z.string().url(),
   earning: ShowcaseEarningSchema,
   contact: ShopPublicContactSchema.nullable(),
@@ -20,7 +24,7 @@ export const PublicHitItemSchema = z.object({
     category: ShopCategorySchema,
     neighborhood: z.string().min(1),
   }),
-})
+}).superRefine(refineHitPrices)
 export type PublicHitItem = z.infer<typeof PublicHitItemSchema>
 
 export const PublicHitItemPageSchema = z.object({

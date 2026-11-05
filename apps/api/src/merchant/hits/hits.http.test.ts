@@ -27,7 +27,7 @@ class TokenRequiredGuard extends FakeAuthGuard {
 
 const SHOP: MerchantShopContext = { shopId: '018f98a2-7b2a-7182-9f33-6d004bbbb002', status: 'approved', plan: 'founder', role: 'owner', termsVersion: null }
 const ID = '018f98a2-7b2a-7182-9f33-6d004bbbb099'
-const DRAFT = { title: 'Bolo', description: null, priceCents: 1000, contact: null, endsAt: null }
+const DRAFT = { title: 'Bolo', description: null, priceCents: 1000, promoPriceCents: null, tags: [], contact: null, endsAt: null }
 const NOW = new Date('2026-01-01T00:00:00Z')
 
 const ROW: HitItemRow = {
@@ -36,6 +36,8 @@ const ROW: HitItemRow = {
   title: 'Bolo',
   description: null,
   priceCents: 1000,
+  promoPriceCents: null,
+  tags: [],
   photoPath: null,
   ctaKind: null,
   whatsapp: null,
@@ -104,6 +106,20 @@ describe('merchant hits HTTP', () => {
   it('refuses a body with a field outside the draft, such as shopId', async () => {
     await server().post('/merchant/hits').set(auth).send({ ...DRAFT, shopId: ID }).expect(400)
     await server().patch(`/merchant/hits/${ID}`).set(auth).send({ ...DRAFT, status: 'approved' }).expect(400)
+  })
+
+  it('refuses a promo price that is not lower than the price, or without a price', async () => {
+    await server().post('/merchant/hits').set(auth).send({ ...DRAFT, promoPriceCents: 1000 }).expect(400)
+    await server().post('/merchant/hits').set(auth).send({ ...DRAFT, promoPriceCents: 1500 }).expect(400)
+    await server().post('/merchant/hits').set(auth).send({ ...DRAFT, priceCents: null, promoPriceCents: 500 }).expect(400)
+    await server().post('/merchant/hits').set(auth).send({ ...DRAFT, promoPriceCents: 900 }).expect(201)
+  })
+
+  it('refuses a tag outside the closed list, repeated tags and more than two', async () => {
+    await server().post('/merchant/hits').set(auth).send({ ...DRAFT, tags: ['vip'] }).expect(400)
+    await server().post('/merchant/hits').set(auth).send({ ...DRAFT, tags: ['new', 'new'] }).expect(400)
+    await server().post('/merchant/hits').set(auth).send({ ...DRAFT, tags: ['clubOnly', 'new', 'lastUnits'] }).expect(400)
+    await server().post('/merchant/hits').set(auth).send({ ...DRAFT, tags: ['clubOnly', 'new'] }).expect(201)
   })
 
   it('refuses an id that is not a uuid with 400, never 500', async () => {

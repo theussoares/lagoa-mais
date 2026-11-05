@@ -26,7 +26,7 @@ export function useHitsScreen(): HitsScreen {
   const editing = computed(() => items.value.find((item) => item.id === editingId.value) ?? null)
   const form = computed(() => typed.value ?? emptyHitItemForm())
   const photoUrl = computed(() => photo.pendingUrl.value ?? editing.value?.photoUrl ?? null)
-  const preview = computed(() => toHitItemPreview(form.value, photoUrl.value, t('shopContact.defaultLabel')))
+  const preview = computed(() => toHitItemPreview(form.value, photoUrl.value, t('shopContact.defaultLabel'), t))
   const saveError = computed(() => saveErrorOf(state.value))
 
   watch(loaded, (current) => {
@@ -123,7 +123,7 @@ export function useHitsScreen(): HitsScreen {
   return reactive({
     loading: computed(() => loaded.value.status === 'loading'),
     loadError: computed(() => (loaded.value.status === 'error' ? loaded.value.error.code : null)),
-    rows: computed(() => items.value.map(toHitItemRow)),
+    rows: computed(() => items.value.map((item) => toHitItemRow(item, t))),
     cap,
     activeCount,
     canCreate: computed(() => activeCount.value < cap.value),

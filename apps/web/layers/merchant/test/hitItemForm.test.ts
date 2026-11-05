@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import type { MerchantHitItem } from '#shared/schemas/hitItem'
-import { emptyHitItemForm, formFromItem, parsePriceCents, saveErrorOf, toHitItemDraft, toHitItemRow } from '../app/utils/hitItemForm'
+import type { Translate } from '#layers/core/app/types/i18n'
+import { emptyHitItemForm, formFromItem, parsePriceCents, saveErrorOf, toHitItemDraft, toHitItemPreview, toHitItemRow, toggleHitTag } from '../app/utils/hitItemForm'
 
 const now = new Date(2026, 9, 19, 10, 0, 0)
+const t: Translate = (key, named = {}) => [key, ...Object.entries(named).map(([name, value]) => `${name}=${String(value)}`)].join(' ')
 const filled = { ...emptyHitItemForm(), title: '  Corte masculino ' }
 
 const item: MerchantHitItem = {
@@ -10,6 +12,8 @@ const item: MerchantHitItem = {
   title: 'Corte',
   description: 'Na régua',
   priceCents: 4550,
+  promoPriceCents: null,
+  tags: [],
   contact: { kind: 'url', url: 'https://loja.com/x', ctaLabel: 'Comprar agora' },
   endsAt: new Date(2026, 10, 30, 23, 59, 59).toISOString(),
   status: 'approved',
@@ -35,7 +39,7 @@ describe('toHitItemDraft', () => {
   it('trims, turns blanks into null and uses the shop button by default', () => {
     expect(toHitItemDraft(filled, now)).toEqual({
       ok: true,
-      draft: { title: 'Corte masculino', description: null, priceCents: null, contact: null, endsAt: null },
+      draft: { title: 'Corte masculino', description: null, priceCents: null, promoPriceCents: null, tags: [], contact: null, endsAt: null },
     })
   })
 
@@ -59,12 +63,52 @@ describe('toHitItemDraft', () => {
   })
 })
 
+describe('promo price and tags in the draft', () => {
+  const promo = { ...filled, price: '39,90', promoPrice: '34,90', tags: ['clubOnly' as const] }
+
+  it('sends the promo price and the tags, and never a discount percent', () => {
+    const result = toHitItemDraft(promo, now)
+    expect(result).toMatchObject({ ok: true, draft: { priceCents: 3990, promoPriceCents: 3490, tags: ['clubOnly'] } })
+    expect(result.ok && 'discountPercent' in result.draft).toBe(false)
+  })
+
+  it('refuses a promo price that is not a price, without the regular price, or not lower', () => {
+    expect(toHitItemDraft({ ...promo, promoPrice: 'barato' }, now)).toEqual({ ok: false, code: 'invalidPromoPrice' })
+    expect(toHitItemDraft({ ...promo, price: '' }, now)).toEqual({ ok: false, code: 'promoNeedsPrice' })
+    expect(toHitItemDraft({ ...promo, promoPrice: '39,90' }, now)).toEqual({ ok: false, code: 'promoNotLower' })
+    expect(toHitItemDraft({ ...promo, promoPrice: '50' }, now)).toEqual({ ok: false, code: 'promoNotLower' })
+  })
+
+  it('round-trips a saved promotion and tags through the form', () => {
+    const saved = { ...item, priceCents: 3990, promoPriceCents: 3490, tags: ['new' as const, 'lastUnits' as const] }
+    expect(formFromItem(saved)).toMatchObject({ price: '39,90', promoPrice: '34,90', tags: ['new', 'lastUnits'] })
+    expect(toHitItemDraft(formFromItem(saved), new Date(2026, 9, 19))).toMatchObject({ ok: true, draft: { promoPriceCents: 3490, tags: ['new', 'lastUnits'] } })
+  })
+
+  it('toggles a tag keeping the card order', () => {
+    expect(toggleHitTag(['lastUnits'], 'clubOnly')).toEqual(['clubOnly', 'lastUnits'])
+    expect(toggleHitTag(['clubOnly', 'lastUnits'], 'clubOnly')).toEqual(['lastUnits'])
+  })
+})
+
+describe('toHitItemPreview', () => {
+  it('shows the old price, the new one and the percent while typing, and drops a promo that makes no sense', () => {
+    const typed = { ...filled, price: '39,90', promoPrice: '34,90', tags: ['clubOnly' as const] }
+    const preview = toHitItemPreview(typed, null, 'Chamar', t)
+    expect(preview.price).toMatchObject({ original: expect.stringMatching(/39,90/), discount: 'hitPrice.discount percent=12' })
+    expect(preview.price.price).toMatch(/34,90/)
+    expect(preview.tags).toEqual([{ tag: 'clubOnly', label: 'hitTags.clubOnly' }])
+    expect(toHitItemPreview({ ...typed, promoPrice: '45' }, null, 'Chamar', t).price).toMatchObject({ original: null, discount: null })
+    expect(toHitItemPreview({ ...filled }, null, 'Chamar', t).price.price).toBe('hitPrice.onRequest')
+  })
+})
+
 describe('formFromItem', () => {
   it('round-trips a saved item through the form', () => {
     const result = toHitItemDraft(formFromItem(item), new Date(2026, 9, 19))
     expect(result).toEqual({
       ok: true,
-      draft: { title: 'Corte', description: 'Na régua', priceCents: 4550, contact: item.contact, endsAt: item.endsAt },
+      draft: { title: 'Corte', description: 'Na régua', priceCents: 4550, promoPriceCents: null, tags: [], contact: item.contact, endsAt: item.endsAt },
     })
   })
 
@@ -75,11 +119,11 @@ describe('formFromItem', () => {
 
 describe('toHitItemRow', () => {
   it('shows the reason only on rejected items and flags a missing photo', () => {
-    expect(toHitItemRow({ ...item, status: 'rejected', rejectionReason: 'Foto escura' }).rejectionReason).toBe('Foto escura')
-    expect(toHitItemRow(item).rejectionReason).toBeNull()
-    expect(toHitItemRow({ ...item, photoUrl: null }).missingPhoto).toBe(true)
-    expect(toHitItemRow({ ...item, photoUrl: null, status: 'archived' })).toMatchObject({ missingPhoto: false, canEdit: false })
-    expect(toHitItemRow(item).priceLabel).toMatch(/45,50/)
+    expect(toHitItemRow({ ...item, status: 'rejected', rejectionReason: 'Foto escura' }, t).rejectionReason).toBe('Foto escura')
+    expect(toHitItemRow(item, t).rejectionReason).toBeNull()
+    expect(toHitItemRow({ ...item, photoUrl: null }, t).missingPhoto).toBe(true)
+    expect(toHitItemRow({ ...item, photoUrl: null, status: 'archived' }, t)).toMatchObject({ missingPhoto: false, canEdit: false })
+    expect(toHitItemRow(item, t).price.price).toMatch(/45,50/)
   })
 })
 

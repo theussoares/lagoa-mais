@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { HIT_ITEM_DESCRIPTION_MAX_LENGTH, HIT_ITEM_TITLE_MAX_LENGTH } from '#shared/constants/domain'
+import type { HitTag } from '#shared/domain/hitTag'
 import type { HitItemForm, HitItemFormErrorCode } from '../../types/hitItem'
+import { toggleHitTag } from '../../utils/hitItemForm'
 import type { ShopContactForm, ShopContactFormErrorCode } from '../../types/shopContact'
 
 interface Props {
@@ -19,9 +21,15 @@ interface Emits {
   (event: 'save' | 'cancel'): void
 }
 
-defineProps<Props>()
+const props = defineProps<Props>()
 defineEmits<Emits>()
 const { t } = useI18n()
+
+const PROMO_ERRORS = ['invalidPromoPrice', 'promoNeedsPrice', 'promoNotLower'] as const
+const promoPriceError = computed(() => {
+  const code = PROMO_ERRORS.find((known) => known === props.fieldError)
+  return code === undefined ? undefined : t(`merchantHits.errors.${code}`)
+})
 </script>
 
 <template>
@@ -40,10 +48,19 @@ const { t } = useI18n()
       <UFormField :label="t('merchantHits.fields.price.label')" :description="t('merchantHits.fields.price.hint')" name="price" :error="fieldError === 'invalidPrice' ? t('merchantHits.errors.invalidPrice') : undefined">
         <UInput :model-value="form.price" inputmode="decimal" size="xl" placeholder="12,50" class="w-full" :ui="{ base: 'min-h-11' }" @update:model-value="$emit('change', { price: String($event) })" />
       </UFormField>
+      <UFormField
+        :label="t('merchantHits.fields.promoPrice.label')"
+        :description="t('merchantHits.fields.promoPrice.hint')"
+        name="promoPrice"
+        :error="promoPriceError"
+      >
+        <UInput :model-value="form.promoPrice" inputmode="decimal" size="xl" placeholder="9,90" class="w-full" :ui="{ base: 'min-h-11' }" @update:model-value="$emit('change', { promoPrice: String($event) })" />
+      </UFormField>
       <UFormField :label="t('merchantHits.fields.endsAt.label')" :description="t('merchantHits.fields.endsAt.hint')" name="endsAt" :error="fieldError === 'invalidEndsAt' ? t('merchantHits.errors.invalidEndsAt') : undefined">
         <UInput :model-value="form.endsAt" type="date" size="xl" class="w-full" :ui="{ base: 'min-h-11' }" @update:model-value="$emit('change', { endsAt: String($event) })" />
       </UFormField>
     </div>
+    <HitsTagsField :selected="form.tags" @toggle="$emit('change', { tags: toggleHitTag(form.tags, $event) })" />
     <HitsPhotoField :image-url="photoUrl" :missing="fieldError === 'missingPhoto'" :unreadable="errorKey === 'merchantHits.errors.unreadable'" @choose="$emit('choosePhoto', $event)" />
     <HitsContactFields :form="form" :field-error="fieldError" @use-shop-button="$emit('change', { useShopButton: $event })" @change="$emit('changeContact', $event)" />
     <div class="flex flex-wrap items-center gap-3">

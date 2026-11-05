@@ -23,6 +23,8 @@ function hitItem(index: number, overrides: Partial<PublicHitItem> = {}): PublicH
     title: `Produto ${index}`,
     description: null,
     priceCents: 4500,
+    promoPriceCents: null,
+    tags: [],
     photoUrl: `https://cdn.lagoa.test/hits/${index}.webp`,
     earning: null,
     contact: null,
@@ -124,6 +126,16 @@ describe('hits page', () => {
     expect(withoutContact.text()).toContain('Sob consulta')
     expect(withoutContact.text()).not.toContain('rende')
     expect(withoutContact.find('a').exists()).toBe(false)
+  })
+
+  it('shows the old price struck, the new price, the percent and the club seal on a promoted product', async () => {
+    vi.spyOn(hits(), 'list').mockResolvedValue(page([hitItem(1, { priceCents: 3990, promoPriceCents: 3490, tags: ['clubOnly'] })]))
+    const view = await mountHits()
+    const card = view.get('article')
+    expect(card.get('s').text()).toMatch(/39,90/)
+    expect(card.text()).toMatch(/34,90/)
+    expect(card.text()).toContain('-12%')
+    expect(card.text()).toContain('Só para clientes do clube')
   })
 
   it('says the group is empty when the chosen group has no product', async () => {
