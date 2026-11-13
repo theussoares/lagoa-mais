@@ -62,6 +62,7 @@ export default defineNuxtConfig({
         { name: 'apple-mobile-web-app-title', content: 'Lagoa+' },
       ],
       link: [
+        { rel: 'manifest', href: '/manifest.webmanifest' },
         { rel: 'icon', href: '/favicon.ico', sizes: 'any' },
         { rel: 'icon', type: 'image/png', href: '/favicon.png' },
         { rel: 'apple-touch-icon', href: '/apple-touch-icon.png' },
@@ -73,24 +74,8 @@ export default defineNuxtConfig({
     // recarga e links, e HTML guardado serviria a carteira de outra sessão). O worker só pré-guarda os arquivos
     // estáticos versionados do build, o que já basta para o app ser instalável e abrir rápido.
     registerType: 'autoUpdate',
-    manifest: {
-      id: '/carteira',
-      name: 'Lagoa+',
-      short_name: 'Lagoa+',
-      description: 'Seus carimbos e pontos nas lojas de Três Lagoas, numa carteira só.',
-      lang: 'pt-BR',
-      start_url: '/carteira',
-      scope: '/',
-      display: 'standalone',
-      orientation: 'portrait',
-      background_color: '#01348D',
-      theme_color: '#01348D',
-      icons: [
-        { src: '/pwa-192x192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
-        { src: '/pwa-512x512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
-        { src: '/pwa-maskable-512x512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
-      ],
-    },
+    // O manifest sai por host em `server/routes/manifest.webmanifest.get.ts` (Balcão e app do cliente se instalam separados).
+    manifest: false,
     workbox: {
       globPatterns: ['_nuxt/**/*.{js,css,woff2}', '*.png'],
       navigateFallback: null,
