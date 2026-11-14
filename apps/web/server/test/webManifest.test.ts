@@ -19,3 +19,12 @@ describe('buildWebManifest', () => {
     expect(buildWebManifest({ merchantUrl: '', host: 'localhost:3000' }).start_url).toBe('/carteira')
   })
 })
+
+describe('buildWebManifest icons', () => {
+  it('gives the Balcão its own icons so it is not mistaken for the customer app', () => {
+    const balcao = buildWebManifest({ merchantUrl, host: 'balcao.lagoa.test' }).icons.map((icon) => icon.src)
+    const app = buildWebManifest({ merchantUrl, host: 'app.lagoa.test' }).icons.map((icon) => icon.src)
+    expect(balcao.every((src) => src.includes('-balcao'))).toBe(true)
+    expect(app.some((src) => src.includes('-balcao'))).toBe(false)
+  })
+})
